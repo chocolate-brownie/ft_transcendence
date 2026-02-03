@@ -20,8 +20,8 @@ docker-compose up --build
 
 ## Docker for Local Development
 
-Setting up a Docker development environment on Linux can sometimes lead to file permission issues between the host machine and the container. This is often due to security features like SELinux.
+Setting up a Docker development environment can sometimes present challenges, from host-specific permission errors (often due to security features like SELinux) to application startup failures inside the container.
 
-We have documented the process of diagnosing and resolving these issues in our developer log. If you encounter any `EACCES: permission denied` errors when running `docker-compose up`, please refer to the detailed troubleshooting guide:
+We have documented the process of diagnosing and resolving these initial setup issues in our developer log. If you encounter errors like `EACCES: permission denied` or `ERR_CONNECTION_REFUSED` when trying to run the project, please refer to the detailed troubleshooting guide:
 
-- **[Developer Log: Resolving Docker Permission Issues](./docs/dev-log.md)**
+- **[Developer Log: Docker Setup & Troubleshooting](./docs/dev-log.md)**
