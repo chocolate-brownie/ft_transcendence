@@ -18,6 +18,14 @@ To start the application, run:
 docker-compose up --build
 ```
 
+## Project Roadmap
+
+This project is being developed in phases, starting with a solid foundation for authentication and user management, followed by core gameplay, and finally online and social features.
+
+For a detailed, step-by-step breakdown of all tasks and to track the current progress, please refer to our project to-do list:
+
+- **[Project To-Do List & Roadmap](./docs/todolist.md)**
+
 ## Docker for Local Development
 
 Setting up a Docker development environment can sometimes present challenges, from host-specific permission errors (often due to security features like SELinux) to application startup failures inside the container.
