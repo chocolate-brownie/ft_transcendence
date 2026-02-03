@@ -1,5 +1,7 @@
+version: "3.8"
+
 services:
-  # Database Service (Postgres)
+  # Box 1: Database
   db:
     image: postgres:15
     restart: always
@@ -12,32 +14,24 @@ services:
     ports:
       - "5432:5432"
 
-  # Backend Service (NestJS)
+  # Box 2: Backend
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    # Override the default command to enable hot-reloading in dev
-    command: npm run start:dev
+    build: ./backend
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/usr/src/app
+      - ./backend:/usr/src/app:z
       - /usr/src/app/node_modules
     depends_on:
       - db
 
-  # Frontend Service (React + Vite)
+  # Box 3: Frontend
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    # Expose Vite to the host
-    command: npm run dev -- --host
+    build: ./frontend
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/usr/src/app
+      - ./frontend:/usr/src/app:z
       - /usr/src/app/node_modules
 
 volumes:

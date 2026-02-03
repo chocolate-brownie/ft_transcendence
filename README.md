@@ -1,56 +1,27 @@
-### **Project Architecture Overview**
+# ft_transcendence
 
-We have established a **Dockerized Microservices Architecture** that separates concerns between data, backend logic, and frontend presentation. This setup ensures consistency across all development environments and meets the project requirement for a single-command deployment.
+This document outlines the setup and configuration for the ft_transcendence project.
 
-**1. Infrastructure & Orchestration**
+## Project Setup
 
-- **Docker Compose:** Used to orchestrate the entire application stack.
-- **Hot-Reloading:** Configured volume mounts (`volumes`) in `docker-compose.yml` to sync local file changes with the containers instantly. This allows for real-time development without rebuilding containers.
-- **Networking:** All services communicate via a dedicated internal bridge network (`trans_net` or default).
+The project is containerized using Docker and managed with Docker Compose. It consists of three main services:
 
-**2. Backend Service (`/backend`)**
+- `db`: A PostgreSQL database.
+- `backend`: A NestJS application.
+- `frontend`: A React/Vite application.
 
-- **Framework:** **NestJS** (Node.js framework).
-- **Role:** Acts as the API Gateway and logic handler. It connects to the database and serves data to the frontend.
-- **Status:** Initialized with the standard NestJS boilerplate (`@nestjs/cli`).
-- **Dockerfile:** Uses `node:18-alpine` for a lightweight image. Configured to run in development mode (`npm run start:dev`).
+The intended setup uses volume mounts to sync local source code with the code inside the containers for a smooth development experience.
 
-**3. Frontend Service (`/frontend`)**
-
-- **Framework:** **React** (via Vite).
-- **Language:** **TypeScript** for type safety and better developer experience.
-- **Role:** The client-side application user interface.
-- **Status:** Initialized using `npm create vite@latest`.
-- **Dockerfile:** Exposes port `5173` and runs Vite with the `--host` flag to allow access from outside the Docker container.
-
-**4. Database Service (`db`)**
-
-- **System:** **PostgreSQL** 15.
-- **Role:** Persistent storage for user data, game history, and relationships.
-- **Configuration:** Protected by environment variables (`POSTGRES_USER`, `POSTGRES_PASSWORD`) defined in `docker-compose.yml`.
-
----
-
-### **How to Run the Project**
-
-**Prerequisites:**
-
-- Docker & Docker Compose
-- Node.js (for local tooling, optional)
-
-**Installation & Launch:**
-
-1. Clone the repository.
-2. Start the application with a single command:
+To start the application, run:
 
 ```bash
 docker-compose up --build
-
 ```
 
-3. Access the application:
+## Docker for Local Development
 
-- **Frontend:** `http://localhost:5173`
-- **Backend API:** `http://localhost:3000`
+Setting up a Docker development environment on Linux can sometimes lead to file permission issues between the host machine and the container. This is often due to security features like SELinux.
 
----
+We have documented the process of diagnosing and resolving these issues in our developer log. If you encounter any `EACCES: permission denied` errors when running `docker-compose up`, please refer to the detailed troubleshooting guide:
+
+- **[Developer Log: Resolving Docker Permission Issues](./docs/dev-log.md)**
