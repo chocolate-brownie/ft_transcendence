@@ -1,13 +1,13 @@
 # Task List: ft_transcendence
 
 ## Phase 1: Planning & Infrastructure (Day 1)
-- [ ] **[Role: PO/PM]** Finalize Requirements & "14 Points" Strategy
-- [ ] **[Role: Tech Lead]** Initialize Git Repository & Repo Structure
-- [ ] **[Role: Tech Lead]** Setup Docker & Docker-Compose (Postgres, NestJS, React)
-- [ ] **[Role: Tech Lead]** Configure Code Quality Tools (Prettier, ESLint)
-- [ ] **[Role: Backend]** Initialize NestJS Project & Basic Configuration
-- [ ] **[Role: Frontend]** Initialize React Project & Install Dependencies (TailwindCSS?)
-- [ ] **[Role: Tech Lead]** Create Documentation Header (README.md)
+- [x] **[Role: PO/PM]** Finalize Requirements & "14 Points" Strategy
+- [x] **[Role: Tech Lead]** Initialize Git Repository & Repo Structure
+- [x] **[Role: Tech Lead]** Setup Docker & Docker-Compose (Postgres, NestJS, React)
+- [x] **[Role: Tech Lead]** Configure Code Quality Tools (Prettier, ESLint)
+- [x] **[Role: Backend]** Initialize NestJS Project & Basic Configuration
+- [x] **[Role: Frontend]** Initialize React Project & Install Dependencies (TailwindCSS?)
+- [x] **[Role: Tech Lead]** Create Documentation Header (README.md)
 
 ## Phase 2: User Management & Auth (Day 2)
 - [ ] **[Role: Backend]** Design Database Schema (Users, Auth, History)
