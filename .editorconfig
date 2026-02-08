@@ -1,0 +1,27 @@
+# EditorConfig — universal formatting rules for ALL editors
+# https://editorconfig.org
+# Zed, VSCode, Vim, etc. all read this file automatically.
+
+root = true
+
+# Default for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown: trailing spaces are intentional (line breaks)
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefile: MUST use tabs (Make syntax requirement)
+[Makefile]
+indent_style = tab
+indent_size = 4
+
+# Shell scripts
+[*.sh]
+end_of_line = lf
