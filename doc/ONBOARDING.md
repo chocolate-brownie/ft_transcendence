@@ -43,11 +43,16 @@ sudo usermod -aG docker $USER && newgrp docker
 make
 ```
 
-This builds and starts three containers:
-- **Frontend** (React) → http://localhost:5173
-- **Backend** (Express) → https://localhost:3000
-- **Database** (PostgreSQL) → localhost:5432
+**Verify the app is working:**
 
+1. Open **http://localhost:5173** in Chrome — you should see a System Status page showing connection indicators for the backend and database.
+2. Open **https://localhost:3000/api/health** — Chrome will show a security warning (self-signed certificate). Click **"Advanced" → "Proceed to localhost (unsafe)"**. You should see:
+```json
+   {"status":"ok","timestamp":"...","database":"connected"}
+```
+3. Go back to **http://localhost:5173** and refresh — all status indicators should be green.
+
+If the frontend shows red indicators, make sure you completed step 2 first (accepting the SSL certificate).
 Verify: `make ps` should show three containers with status `Up`.
 
 ## Step 5: Install Local Dependencies (for your editor)
