@@ -15,6 +15,7 @@ backend/certs/*.key
 
 # ── IDE / OS ──────────────────────────────────────────────────────────────
 .vscode/
+.claude/
 .idea/
 .DS_Store
 *.swp
