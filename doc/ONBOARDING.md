@@ -38,7 +38,15 @@ sudo usermod -aG docker $USER && newgrp docker
 
 **macOS:** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and launch it.
 
-## Step 4: Start the Application
+## Step 4: Install Local Dependencies (for your editor)
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
+```
+This gives your editor (VSCode, Zed, etc.) autocomplete and type checking.
+
+## Step 5: Start the Application
 ```bash
 make
 ```
@@ -54,15 +62,6 @@ make
 
 If the frontend shows red indicators, make sure you completed step 2 first (accepting the SSL certificate).
 Verify: `make ps` should show three containers with status `Up`.
-
-## Step 5: Install Local Dependencies (for your editor)
-```bash
-cd backend && npm install
-cd ../frontend && npm install
-cd ..
-```
-
-This gives your editor (VSCode, Zed, etc.) autocomplete and type checking.
 
 ## Step 6: Project Structure
 ```
