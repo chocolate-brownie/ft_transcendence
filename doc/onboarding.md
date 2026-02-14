@@ -5,12 +5,14 @@ Welcome to the team! This guide will get you from zero to contributing in about 
 ---
 
 ## Step 1: Clone the Repository
+
 ```bash
 git clone <repo-url>
 cd ft_transcendence
 ```
 
 ## Step 2: Environment Setup
+
 ```bash
 cp .env.example .env
 ```
@@ -20,6 +22,7 @@ The defaults in `.env.example` work for local development — no changes needed.
 ## Step 3: Install Docker
 
 **Linux Mint / Ubuntu / Debian:**
+
 ```bash
 sudo apt update
 sudo apt install docker.io docker-compose-v2
@@ -30,6 +33,7 @@ sudo systemctl start docker
 ```
 
 **Fedora:**
+
 ```bash
 sudo dnf install docker docker-compose-plugin
 sudo systemctl enable docker && sudo systemctl start docker
@@ -39,14 +43,17 @@ sudo usermod -aG docker $USER && newgrp docker
 **macOS:** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and launch it.
 
 ## Step 4: Install Local Dependencies (for your editor)
+
 ```bash
 cd backend && npm install
 cd ../frontend && npm install
 cd ..
 ```
+
 This gives your editor (VSCode, Zed, etc.) autocomplete and type checking.
 
 ## Step 5: Start the Application
+
 ```bash
 make
 ```
@@ -55,15 +62,18 @@ make
 
 1. Open **http://localhost:5173** in Chrome — you should see a System Status page showing connection indicators for the backend and database.
 2. Open **https://localhost:3000/api/health** — Chrome will show a security warning (self-signed certificate). Click **"Advanced" → "Proceed to localhost (unsafe)"**. You should see:
+
 ```json
-   {"status":"ok","timestamp":"...","database":"connected"}
+{ "status": "ok", "timestamp": "...", "database": "connected" }
 ```
+
 3. Go back to **http://localhost:5173** and refresh — all status indicators should be green.
 
 If the frontend shows red indicators, make sure you completed step 2 first (accepting the SSL certificate).
 Verify: `make ps` should show three containers with status `Up`.
 
 ## Step 6: Project Structure
+
 ```
 ft_transcendence/
 ├── Makefile                  # make, make down, make logs, make fclean, etc.
@@ -88,41 +98,62 @@ ft_transcendence/
 
 Open `doc/tasks.md` and find tasks tagged with your role:
 
-| Role | Focus |
-| :--- | :--- |
-| Tech Lead | Docker, HTTPS, code reviews |
-| Frontend | React pages, TailwindCSS, game board |
-| Backend | Express API, Prisma, auth, AI logic |
-| Real-Time | Socket.io, multiplayer, chat |
-| PM | GitHub Issues, QA, Privacy Policy, ToS |
+| Role      | Focus                                  |
+| :-------- | :------------------------------------- |
+| Tech Lead | Docker, HTTPS, code reviews            |
+| Frontend  | React pages, TailwindCSS, game board   |
+| Backend   | Express API, Prisma, auth, AI logic    |
+| Real-Time | Socket.io, multiplayer, chat           |
+| PM        | GitHub Issues, QA, Privacy Policy, ToS |
 
 ## Step 8: Git Workflow
+
+**`main` is protected — you cannot push to it directly.** All changes go through Pull Requests.
+
+### Branch naming convention
+
+```
+feature/<short-description>   — new functionality
+fix/<short-description>       — bug fixes
+docs/<short-description>      — documentation only
+```
+
+### Workflow
+
 ```bash
 git checkout main && git pull
-git checkout -b feature/your-feature-name
+git checkout -b feature/your-feature-name    # e.g. feature/auth-signup
 # ... work on your feature ...
 git add . && git commit -m "feat: add login page"
 git push origin feature/your-feature-name
-# Then create a Pull Request on GitHub
+# Then create a Pull Request on GitHub — requires 1 approval before merging
 ```
+
+### Rules
+
+- One branch per task. Keep branches small and focused.
+- Get at least 1 code review before merging.
+- Delete your branch after merging (GitHub can do this automatically).
+- Pull `main` before creating a new branch to avoid stale code.
 
 ## Step 9: Useful Commands
 
-| Command | What it does |
-| :--- | :--- |
-| `make` | Build and start everything |
-| `make down` | Stop containers |
-| `make logs` | Live logs (all services) |
-| `make logs-back` | Backend logs only |
-| `make ps` | Container status |
-| `make shell-back` | Shell inside backend |
-| `make shell-db` | PostgreSQL CLI |
-| `make fclean` | Remove everything |
-| `make re` | Full rebuild |
+| Command           | What it does               |
+| :---------------- | :------------------------- |
+| `make`            | Build and start everything |
+| `make down`       | Stop containers            |
+| `make logs`       | Live logs (all services)   |
+| `make logs-back`  | Backend logs only          |
+| `make ps`         | Container status           |
+| `make shell-back` | Shell inside backend       |
+| `make shell-db`   | PostgreSQL CLI             |
+| `make fclean`     | Remove everything          |
+| `make re`         | Full rebuild               |
 
 **When to rebuild:** Changed package.json or Dockerfile → `make re`. Changed source code → no rebuild (hot reload).
 
 ## Step 10: How Data Flows
+
 ```
 User clicks "Login"
   → React sends POST /api/auth/login { email, password }
@@ -134,13 +165,13 @@ User clicks "Login"
 
 ## Troubleshooting
 
-| Problem | Fix |
-| :--- | :--- |
-| Docker permission denied | `sudo usermod -aG docker $USER && newgrp docker` |
-| Docker daemon not running | `sudo systemctl start docker` |
-| Editor red squiggles | `cd backend && npm install && cd ../frontend && npm install` |
-| Port already in use | `make fclean && make` |
-| Pulled changes, things broke | `make re` |
+| Problem                      | Fix                                                          |
+| :--------------------------- | :----------------------------------------------------------- |
+| Docker permission denied     | `sudo usermod -aG docker $USER && newgrp docker`             |
+| Docker daemon not running    | `sudo systemctl start docker`                                |
+| Editor red squiggles         | `cd backend && npm install && cd ../frontend && npm install` |
+| Port already in use          | `make fclean && make`                                        |
+| Pulled changes, things broke | `make re`                                                    |
 
 ## Communication
 

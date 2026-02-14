@@ -39,7 +39,7 @@ app.get("/api/health", async (_req, res) => {
       timestamp: new Date().toISOString(),
       database: "connected",
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
@@ -105,9 +105,9 @@ server.listen(PORT, "0.0.0.0", () => {
 });
 
 // Graceful shutdown (like signal handlers in C)
-const shutdown = async () => {
+const shutdown = () => {
   console.log("\n🛑 Shutting down...");
-  await prisma.$disconnect();
+  prisma.$disconnect().catch(() => {});
   server.close(() => process.exit(0));
 };
 
