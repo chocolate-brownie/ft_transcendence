@@ -3,6 +3,10 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 import prettier from "eslint-config-prettier";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default [
   {
@@ -11,6 +15,7 @@ export default [
       parser: tsparser,
       parserOptions: {
         project: "./tsconfig.json",
+        tsconfigRootDir: __dirname,
       },
     },
     plugins: {
@@ -20,10 +25,7 @@ export default [
     rules: {
       // ── Dead code detection ───────────────────────────────────────
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
 
       // ── Async/Promise bugs ────────────────────────────────────────
       "@typescript-eslint/no-floating-promises": "error",
