@@ -18,8 +18,8 @@
 - [x] Configure `.env` and `.env.example` — mgodawat
 - [x] Configure `.editorconfig` and `.prettierrc` (consistent formatting across editors) — mgodawat
 - [x] Verify `make` starts all 3 services — mgodawat
-- [ ] Set up Git branching strategy and branch protection rules
-- [ ] Configure ESLint for backend and frontend
+- [x] Set up Git branching strategy and branch protection rules
+- [x] Configure ESLint for backend and frontend
 
 ### Backend Setup — [Backend: teammate_2]
 
@@ -371,10 +371,10 @@ Module #2 (ORM) ────────────┤
 
 ## Quick Reference: Who Does What
 
-| Team Member | Primary Focus | Key Deliverables |
-| :--- | :--- | :--- |
-| mgodawat | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions |
-| teammate_1 | Frontend UI | React pages, game board, TailwindCSS, customization UI |
-| teammate_2 | Backend Logic | Express API, auth, Prisma, AI opponent, tournament |
-| teammate_3 | Real-Time Features | Socket.io, multiplayer sync, chat, online status |
-| teammate_4 | Project Management + QA | GitHub Issues, testing, Privacy Policy, ToS, README |
+| Team Member | Primary Focus                 | Key Deliverables                                       |
+| :---------- | :---------------------------- | :----------------------------------------------------- |
+| mgodawat    | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions            |
+| teammate_1  | Frontend UI                   | React pages, game board, TailwindCSS, customization UI |
+| teammate_2  | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
+| teammate_3  | Real-Time Features            | Socket.io, multiplayer sync, chat, online status       |
+| teammate_4  | Project Management + QA       | GitHub Issues, testing, Privacy Policy, ToS, README    |

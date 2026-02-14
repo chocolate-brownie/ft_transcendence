@@ -39,7 +39,7 @@ app.get("/api/health", async (_req, res) => {
       timestamp: new Date().toISOString(),
       database: "connected",
     });
-  } catch (_error) {
+  } catch {
     res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
