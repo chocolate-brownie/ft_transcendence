@@ -100,6 +100,8 @@ If you are joining the team and want to develop locally outside Docker:
 
 ## Documentation
 
+- [Subject](doc/subject.md)
+- [Team Workflow](doc/team-workflow.md)
 - [Implementation Plan](doc/implementation_plan.md)
 - [Task List](doc/tasks.md)
 
