@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by mgodawat, [teammate_1], [teammate_2], [teammate_3], [teammate_4]._
+_This project has been created as part of the 42 curriculum by mgodawat, mamahtal, atrabut, [teammate_3], [teammate_4]._
 
 # ft_transcendence — The Ultimate Multiplayer Tic-Tac-Toe Experience
 
@@ -173,41 +173,41 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 
 ## Features List
 
-| Feature                              | Status     | Owner(s)        | Description                                                      |
-| :----------------------------------- | :--------- | :-------------- | :--------------------------------------------------------------- |
-| Project Setup & Dockerization        | ✅ Done    | mgodawat        | Docker Compose with frontend, backend, and database containers   |
-| User Authentication (email/password) | 🔲 Planned | teammate_2      | Signup, login, JWT tokens, password hashing with bcrypt          |
-| User Profiles (view/edit/avatar)     | 🔲 Planned | teammate_1, teammate_2 | Profile page, avatar upload, display name editing         |
-| Friends System                       | 🔲 Planned | teammate_2, teammate_3 | Add/remove friends, online status, friend requests        |
-| Real-Time Chat                       | 🔲 Planned | teammate_3      | Direct messages via WebSockets, chat history                     |
-| Tic-Tac-Toe Game (local)            | 🔲 Planned | teammate_1, teammate_3 | React component grid, game logic, win detection           |
-| Remote Multiplayer                   | 🔲 Planned | teammate_3      | Online 1v1 via WebSockets with turn synchronization              |
-| AI Opponent                          | 🔲 Planned | teammate_2      | Minimax algorithm with adjustable difficulty                     |
-| Tournament System                    | 🔲 Planned | teammate_2, teammate_4 | Bracket generation, matchmaking, progression              |
-| Game Customization                   | 🔲 Planned | teammate_1      | Board themes, X/O symbols, grid size variants                    |
-| Game Statistics & Match History      | 🔲 Planned | teammate_1, teammate_2 | Wins/losses, rankings, match history, leaderboard         |
-| Privacy Policy Page                  | 🔲 Planned | teammate_4      | Accessible from footer, relevant content                         |
-| Terms of Service Page                | 🔲 Planned | teammate_4      | Accessible from footer, relevant content                         |
-| HTTPS Configuration                  | 🔲 Planned | mgodawat        | SSL/TLS for all backend communication                            |
+| Feature                              | Status     | Owner(s)               | Description                                                    |
+| :----------------------------------- | :--------- | :--------------------- | :------------------------------------------------------------- |
+| Project Setup & Dockerization        | ✅ Done    | mgodawat               | Docker Compose with frontend, backend, and database containers |
+| User Authentication (email/password) | 🔲 Planned | teammate_2             | Signup, login, JWT tokens, password hashing with bcrypt        |
+| User Profiles (view/edit/avatar)     | 🔲 Planned | teammate_1, teammate_2 | Profile page, avatar upload, display name editing              |
+| Friends System                       | 🔲 Planned | teammate_2, teammate_3 | Add/remove friends, online status, friend requests             |
+| Real-Time Chat                       | 🔲 Planned | teammate_3             | Direct messages via WebSockets, chat history                   |
+| Tic-Tac-Toe Game (local)             | 🔲 Planned | teammate_1, teammate_3 | React component grid, game logic, win detection                |
+| Remote Multiplayer                   | 🔲 Planned | teammate_3             | Online 1v1 via WebSockets with turn synchronization            |
+| AI Opponent                          | 🔲 Planned | teammate_2             | Minimax algorithm with adjustable difficulty                   |
+| Tournament System                    | 🔲 Planned | teammate_2, teammate_4 | Bracket generation, matchmaking, progression                   |
+| Game Customization                   | 🔲 Planned | teammate_1             | Board themes, X/O symbols, grid size variants                  |
+| Game Statistics & Match History      | 🔲 Planned | teammate_1, teammate_2 | Wins/losses, rankings, match history, leaderboard              |
+| Privacy Policy Page                  | 🔲 Planned | teammate_4             | Accessible from footer, relevant content                       |
+| Terms of Service Page                | 🔲 Planned | teammate_4             | Accessible from footer, relevant content                       |
+| HTTPS Configuration                  | 🔲 Planned | mgodawat               | SSL/TLS for all backend communication                          |
 
 ## Modules (18 Points Target — 4-Point Safety Buffer)
 
 The subject requires a minimum of 14 points. We target 18 points to provide a safety margin in case any module is not fully validated during evaluation.
 
-| #   | Category  | Module                                       | Type      | Points | Owner(s)              | Implementation Notes                                    |
-| :-- | :-------- | :------------------------------------------- | :-------- | :----- | :-------------------- | :------------------------------------------------------ |
-| 1   | Web       | Use frameworks (React + Express)             | Major     | 2      | All                   | React for frontend, Express for backend                 |
-| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | teammate_2            | Type-safe queries, auto migrations                      |
-| 3   | Web       | Real-time WebSockets (Socket.io)             | Major     | 2      | teammate_3            | Game sync, chat, live notifications                     |
-| 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | teammate_1, teammate_3 | Chat system, profile pages, friends list                |
-| 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, teammate_2  | Auth, avatars, profiles, online status                  |
-| 6   | Gaming    | Web-based Tic-Tac-Toe game                   | Major     | 2      | teammate_1, teammate_3 | React component grid with game logic and win detection  |
-| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | teammate_3            | WebSocket turn sync, reconnection logic                 |
-| 8   | Gaming    | Tournament system                            | Minor     | 1      | teammate_2, teammate_4 | Bracket system, matchmaking, registration               |
-| 9   | AI        | AI Opponent                                  | Major     | 2      | teammate_2            | Minimax algorithm with human-like imperfection          |
-| 10  | Gaming    | Game customization                           | Minor     | 1      | teammate_1            | Board themes, custom symbols, grid size options          |
-| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | teammate_1, teammate_2 | Win/loss tracking, leaderboard, match history page      |
-|     |           |                                              | **Total** | **18** |                       |                                                         |
+| #   | Category  | Module                                       | Type      | Points | Owner(s)               | Implementation Notes                                   |
+| :-- | :-------- | :------------------------------------------- | :-------- | :----- | :--------------------- | :----------------------------------------------------- |
+| 1   | Web       | Use frameworks (React + Express)             | Major     | 2      | All                    | React for frontend, Express for backend                |
+| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | teammate_2             | Type-safe queries, auto migrations                     |
+| 3   | Web       | Real-time WebSockets (Socket.io)             | Major     | 2      | teammate_3             | Game sync, chat, live notifications                    |
+| 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | teammate_1, teammate_3 | Chat system, profile pages, friends list               |
+| 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, teammate_2   | Auth, avatars, profiles, online status                 |
+| 6   | Gaming    | Web-based Tic-Tac-Toe game                   | Major     | 2      | teammate_1, teammate_3 | React component grid with game logic and win detection |
+| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | teammate_3             | WebSocket turn sync, reconnection logic                |
+| 8   | Gaming    | Tournament system                            | Minor     | 1      | teammate_2, teammate_4 | Bracket system, matchmaking, registration              |
+| 9   | AI        | AI Opponent                                  | Major     | 2      | teammate_2             | Minimax algorithm with human-like imperfection         |
+| 10  | Gaming    | Game customization                           | Minor     | 1      | teammate_1             | Board themes, custom symbols, grid size options        |
+| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | teammate_1, teammate_2 | Win/loss tracking, leaderboard, match history page     |
+|     |           |                                              | **Total** | **18** |                        |                                                        |
 
 **Point Breakdown:** 7 Major modules (14 pts) + 4 Minor modules (4 pts) = **18 points**
 
