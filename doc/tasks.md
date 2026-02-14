@@ -8,35 +8,56 @@
 
 ## Phase 1: Foundation & Infrastructure (Day 1)
 
-### Docker & DevOps
+### Docker & DevOps — [Tech Lead: mgodawat]
 
-- [x] **[Tech Lead]** Install Docker & Docker Compose (if needed)
-- [x] **[Tech Lead]** Create project directory structure
-- [x] **[Tech Lead]** Write `backend/Dockerfile` (Node.js + TypeScript)
-- [x] **[Tech Lead]** Write `frontend/Dockerfile` (Node.js + Vite)
-- [x] **[Tech Lead]** Write `docker-compose.yml` (frontend + backend + PostgreSQL)
-- [x] **[Tech Lead]** Configure `.env` and `.env.example` (DB creds, JWT secret, ports)
-- [x] **[Tech Lead]** Verify `docker compose up --build` starts all 3 services
+- [x] Create project directory structure — mgodawat
+- [x] Write `backend/Dockerfile` — mgodawat
+- [x] Write `frontend/Dockerfile` — mgodawat
+- [x] Write `docker-compose.yml` (frontend + backend + PostgreSQL) — mgodawat
+- [x] Write `Makefile` (make, make up, make down, make fclean, make re, make logs) — mgodawat
+- [x] Configure `.env` and `.env.example` — mgodawat
+- [x] Configure `.editorconfig` and `.prettierrc` (consistent formatting across editors) — mgodawat
+- [x] Verify `make` starts all 3 services — mgodawat
+- [ ] Set up Git branching strategy and branch protection rules
+- [ ] Configure ESLint for backend and frontend
 
-### Backend Setup
+### Backend Setup — [Backend: teammate_2]
 
-- [ ] **[Backend]** Initialize Express project with TypeScript (`npm init`, tsconfig, etc.)
-- [ ] **[Backend]** Create basic Express server (`src/index.ts`) with health check route
-- [ ] **[Backend]** Install and configure Prisma ORM with PostgreSQL connection
-- [ ] **[Backend]** Create initial Prisma schema (Users table)
-- [ ] **[Backend]** Run first Prisma migration
-- [ ] **[Backend]** Configure CORS for frontend communication
-- [ ] **[Backend]** Install and configure ESLint + Prettier
+- [ ] Review Express project structure (`backend/src/index.ts`)
+- [ ] Install dependencies locally (`cd backend && npm install`)
+- [ ] Review Prisma schema (`backend/prisma/schema.prisma`)
+- [ ] Run `npx prisma generate` locally (for editor type support)
+- [ ] Create route file structure: `routes/auth.ts`, `routes/users.ts`, `routes/games.ts`
+- [ ] Create middleware directory: `middleware/auth.ts`
+- [ ] Verify backend health check works: `curl -k https://localhost:3000/api/health`
 
-### Frontend Setup
+### Frontend Setup — [Frontend: teammate_1]
 
-- [ ] **[Frontend]** Initialize React project with Vite (`npm create vite@latest`)
-- [ ] **[Frontend]** Install and configure TailwindCSS
-- [ ] **[Frontend]** Create basic App component with routing (React Router)
-- [ ] **[Frontend]** Create layout shell (navbar, footer, main content area)
-- [ ] **[Frontend]** Verify hot-reload works inside Docker
+- [ ] Install dependencies locally (`cd frontend && npm install`)
+- [ ] Review React project structure (`frontend/src/App.tsx`, `main.tsx`)
+- [ ] Install React Router: `npm install react-router-dom`
+- [ ] Create layout shell: Navbar component, Footer component, main content area
+- [ ] Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`
+- [ ] Create reusable UI components: Button, Input, Card (TailwindCSS)
+- [ ] Verify hot-reload works (edit App.tsx, see changes in browser)
 
-### ✅ Modules Progressed
+### Real-Time Setup — [Real-Time: teammate_3]
+
+- [ ] Install dependencies locally (`cd backend && npm install` + `cd frontend && npm install`)
+- [ ] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
+- [ ] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
+- [ ] Test from frontend: connect to Socket.io, log `connected` in console
+- [ ] Plan WebSocket event structure document (events for chat + game)
+
+### Project Management — [PM: teammate_4]
+
+- [ ] Create GitHub Issues for all Phase 2 tasks
+- [ ] Set up GitHub Project board (To Do / In Progress / Done / Review)
+- [ ] Draft Privacy Policy page content
+- [ ] Draft Terms of Service page content
+- [ ] Ensure all team members have Docker working
+
+### Modules Progressed
 
 - Module #1 — Web Frameworks (React + Express): **In Progress**
 - Module #2 — ORM (Prisma): **In Progress**
@@ -45,234 +66,290 @@
 
 ## Phase 2: User Authentication & Management (Day 2)
 
-### Database
+### Backend Auth API — [Backend: teammate_2]
 
-- [ ] **[Backend]** Expand Prisma schema: Users (email, username, password_hash, avatar_url, display_name, is_online, created_at, updated_at)
-- [ ] **[Backend]** Run Prisma migration for Users table
+- [ ] Install bcrypt and jsonwebtoken: `npm install bcrypt jsonwebtoken`
+- [ ] Install types: `npm install -D @types/bcrypt @types/jsonwebtoken`
+- [ ] Create `middleware/auth.ts` — JWT token verification middleware
+- [ ] Create `routes/auth.ts`:
+  - [ ] `POST /api/auth/signup` — validate input, hash password, create user, return JWT
+  - [ ] `POST /api/auth/login` — verify email + password, return JWT
+  - [ ] `GET /api/auth/me` — return current user from JWT (protected route)
+- [ ] Input validation: email format, password min length (8 chars), username min length (3 chars)
+- [ ] Error responses: 400 (bad input), 401 (wrong credentials), 409 (email/username taken)
 
-### Backend Auth API
+### Frontend Auth Pages — [Frontend: teammate_1]
 
-- [ ] **[Backend]** Install bcrypt and jsonwebtoken packages
-- [ ] **[Backend]** Create auth middleware (JWT token verification)
-- [ ] **[Backend]** `POST /api/auth/signup` — validate input, hash password, create user, return JWT
-- [ ] **[Backend]** `POST /api/auth/login` — verify credentials, return JWT
-- [ ] **[Backend]** `GET /api/auth/me` — return current user from JWT (protected route)
-- [ ] **[Backend]** `POST /api/auth/logout` — invalidate token (optional: token blacklist)
-- [ ] **[Backend]** Input validation middleware (email format, password strength, username rules)
+- [ ] Create Login page (`pages/Login.tsx`):
+  - [ ] Email + password form fields
+  - [ ] Form validation (required fields, email format)
+  - [ ] Submit → call `POST /api/auth/login`
+  - [ ] On success → store JWT, redirect to home
+  - [ ] On error → display error message
+- [ ] Create Signup page (`pages/Signup.tsx`):
+  - [ ] Email + username + password + confirm password fields
+  - [ ] Form validation (matching passwords, email format, min lengths)
+  - [ ] Submit → call `POST /api/auth/signup`
+  - [ ] On success → store JWT, redirect to home
+  - [ ] On error → display error message
+- [ ] Create auth context (`context/AuthContext.tsx`):
+  - [ ] Store current user + JWT token in React state
+  - [ ] Provide `login()`, `signup()`, `logout()` functions
+  - [ ] On app load → call `GET /api/auth/me` to restore session
+- [ ] Create ProtectedRoute wrapper (redirect to `/login` if not authenticated)
 
-### Frontend Auth Pages
+### Real-Time Auth — [Real-Time: teammate_3]
 
-- [ ] **[Frontend]** Create Login page (email + password form)
-- [ ] **[Frontend]** Create Signup page (email + username + password + confirm password)
-- [ ] **[Frontend]** Store JWT in memory (not localStorage for security)
-- [ ] **[Frontend]** Create auth context/provider (React Context for user state)
-- [ ] **[Frontend]** Create protected route wrapper (redirect to login if not authenticated)
-- [ ] **[Frontend]** Form validation (matching passwords, email format, required fields)
-- [ ] **[Frontend]** Error display (wrong credentials, email taken, etc.)
+- [ ] Add JWT authentication to Socket.io connection handshake
+- [ ] On connect: set user `isOnline = true` in database
+- [ ] On disconnect: set user `isOnline = false` in database
+- [ ] Broadcast online status changes to friends
 
-### ✅ Modules Progressed
+### QA & Testing — [PM: teammate_4]
+
+- [ ] Test signup flow: valid input, duplicate email, duplicate username, weak password
+- [ ] Test login flow: valid credentials, wrong password, non-existent email
+- [ ] Test protected route: with token, without token, expired token
+- [ ] Report bugs as GitHub Issues
+
+### Modules Progressed
 
 - Module #5 — Standard User Management: **In Progress**
 
 ---
 
-## Phase 3: Profiles, Friends & Chat (Day 3)
+## Phase 3: Social Features + Game Board (Day 3)
 
-### Database
+### Backend — Profiles & Friends — [Backend: teammate_2]
 
-- [ ] **[Backend]** Add Prisma schema: Friends table (requester_id, addressee_id, status)
-- [ ] **[Backend]** Add Prisma schema: Messages table (sender_id, receiver_id, content, read, created_at)
-- [ ] **[Backend]** Run Prisma migration
+- [ ] `GET /api/users/:id` — get user profile (public info: username, avatar, stats, online status)
+- [ ] `PUT /api/users/me` — update own profile (display name, avatar)
+- [ ] `POST /api/users/me/avatar` — upload avatar image (store locally, default fallback)
+- [ ] Serve uploaded avatars as static files (`/uploads/avatars/`)
+- [ ] `POST /api/friends/request/:userId` — send friend request
+- [ ] `POST /api/friends/accept/:requestId` — accept friend request
+- [ ] `DELETE /api/friends/:friendId` — remove friend / reject request
+- [ ] `GET /api/friends` — list accepted friends with online status
+- [ ] `GET /api/friends/requests` — list pending incoming requests
 
-### Backend API — Profiles
+### Frontend — Profiles & Friends — [Frontend: teammate_1]
 
-- [ ] **[Backend]** `GET /api/users/:id` — get user profile (public info)
-- [ ] **[Backend]** `PUT /api/users/me` — update own profile (display name, avatar)
-- [ ] **[Backend]** `POST /api/users/me/avatar` — upload avatar image (with default fallback)
-- [ ] **[Backend]** Serve uploaded avatars as static files
+- [ ] Profile page (`pages/Profile.tsx`):
+  - [ ] Display: avatar, username, display name, online status, join date
+  - [ ] Edit mode: change display name, upload avatar
+  - [ ] Avatar upload with preview before saving
+- [ ] Friends list component:
+  - [ ] Show friends with online/offline indicator (green/gray dot)
+  - [ ] "Remove friend" button
+- [ ] Friend request UI:
+  - [ ] "Add Friend" button on other users' profiles
+  - [ ] Pending requests list (accept / reject buttons)
+- [ ] User search: search input to find users by username
 
-### Backend API — Friends
+### Backend + Frontend — Chat — [Real-Time: teammate_3]
 
-- [ ] **[Backend]** `POST /api/friends/request/:userId` — send friend request
-- [ ] **[Backend]** `POST /api/friends/accept/:requestId` — accept friend request
-- [ ] **[Backend]** `DELETE /api/friends/:friendId` — remove friend
-- [ ] **[Backend]** `GET /api/friends` — list friends with online status
-- [ ] **[Backend]** `GET /api/friends/requests` — list pending friend requests
+- [ ] Socket.io events: `send_message` (client → server), `receive_message` (server → client)
+- [ ] `typing` indicator event
+- [ ] Store messages in database (Messages table via Prisma)
+- [ ] `GET /api/messages/:userId` — load chat history with a specific user (paginated)
+- [ ] Frontend chat sidebar/overlay:
+  - [ ] Chat list: friends you've messaged (sorted by most recent)
+  - [ ] Message thread: scrollable, auto-scroll to bottom on new message
+  - [ ] Message input with send button
+  - [ ] Typing indicator ("User is typing...")
+  - [ ] Connect Socket.io client to backend for real-time messages
 
-### Backend — Chat (Socket.io)
+### Frontend — Game Board Start — [Frontend: teammate_1]
 
-- [ ] **[Backend]** Install and configure Socket.io with Express
-- [ ] **[Backend]** Authentication middleware for Socket.io (verify JWT on connection)
-- [ ] **[Backend]** Chat events: `send_message`, `receive_message`, `typing`
-- [ ] **[Backend]** Store messages in database
-- [ ] **[Backend]** Track online status (update on connect/disconnect)
+- [ ] Create Tic-Tac-Toe board component (`components/GameBoard.tsx`):
+  - [ ] 3x3 CSS grid of clickable cells
+  - [ ] Each cell displays: empty, "X", or "O"
+  - [ ] Click handler: call `onCellClick(cellIndex)`
+  - [ ] Visual feedback: hover effect on empty cells, cursor pointer
+  - [ ] Current turn indicator: "Your turn (X)" or "Waiting for opponent (O)"
 
-### Frontend — Profiles
+### QA & Testing — [PM: teammate_4]
 
-- [ ] **[Frontend]** Create Profile page (view mode: username, avatar, stats, online status)
-- [ ] **[Frontend]** Create Profile edit form (display name, avatar upload)
-- [ ] **[Frontend]** Avatar upload with preview
+- [ ] Test profile view and edit flows
+- [ ] Test friend request flow end-to-end
+- [ ] Test chat between two users (two browser windows)
+- [ ] Finalize Privacy Policy and Terms of Service React pages
+- [ ] Link Privacy Policy and ToS from footer component
 
-### Frontend — Friends
-
-- [ ] **[Frontend]** Friends list component (with online/offline indicators)
-- [ ] **[Frontend]** Friend request send button (on profile pages)
-- [ ] **[Frontend]** Pending requests list (accept/reject)
-- [ ] **[Frontend]** User search to find and add friends
-
-### Frontend — Chat
-
-- [ ] **[Frontend]** Chat sidebar or overlay component
-- [ ] **[Frontend]** Message list (scrollable, auto-scroll to bottom)
-- [ ] **[Frontend]** Message input with send button
-- [ ] **[Frontend]** Connect Socket.io client to backend
-- [ ] **[Frontend]** Show chat history from database
-
-### ✅ Modules Progressed
+### Modules Progressed
 
 - Module #4 — User Interaction (chat + profiles + friends): **In Progress**
 - Module #5 — Standard User Management: **Completed**
+- Module #6 — Web-based Game: **Started**
 
 ---
 
-## Phase 4: Pong Game — Local (Day 4)
+## Phase 4: Game Complete + Multiplayer (Day 4)
 
-### Game Engine
+### Backend — Game Logic — [Backend: teammate_2]
 
-- [ ] **[Game Dev]** Create HTML5 Canvas React component
-- [ ] **[Game Dev]** Implement game loop using `requestAnimationFrame`
-- [ ] **[Game Dev]** Render game objects: ball, two paddles, center line, scores
-- [ ] **[Game Dev]** Ball physics: movement, wall bouncing (top/bottom), speed increase over time
-- [ ] **[Game Dev]** Paddle physics: movement within boundaries, collision with ball
-- [ ] **[Game Dev]** Keyboard input: Player 1 (W/S), Player 2 (Up/Down arrows)
-- [ ] **[Game Dev]** Scoring: detect ball passing paddle, increment score, reset ball
-- [ ] **[Game Dev]** Win condition (first to 5 or 11 points)
-- [ ] **[Game Dev]** Game states: waiting, countdown, playing, paused, game over
-- [ ] **[Game Dev]** Game over screen with winner display and "Play Again" button
+- [ ] Game state model: `{ board: [9 cells], currentTurn: "X"|"O", status, winner }`
+- [ ] Move validation function: is it this player's turn? Is the cell empty? Is the game active?
+- [ ] Win detection function: check 8 winning lines → return winner or null
+- [ ] Draw detection: all 9 cells filled, no winner
+- [ ] `POST /api/games` — create new game
+- [ ] `POST /api/games/:id/move` — make a move (REST fallback)
+- [ ] `GET /api/games/:id` — get current game state
+- [ ] Save completed game to database (winner, final board, timestamps)
 
-### Frontend Integration
+### Frontend — Game UI Complete — [Frontend: teammate_1]
 
-- [ ] **[Frontend]** Game page with canvas centered
-- [ ] **[Frontend]** Pre-game lobby (choose local vs online vs AI)
-- [ ] **[Frontend]** In-game UI (scores, timer, pause button)
+- [ ] Game states: waiting (for opponent), playing, finished (win), finished (draw)
+- [ ] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!"
+- [ ] Draw display: "It's a draw!"
+- [ ] Game over screen: winner display, "Play Again" button, "Back to Lobby" button
+- [ ] Pre-game lobby page (`pages/GameLobby.tsx`):
+  - [ ] "Play Local" (two players, same screen)
+  - [ ] "Play Online" (matchmaking)
+  - [ ] "Play vs AI" (with difficulty selector)
+- [ ] Local game mode: alternate turns on same screen
 
-### ✅ Modules Progressed
+### Backend + Frontend — Multiplayer — [Real-Time: teammate_3]
 
-- Module #6 — Web-based Pong Game: **In Progress**
+- [ ] Matchmaking: `find_game` event → add to queue → match two players → create room
+- [ ] Cancel matchmaking: `cancel_search` event
+- [ ] Game room: both players join a Socket.io room named by game ID
+- [ ] `make_move` event: client sends `{ gameId, cell }` → server validates → updates state
+- [ ] `game_update` event: server broadcasts updated board to both players in room
+- [ ] `game_over` event: server sends final result (winner or draw)
+- [ ] Disconnection handling:
+  - [ ] If player disconnects during game → wait 30 seconds → forfeit
+  - [ ] Show "Opponent disconnected, waiting for reconnection..." message
+- [ ] Reconnection: player rejoins room, receives current game state
+- [ ] Matchmaking UI: "Searching for opponent..." with cancel button
 
----
+### QA & Testing — [PM: teammate_4]
 
-## Phase 5: Multiplayer & Real-Time (Day 5)
+- [ ] Test local game: all win conditions (rows, columns, diagonals), draw
+- [ ] Test multiplayer: two browsers, full game to completion
+- [ ] Test disconnection: close one browser, verify other sees message
+- [ ] Test reconnection: reopen browser, verify game resumes
 
-### Server-Side Game Logic
-
-- [ ] **[Backend]** Game room management (create, join, leave, list)
-- [ ] **[Backend]** Server-side game state (authoritative — server controls ball position)
-- [ ] **[Backend]** WebSocket events: `join_game`, `player_input`, `game_state_update`, `game_over`
-- [ ] **[Backend]** Matchmaking queue (wait for opponent, auto-match)
-- [ ] **[Backend]** Handle player disconnection (pause game, timeout, forfeit)
-- [ ] **[Backend]** Handle player reconnection (resume game)
-- [ ] **[Backend]** Save completed game to database (Games table)
-
-### Frontend Multiplayer
-
-- [ ] **[Frontend]** Matchmaking UI (searching for opponent, cancel search)
-- [ ] **[Frontend]** Receive game state from server, render on canvas
-- [ ] **[Frontend]** Send player input to server (not local paddle movement)
-- [ ] **[Frontend]** Client-side interpolation for smooth rendering
-- [ ] **[Frontend]** Disconnection handling (show reconnecting message)
-- [ ] **[Frontend]** Game result screen (win/loss, option to rematch)
-
-### Database
-
-- [ ] **[Backend]** Add Prisma schema: Games table (players, scores, winner, mode, settings, timestamps)
-- [ ] **[Backend]** Run Prisma migration
-
-### ✅ Modules Progressed
+### Modules Progressed
 
 - Module #3 — Real-time WebSockets: **Completed**
-- Module #6 — Web-based Pong Game: **Completed**
+- Module #6 — Web-based Tic-Tac-Toe Game: **Completed**
 - Module #7 — Remote Players: **Completed**
 
 ---
 
-## Phase 6: Bonus Modules (Day 6)
+## Phase 5: Bonus Modules (Day 5)
 
-### Tournament System (Module #8 — 1pt)
+### Tournament System (Module #8 — 1pt) — [Backend: teammate_2 + PM: teammate_4]
 
-- [ ] **[Backend]** Add Prisma schema: Tournaments, TournamentParticipants tables
-- [ ] **[Backend]** `POST /api/tournaments` — create tournament (name, max players)
-- [ ] **[Backend]** `POST /api/tournaments/:id/join` — register for tournament
-- [ ] **[Backend]** `GET /api/tournaments` — list tournaments
-- [ ] **[Backend]** `GET /api/tournaments/:id` — get tournament bracket/details
-- [ ] **[Backend]** Auto-generate bracket when tournament starts
-- [ ] **[Backend]** Progress bracket: after each match, advance winner
-- [ ] **[Backend]** Determine tournament winner
-- [ ] **[Frontend]** Tournament list page (available, in progress, completed)
-- [ ] **[Frontend]** Tournament detail page with visual bracket
-- [ ] **[Frontend]** Tournament registration button
-- [ ] **[Frontend]** Auto-redirect to game when it's your turn
+- [ ] Prisma: Tournaments + TournamentParticipants tables (already in schema)
+- [ ] `POST /api/tournaments` — create tournament (name, max players: 4 or 8)
+- [ ] `POST /api/tournaments/:id/join` — register for tournament
+- [ ] `GET /api/tournaments` — list tournaments (filterable by status)
+- [ ] `GET /api/tournaments/:id` — get tournament details + bracket
+- [ ] Auto-generate bracket when registration full (power of 2 seeding)
+- [ ] After each match: advance winner to next round
+- [ ] Determine tournament champion
+- [ ] Frontend — Tournament list page (available, in progress, completed)
+- [ ] Frontend — Tournament detail page with visual bracket
+- [ ] Frontend — Registration button
+- [ ] Socket.io — Notify player when it's their turn in tournament
 
-### AI Opponent (Module #9 — 2pts)
+### AI Opponent (Module #9 — 2pts) — [Backend: teammate_2]
 
-- [ ] **[Game Dev]** Create AI paddle controller on the server side
-- [ ] **[Game Dev]** AI tracks ball Y position with prediction
-- [ ] **[Game Dev]** Add reaction delay (AI doesn't instantly move to ball)
-- [ ] **[Game Dev]** Add random offset (AI occasionally misjudges position)
-- [ ] **[Game Dev]** Difficulty levels: Easy (high offset, slow reaction), Medium, Hard (low offset, fast reaction)
-- [ ] **[Frontend]** "Play vs AI" option in game lobby with difficulty selector
-- [ ] **[Game Dev]** Verify: AI wins some games but not all, behaves human-like
+- [ ] Implement Minimax algorithm:
+  - [ ] Evaluate board: +10 if AI wins, -10 if player wins, 0 for draw
+  - [ ] Recursively check all possible moves
+  - [ ] Return the move with the best score
+- [ ] Add alpha-beta pruning (optimization — optional but recommended)
+- [ ] Difficulty levels:
+  - [ ] Easy: 50% random moves, 50% minimax
+  - [ ] Medium: 20% random moves, 80% minimax
+  - [ ] Hard: 100% minimax (unbeatable)
+- [ ] AI game flow: player makes move → server runs AI → server responds with AI move
+- [ ] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard)
+- [ ] Verify: AI wins sometimes on Easy, often on Medium, always draws or wins on Hard
 
-### Game Customization (Module #10 — 1pt)
+### Game Customization (Module #10 — 1pt) — [Frontend: teammate_1]
 
-- [ ] **[Frontend]** Pre-game settings panel:
-  - [ ] Paddle color picker (at least 4 color options)
-  - [ ] Ball speed selector (slow / normal / fast)
-  - [ ] Map theme selector (at least 2 themes: classic dark, retro neon)
-- [ ] **[Backend]** Store game settings in Games table (JSON field)
-- [ ] **[Game Dev]** Apply settings during gameplay (colors, speed, background)
-- [ ] **[Frontend]** Default options clearly available (subject requirement)
+- [ ] Pre-game settings panel:
+  - [ ] Theme selector: Classic (black/white), Neon (dark bg + glowing lines), Retro (pixel art style)
+  - [ ] Symbol selector: X/O (default), custom emoji pairs, or initials
+  - [ ] Board size: 3x3 (default), 4x4 (win = 4 in a row), 5x5 (win = 4 in a row)
+- [ ] Store settings in game record (JSON field in database)
+- [ ] Apply settings during gameplay (colors, symbols, grid size)
+- [ ] Default options clearly available (subject requirement)
+- [ ] If AI module is implemented, AI must work with custom settings
 
-### Game Statistics & Match History (Module #11 — 1pt)
+### Game Statistics & Match History (Module #11 — 1pt) — [Frontend: teammate_1 + Backend: teammate_2]
 
-- [ ] **[Backend]** `GET /api/users/:id/stats` — wins, losses, win rate, total games
-- [ ] **[Backend]** `GET /api/users/:id/matches` — paginated match history
-- [ ] **[Backend]** `GET /api/leaderboard` — top players by wins
-- [ ] **[Frontend]** Stats section on user profile page
-- [ ] **[Frontend]** Match history page (date, opponent, score, result, game mode)
-- [ ] **[Frontend]** Leaderboard page (ranking, username, wins, losses)
-- [ ] **[Frontend]** Achievement badges (optional: "First Win", "10 Wins", "Tournament Champion")
+- [ ] `GET /api/users/:id/stats` — wins, losses, draws, win rate, total games
+- [ ] `GET /api/users/:id/matches` — paginated match history (most recent first)
+- [ ] `GET /api/leaderboard` — top players sorted by wins
+- [ ] Frontend — Stats section on profile page (wins, losses, draws, win rate percentage)
+- [ ] Frontend — Match history list (date, opponent name, result: W/L/D, game mode)
+- [ ] Frontend — Leaderboard page (rank, username, avatar, wins, losses)
+
+### Modules Progressed
+
+- Module #8 — Tournament: **Completed**
+- Module #9 — AI Opponent: **Completed**
+- Module #10 — Customization: **Completed**
+- Module #11 — Statistics: **Completed**
+
+---
+
+## Phase 6: Integration & Bug Fixing (Day 6)
+
+### All Team Members
+
+- [ ] Fix bugs reported during Day 5 testing
+- [ ] Cross-test each other's features (each person tests a feature they didn't build)
+- [ ] Edge cases:
+  - [ ] What if both players disconnect from a game?
+  - [ ] What if a tournament has odd number of players? (bye system)
+  - [ ] What if user submits empty form fields?
+  - [ ] What if user tries to make a move out of turn?
+  - [ ] What if the same user opens two browser tabs?
+- [ ] Remove all `console.log` statements from production code
+- [ ] Check responsive design: desktop, tablet, mobile screen sizes
+- [ ] Ensure all API errors return proper status codes and messages
+- [ ] Ensure all forms validate on both frontend AND backend
 
 ---
 
 ## Phase 7: Mandatory Checks & Submission (Day 7)
 
-### Subject Mandatory Requirements
+### Subject Mandatory Requirements — [All]
 
-- [ ] **[All]** Privacy Policy page — written, relevant content, linked from footer
-- [ ] **[All]** Terms of Service page — written, relevant content, linked from footer
-- [ ] **[Tech Lead]** HTTPS setup (self-signed cert for development)
-- [ ] **[Tech Lead]** Verify: no console errors or warnings in Chrome
-- [ ] **[All]** Verify: all forms validate on frontend AND backend
-- [ ] **[Tech Lead]** Verify: `.env` is in `.gitignore`, `.env.example` is committed
-- [ ] **[Tech Lead]** Verify: responsive design (test at different window sizes)
-- [ ] **[Tech Lead]** Verify: multi-user support (open 2+ browsers, both work simultaneously)
+- [ ] Privacy Policy page — written, relevant content, linked from footer (teammate_4)
+- [ ] Terms of Service page — written, relevant content, linked from footer (teammate_4)
+- [ ] HTTPS setup — self-signed certificate for all backend communication (mgodawat)
+- [ ] Zero console errors or warnings in Chrome (all — open DevTools and check)
+- [ ] All forms validate on frontend AND backend (all)
+- [ ] `.env` is in `.gitignore`, `.env.example` is committed (mgodawat)
+- [ ] Responsive design works at different screen sizes (teammate_1)
+- [ ] Multi-user support: 2+ browsers simultaneously, no conflicts (teammate_3)
 
-### Final Testing
+### Final Testing — [All]
 
-- [ ] **[Tech Lead]** Clean Docker test: `docker compose down -v && docker compose up --build`
-- [ ] **[All]** Full user flow test: signup → login → edit profile → add friend → chat → play game
-- [ ] **[All]** Multiplayer test: two browsers, remote game, verify sync
-- [ ] **[All]** AI test: play vs bot, verify it wins sometimes and loses sometimes
-- [ ] **[All]** Tournament test: create → join → play through → winner declared
-- [ ] **[PM]** Verify all module functionality matches subject requirements
+- [ ] Clean Docker test: `make fclean && make` from scratch on a clean machine
+- [ ] Full user flow: signup → login → edit profile → upload avatar → add friend → chat → play game
+- [ ] Multiplayer test: two browsers, remote game, verify turn sync works
+- [ ] AI test: play vs bot on each difficulty, verify appropriate challenge level
+- [ ] Tournament test: create → join (enough players) → play through bracket → winner declared
+- [ ] Customization test: change theme + symbols, verify they apply in game
+- [ ] Statistics test: play a few games, verify stats update on profile
+- [ ] Leaderboard test: verify it shows correct rankings
 
-### Documentation
+### Documentation — [Tech Lead + PM]
 
-- [ ] **[Tech Lead]** Update README.md with final feature list, contributions, and module justifications
-- [ ] **[Tech Lead]** Update this task list with completion status
-- [ ] **[PM]** Verify README has all required sections (Subject Chapter VI)
-- [ ] **[All]** Each team member can explain their contributions (evaluation prep)
+- [ ] Update README.md with final feature list and completion status
+- [ ] Update README.md individual contributions section (each person writes their own)
+- [ ] Update README.md module justifications (each module owner writes theirs)
+- [ ] Update this task list with completion status
+- [ ] Verify README has all required sections per Subject Chapter VI
+- [ ] **Each team member can explain their code during evaluation**
 
 ---
 
@@ -285,9 +362,19 @@ Module #2 (ORM) ────────────┤
                             │
                             ├───▶ Module #5 (User Mgmt) ────▶ Module #4 (User Interaction)
                             │
-                            └───▶ Module #6 (Pong Game) ────┬──▶ Module #7 (Remote Players)
-                                                            ├──▶ Module #8 (Tournament)
-                                                            ├──▶ Module #9 (AI Opponent)
-                                                            ├──▶ Module #10 (Customization)
-                                                            └──▶ Module #11 (Statistics)
+                            └───▶ Module #6 (Tic-Tac-Toe) ──┬──▶ Module #7 (Remote Players)
+                                                             ├──▶ Module #8 (Tournament)
+                                                             ├──▶ Module #9 (AI Opponent)
+                                                             ├──▶ Module #10 (Customization)
+                                                             └──▶ Module #11 (Statistics)
 ```
+
+## Quick Reference: Who Does What
+
+| Team Member | Primary Focus | Key Deliverables |
+| :--- | :--- | :--- |
+| mgodawat | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions |
+| teammate_1 | Frontend UI | React pages, game board, TailwindCSS, customization UI |
+| teammate_2 | Backend Logic | Express API, auth, Prisma, AI opponent, tournament |
+| teammate_3 | Real-Time Features | Socket.io, multiplayer sync, chat, online status |
+| teammate_4 | Project Management + QA | GitHub Issues, testing, Privacy Policy, ToS, README |

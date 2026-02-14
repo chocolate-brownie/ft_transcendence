@@ -1,0 +1,113 @@
+docker compose logs -f
+transcendence-backend  | Generating self-signed SSL certificate...
+transcendence-backend  | SSL certificate generated.
+transcendence-backend  | Running database migrations...
+transcendence-backend   | Prisma schema loaded from prisma/schema.prisma
+transcendence-frontend  | 
+transcendence-frontend  |   VITE v6.4.1  ready in 379 ms
+transcendence-frontend  | 
+transcendence-backend   | Datasource "db": PostgreSQL database "transcendence", schema "public" at "db:5432"
+transcendence-backend   | 
+transcendence-backend   | Applying migration `20260208151031_init`
+transcendence-backend   | 
+transcendence-backend   | The following migration(s) have been applied:
+transcendence-backend   | 
+transcendence-backend   | migrations/
+transcendence-backend   |   └─ 20260208151031_init/
+transcendence-backend   |     └─ migration.sql
+transcendence-backend   | Applying migration `20260214075638_init`
+transcendence-db        | The files belonging to this database system will be owned by user "postgres".
+transcendence-db        | This user must also own the server process.
+transcendence-db        | 
+transcendence-db        | The database cluster will be initialized with locale "en_US.utf8".
+transcendence-backend   | 
+transcendence-backend   | 
+transcendence-backend   | The following migration(s) have been created and applied from new schema changes:
+transcendence-backend   | 
+transcendence-backend   | prisma/migrations/
+transcendence-frontend  |   ➜  Local:   http://localhost:5173/
+transcendence-frontend  |   ➜  Network: http://172.18.0.4:5173/
+transcendence-db        | The default database encoding has accordingly been set to "UTF8".
+transcendence-backend   |   └─ 20260214075638_init/
+transcendence-backend   |     └─ migration.sql
+transcendence-db        | The default text search configuration will be set to "english".
+transcendence-db        | 
+transcendence-db        | Data page checksums are disabled.
+transcendence-db        | 
+transcendence-db        | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+transcendence-db        | creating subdirectories ... ok
+transcendence-db        | selecting dynamic shared memory implementation ... posix
+transcendence-db        | selecting default max_connections ... 100
+transcendence-db        | selecting default shared_buffers ... 128MB
+transcendence-db        | selecting default time zone ... UTC
+transcendence-db        | creating configuration files ... ok
+transcendence-db        | running bootstrap script ... ok
+transcendence-db        | sh: locale: not found
+transcendence-db        | 2026-02-14 07:56:29.812 UTC [35] WARNING:  no usable system locales were found
+transcendence-db        | performing post-bootstrap initialization ... ok
+transcendence-backend   | 
+transcendence-backend   | Your database is now in sync with your schema.
+transcendence-backend   | 
+transcendence-backend   | Generating Prisma client...
+transcendence-backend   | Prisma schema loaded from prisma/schema.prisma
+transcendence-backend   | 
+transcendence-backend   | ✔ Generated Prisma Client (v6.19.2) to ./node_modules/@prisma/client in 218ms
+transcendence-backend   | 
+transcendence-backend   | Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+transcendence-backend   | 
+transcendence-backend   | Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+transcendence-db        | syncing data to disk ... ok
+transcendence-backend   | 
+transcendence-backend   | Starting backend server...
+transcendence-backend   | 🔒 HTTPS mode enabled
+transcendence-backend   | 
+transcendence-backend   | 🚀 Backend running on https://0.0.0.0:3000
+transcendence-backend   |    Health check: https://localhost:3000/api/health
+transcendence-backend   | 
+transcendence-db        | 
+transcendence-db        | 
+transcendence-db        | Success. You can now start the database server using:
+transcendence-db        | initdb: warning: enabling "trust" authentication for local connections
+transcendence-db        | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+transcendence-db        | 
+transcendence-db        |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+transcendence-db        | 
+transcendence-db        | waiting for server to start....2026-02-14 07:56:32.663 UTC [41] LOG:  starting PostgreSQL 16.12 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+transcendence-db        | 2026-02-14 07:56:32.665 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+transcendence-db        | 2026-02-14 07:56:32.672 UTC [44] LOG:  database system was shut down at 2026-02-14 07:56:30 UTC
+transcendence-db        | 2026-02-14 07:56:32.696 UTC [41] LOG:  database system is ready to accept connections
+transcendence-db        |  done
+transcendence-db        | server started
+transcendence-db        | CREATE DATABASE
+transcendence-db        | 
+transcendence-db        | 
+transcendence-db        | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+transcendence-db        | 
+transcendence-db        | waiting for server to shut down....2026-02-14 07:56:32.837 UTC [41] LOG:  received fast shutdown request
+transcendence-db        | 2026-02-14 07:56:32.839 UTC [41] LOG:  aborting any active transactions
+transcendence-db        | 2026-02-14 07:56:32.842 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+transcendence-db        | 2026-02-14 07:56:32.843 UTC [42] LOG:  shutting down
+transcendence-db        | 2026-02-14 07:56:32.845 UTC [42] LOG:  checkpoint starting: shutdown immediate
+transcendence-db        | 2026-02-14 07:56:33.546 UTC [42] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.037 s, sync=0.652 s, total=0.704 s; sync files=301, longest=0.007 s, average=0.003 s; distance=4272 kB, estimate=4272 kB; lsn=0/191E940, redo lsn=0/191E940
+transcendence-db        | 2026-02-14 07:56:33.556 UTC [41] LOG:  database system is shut down
+transcendence-db        |  done
+transcendence-db        | server stopped
+transcendence-db        | 
+transcendence-db        | PostgreSQL init process complete; ready for start up.
+transcendence-db        | 
+transcendence-db        | 2026-02-14 07:56:33.662 UTC [1] LOG:  starting PostgreSQL 16.12 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+transcendence-db        | 2026-02-14 07:56:33.662 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+transcendence-db        | 2026-02-14 07:56:33.662 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+transcendence-db        | 2026-02-14 07:56:33.667 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+transcendence-db        | 2026-02-14 07:56:33.672 UTC [57] LOG:  database system was shut down at 2026-02-14 07:56:33 UTC
+transcendence-db        | 2026-02-14 07:56:33.696 UTC [1] LOG:  database system is ready to accept connections
+transcendence-db        | 2026-02-14 07:56:37.297 UTC [69] ERROR:  relation "_prisma_migrations" does not exist at character 126
+transcendence-db        | 2026-02-14 07:56:37.297 UTC [69] STATEMENT:  SELECT "id", "checksum", "finished_at", "migration_name", "logs", "rolled_back_at", "started_at", "applied_steps_count" FROM "_prisma_migrations" ORDER BY "started_at" ASC
+transcendence-db        | 2026-02-14 07:56:37.483 UTC [55] LOG:  checkpoint starting: immediate force wait
+transcendence-db        | 2026-02-14 07:56:37.553 UTC [55] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 1 WAL file(s) added, 0 removed, 0 recycled; write=0.023 s, sync=0.010 s, total=0.070 s; sync files=5, longest=0.003 s, average=0.002 s; distance=4273 kB, estimate=4273 kB; lsn=0/1D4AEE0, redo lsn=0/1D4AEA8
+transcendence-db        | 2026-02-14 07:56:37.843 UTC [55] LOG:  checkpoint starting: immediate force wait
+transcendence-db        | 2026-02-14 07:56:37.872 UTC [55] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.009 s, total=0.029 s; sync files=4, longest=0.003 s, average=0.003 s; distance=4466 kB, estimate=4466 kB; lsn=0/21A7848, redo lsn=0/21A7810
+transcendence-db        | 2026-02-14 07:56:38.282 UTC [55] LOG:  checkpoint starting: immediate force wait
+transcendence-db        | 2026-02-14 07:56:38.462 UTC [55] LOG:  checkpoint complete: wrote 97 buffers (0.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.162 s, total=0.181 s; sync files=81, longest=0.004 s, average=0.002 s; distance=4855 kB, estimate=4855 kB; lsn=0/2665680, redo lsn=0/2665648
+transcendence-db        | 2026-02-14 08:01:38.484 UTC [55] LOG:  checkpoint starting: time
+transcendence-db        | 2026-02-14 08:01:46.096 UTC [55] LOG:  checkpoint complete: wrote 76 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=7.523 s, sync=0.074 s, total=7.613 s; sync files=39, longest=0.005 s, average=0.002 s; distance=391 kB, estimate=4409 kB; lsn=0/26C74A8, redo lsn=0/26C7470

@@ -1,17 +1,17 @@
-_This project has been created as part of the 42 curriculum by mgodawat, [teammate_1], [teammate_2], [teammate_3]._
+_This project has been created as part of the 42 curriculum by mgodawat, [teammate_1], [teammate_2], [teammate_3], [teammate_4]._
 
-# ft_transcendence — The Ultimate Multiplayer Pong Experience
+# ft_transcendence — The Ultimate Multiplayer Tic-Tac-Toe Experience
 
 ## Description
 
-ft_transcendence is a web-based multiplayer Pong game that allows users to compete in real-time, track their match history, and interact socially. Built with React, Express, PostgreSQL, and WebSockets, the project demonstrates full-stack web development skills including real-time communication, secure authentication, and AI-driven gameplay.
+ft_transcendence is a web-based multiplayer Tic-Tac-Toe platform that allows users to compete in real-time, track their match history, and interact socially. Built with React, Express, PostgreSQL, and WebSockets, the project demonstrates full-stack web development skills including real-time communication, secure authentication, and AI-driven gameplay.
 
 **Key Features:**
 
-- **Classic Pong Reimagined:** A fast-paced, responsive browser-based Pong game with customizable settings.
-- **Real-Time Multiplayer:** Play against friends or opponents online with WebSocket-powered synchronization.
-- **AI Opponent:** Challenge a server-side bot that simulates human-like play.
-- **Tournament System:** Compete in bracket-style tournaments with matchmaking.
+- **Classic Tic-Tac-Toe Reimagined:** A polished, responsive browser-based Tic-Tac-Toe game with customizable themes and symbols.
+- **Real-Time Multiplayer:** Play against friends or opponents online with WebSocket-powered turn synchronization.
+- **AI Opponent:** Challenge a server-side bot powered by the Minimax algorithm with adjustable difficulty.
+- **Tournament System:** Compete in bracket-style tournaments with matchmaking and progression.
 - **Social Hub:** User profiles, friends lists, online status, and real-time chat.
 - **Statistics & History:** Track your wins, losses, ranking, and full match history.
 - **Secure Authentication:** Email/password login with hashed credentials and JWT sessions.
@@ -47,10 +47,16 @@ ft_transcendence is a web-based multiplayer Pong game that allows users to compe
    ```
 
 4. Access the application:
-   - **Frontend:** https://localhost:4443
+   - **Frontend:** https://localhost:5173
    - **Backend API:** https://localhost:3000
 
 5. To stop the application:
+
+   ```bash
+   make down
+   ```
+
+6. To fully clean (remove containers, volumes, images):
 
    ```bash
    make fclean
@@ -60,7 +66,7 @@ ft_transcendence is a web-based multiplayer Pong game that allows users to compe
 
 If you are joining the team and want to develop locally outside Docker:
 
-1. Install Node.js (v20 LTS recommended).
+1. Install Node.js (v22 LTS recommended).
 2. Backend:
 
    ```bash
@@ -88,8 +94,9 @@ If you are joining the team and want to develop locally outside Docker:
 - [TailwindCSS Documentation](https://tailwindcss.com/docs)
 - [Docker Documentation](https://docs.docker.com/)
 - [JWT Introduction](https://jwt.io/introduction)
+- [Minimax Algorithm Explained](https://en.wikipedia.org/wiki/Minimax)
 
-**AI Usage:** AI tools were used to assist in generating initial project boilerplate, drafting documentation structure, brainstorming module strategies, and debugging configuration issues. All AI-generated code was reviewed, understood, and adapted by team members before inclusion.
+**AI Usage:** AI tools were used to assist in generating initial project boilerplate, drafting documentation structure, brainstorming module strategies, and debugging Docker configuration issues. All AI-generated code was reviewed, understood, and adapted by team members before inclusion.
 
 ## Documentation
 
@@ -100,25 +107,27 @@ If you are joining the team and want to develop locally outside Docker:
 
 ## Team Information
 
-_(Roles assigned as per Subject II.1.1. One person may hold multiple roles in a smaller team.)_
+_(Roles assigned as per Subject II.1.1. With 5 team members, roles are specialized as recommended by the subject.)_
 
 - **mgodawat**
-  - **Role(s):** Tech Lead / Fullstack Developer
-  - **Responsibilities:** Architecture design, Docker setup, backend API implementation, frontend integration, code quality standards.
+  - **Role(s):** Tech Lead / Architect
+  - **Responsibilities:** Architecture design, Docker setup, tech stack decisions, code reviews, HTTPS configuration, code quality standards.
 
 - **[teammate_1]**
   - **Role(s):** Frontend Developer / UI Designer
-  - **Responsibilities:** React components, TailwindCSS styling, game canvas rendering, responsive design, accessibility.
+  - **Responsibilities:** React components, TailwindCSS styling, game board rendering, responsive design, page layouts.
 
 - **[teammate_2]**
-  - **Role(s):** Backend Developer / Game Logic
-  - **Responsibilities:** Database schema, Prisma ORM, game physics engine, WebSocket gateway, API endpoints.
+  - **Role(s):** Backend Developer
+  - **Responsibilities:** Express API routes, Prisma ORM queries, database schema, authentication endpoints, game logic API.
 
 - **[teammate_3]**
-  - **Role(s):** Product Owner (PO) / Project Manager (PM)
-  - **Responsibilities:** Requirement analysis, task tracking, QA testing, final verification, evaluation preparation.
+  - **Role(s):** Fullstack Developer / Real-Time Specialist
+  - **Responsibilities:** WebSocket gateway (Socket.io), multiplayer game synchronization, chat system, real-time features.
 
-_Note: Until all teammates are onboarded, mgodawat is covering all roles. Roles will be redistributed as team members join._
+- **[teammate_4]**
+  - **Role(s):** Product Owner (PO) / Project Manager (PM)
+  - **Responsibilities:** Requirement analysis, task tracking, QA testing, evaluation preparation, README finalization, Privacy Policy and ToS pages.
 
 ## Project Management
 
@@ -147,12 +156,12 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 
 **Core Tables:**
 
-- **Users:** id, email, username, password_hash, avatar_url, display_name, is_online, created_at, updated_at
-- **Games:** id, player1_id, player2_id, player1_score, player2_score, winner_id, game_mode (normal/ai/tournament), game_settings (JSON), status (waiting/playing/finished), started_at, finished_at
+- **Users:** id, email, username, password_hash, avatar_url, is_online, wins, losses, created_at, updated_at
+- **Games:** id, player1_id, player2_id, winner_id, board_state (JSON — array of 9 cells), current_turn, game_type (classic/custom/tournament), status (waiting/in_progress/finished/draw), settings (JSON), created_at, finished_at
 - **Friends:** id, requester_id, addressee_id, status (pending/accepted/blocked), created_at
-- **Messages:** id, sender_id, receiver_id, content, read, created_at
-- **Tournaments:** id, name, status (registration/in_progress/completed), created_by, created_at
-- **TournamentParticipants:** id, tournament_id, user_id, seed, eliminated, joined_at
+- **Messages:** id, sender_id, receiver_id, content, created_at
+- **Tournaments:** id, name, status (registering/in_progress/finished/cancelled), max_players, created_at, started_at, finished_at
+- **TournamentParticipants:** id, tournament_id, user_id, seed, eliminated_at, joined_at
 
 **Relationships:**
 
@@ -164,47 +173,49 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 
 ## Features List
 
-| Feature                              | Status     | Owner        | Description                                                      |
-| :----------------------------------- | :--------- | :----------- | :--------------------------------------------------------------- |
-| Project Setup & Dockerization        | ✅ Done    | mgodawat     | Docker Compose with frontend, backend, and database containers   |
-| User Authentication (email/password) | 🔲 Planned | Backend Dev  | Signup, login, JWT tokens, password hashing with bcrypt          |
-| User Profiles (view/edit/avatar)     | 🔲 Planned | Fullstack    | Profile page, avatar upload, display name editing                |
-| Friends System                       | 🔲 Planned | Backend Dev  | Add/remove friends, online status, friend requests               |
-| Real-Time Chat                       | 🔲 Planned | Fullstack    | Direct messages via WebSockets, chat history                     |
-| Pong Game (local)                    | 🔲 Planned | Game Dev     | Canvas-based Pong with game loop, physics, scoring               |
-| Remote Multiplayer                   | 🔲 Planned | Fullstack    | Online 1v1 via WebSockets with state synchronization             |
-| AI Opponent                          | 🔲 Planned | Game Dev     | Server-side bot with human-like behavior                         |
-| Tournament System                    | 🔲 Planned | Backend Dev  | Bracket generation, matchmaking, progression                     |
-| Game Customization                   | 🔲 Planned | Frontend Dev | Paddle colors, ball speed, map themes, default options available |
-| Game Statistics & Match History      | 🔲 Planned | Fullstack    | Wins/losses, rankings, match history display, leaderboard        |
-| Privacy Policy Page                  | 🔲 Planned | PM           | Accessible from footer, relevant content                         |
-| Terms of Service Page                | 🔲 Planned | PM           | Accessible from footer, relevant content                         |
-| HTTPS Configuration                  | 🔲 Planned | Tech Lead    | SSL/TLS for all backend communication                            |
+| Feature                              | Status     | Owner(s)        | Description                                                      |
+| :----------------------------------- | :--------- | :-------------- | :--------------------------------------------------------------- |
+| Project Setup & Dockerization        | ✅ Done    | mgodawat        | Docker Compose with frontend, backend, and database containers   |
+| User Authentication (email/password) | 🔲 Planned | teammate_2      | Signup, login, JWT tokens, password hashing with bcrypt          |
+| User Profiles (view/edit/avatar)     | 🔲 Planned | teammate_1, teammate_2 | Profile page, avatar upload, display name editing         |
+| Friends System                       | 🔲 Planned | teammate_2, teammate_3 | Add/remove friends, online status, friend requests        |
+| Real-Time Chat                       | 🔲 Planned | teammate_3      | Direct messages via WebSockets, chat history                     |
+| Tic-Tac-Toe Game (local)            | 🔲 Planned | teammate_1, teammate_3 | React component grid, game logic, win detection           |
+| Remote Multiplayer                   | 🔲 Planned | teammate_3      | Online 1v1 via WebSockets with turn synchronization              |
+| AI Opponent                          | 🔲 Planned | teammate_2      | Minimax algorithm with adjustable difficulty                     |
+| Tournament System                    | 🔲 Planned | teammate_2, teammate_4 | Bracket generation, matchmaking, progression              |
+| Game Customization                   | 🔲 Planned | teammate_1      | Board themes, X/O symbols, grid size variants                    |
+| Game Statistics & Match History      | 🔲 Planned | teammate_1, teammate_2 | Wins/losses, rankings, match history, leaderboard         |
+| Privacy Policy Page                  | 🔲 Planned | teammate_4      | Accessible from footer, relevant content                         |
+| Terms of Service Page                | 🔲 Planned | teammate_4      | Accessible from footer, relevant content                         |
+| HTTPS Configuration                  | 🔲 Planned | mgodawat        | SSL/TLS for all backend communication                            |
 
 ## Modules (18 Points Target — 4-Point Safety Buffer)
 
 The subject requires a minimum of 14 points. We target 18 points to provide a safety margin in case any module is not fully validated during evaluation.
 
-| #   | Category  | Module                                       | Type      | Points | Owner(s)     | Implementation Notes                                   |
-| :-- | :-------- | :------------------------------------------- | :-------- | :----- | :----------- | :----------------------------------------------------- |
-| 1   | Web       | Use frameworks (React + Express)             | Major     | 2      | All          | React for frontend, Express for backend                |
-| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | Backend Dev  | Type-safe queries, auto migrations                     |
-| 3   | Web       | Real-time WebSockets (Socket.io)             | Major     | 2      | Fullstack    | Game sync, chat, live notifications                    |
-| 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | Fullstack    | Chat system, profile pages, friends list               |
-| 5   | User Mgmt | Standard user management                     | Major     | 2      | Fullstack    | Auth, avatars, profiles, online status                 |
-| 6   | Gaming    | Web-based Pong game                          | Major     | 2      | Game Dev     | Canvas 2D game with physics and scoring                |
-| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | Fullstack    | WebSocket state sync, reconnection logic               |
-| 8   | Gaming    | Tournament system                            | Minor     | 1      | Backend Dev  | Bracket system, matchmaking, registration              |
-| 9   | AI        | AI Opponent                                  | Major     | 2      | Game Dev     | Paddle-tracking heuristic with human-like imperfection |
-| 10  | Gaming    | Game customization                           | Minor     | 1      | Frontend Dev | Paddle colors, ball speed, map themes                  |
-| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | Fullstack    | Win/loss tracking, leaderboard, match history page     |
-|     |           |                                              | **Total** | **18** |              |                                                        |
+| #   | Category  | Module                                       | Type      | Points | Owner(s)              | Implementation Notes                                    |
+| :-- | :-------- | :------------------------------------------- | :-------- | :----- | :-------------------- | :------------------------------------------------------ |
+| 1   | Web       | Use frameworks (React + Express)             | Major     | 2      | All                   | React for frontend, Express for backend                 |
+| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | teammate_2            | Type-safe queries, auto migrations                      |
+| 3   | Web       | Real-time WebSockets (Socket.io)             | Major     | 2      | teammate_3            | Game sync, chat, live notifications                     |
+| 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | teammate_1, teammate_3 | Chat system, profile pages, friends list                |
+| 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, teammate_2  | Auth, avatars, profiles, online status                  |
+| 6   | Gaming    | Web-based Tic-Tac-Toe game                   | Major     | 2      | teammate_1, teammate_3 | React component grid with game logic and win detection  |
+| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | teammate_3            | WebSocket turn sync, reconnection logic                 |
+| 8   | Gaming    | Tournament system                            | Minor     | 1      | teammate_2, teammate_4 | Bracket system, matchmaking, registration               |
+| 9   | AI        | AI Opponent                                  | Major     | 2      | teammate_2            | Minimax algorithm with human-like imperfection          |
+| 10  | Gaming    | Game customization                           | Minor     | 1      | teammate_1            | Board themes, custom symbols, grid size options          |
+| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | teammate_1, teammate_2 | Win/loss tracking, leaderboard, match history page      |
+|     |           |                                              | **Total** | **18** |                       |                                                         |
 
 **Point Breakdown:** 7 Major modules (14 pts) + 4 Minor modules (4 pts) = **18 points**
 
 **Core modules (14 pts):** #1–#8 — these must be completed and are the priority.
 
-**Bonus modules (4 pts):** #9–#11 — low-effort additions built on top of existing infrastructure. These are implemented last and can be dropped if time runs short without falling below 14 points.
+**Bonus modules (4 pts):** #9–#11 — built on top of existing infrastructure. These are implemented last and can be dropped if time runs short without falling below 14 points.
+
+**Drop Strategy:** If running short on time, drop in reverse order: #11 → #10 → #9 → #8. This keeps you at 14 points minimum.
 
 **Module Dependencies (per subject requirements):**
 
@@ -216,13 +227,15 @@ The subject requires a minimum of 14 points. We target 18 points to provide a sa
 
 _(This section will be updated throughout development. Each team member must be able to explain their contributions during evaluation.)_
 
-- **mgodawat:** Initialized project structure, set up Docker environment, created documentation and implementation plan, architected the tech stack. Currently covering all development roles until teammates join.
+- **mgodawat:** Initialized project structure, set up Docker environment, created documentation and implementation plan, architected the tech stack, HTTPS configuration.
 
-- **[teammate_1]:** _(To be updated — Frontend components, TailwindCSS theme, UI mockups, game canvas rendering)_
+- **[teammate_1]:** _(To be updated — React page components, TailwindCSS theme, game board UI, profile pages, customization UI, statistics display)_
 
-- **[teammate_2]:** _(To be updated — Database schema, Express API routes, WebSocket gateway, game physics)_
+- **[teammate_2]:** _(To be updated — Prisma schema, Express API routes, auth system, AI opponent logic, tournament backend, game statistics API)_
 
-- **[teammate_3]:** _(To be updated — Project requirements, GitHub Issues management, QA testing, evaluation preparation)_
+- **[teammate_3]:** _(To be updated — Socket.io gateway, multiplayer game sync, chat system, real-time notifications, friends online status)_
+
+- **[teammate_4]:** _(To be updated — Requirements documentation, GitHub Issues, QA testing, Privacy Policy, Terms of Service, evaluation preparation)_
 
 ---
 

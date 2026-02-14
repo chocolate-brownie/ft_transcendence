@@ -24,18 +24,14 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-pong-dark">
       {/* Title */}
-      <h1 className="text-5xl font-bold text-pong-accent mb-2">
-        🏓 ft_transcendence
-      </h1>
+      <h1 className="text-5xl font-bold text-pong-accent mb-2">ft_transcendence</h1>
       <p className="text-pong-light/60 text-lg mb-10">
-        The Ultimate Multiplayer Pong Experience
+        The Ultimate Multiplayer Tic-Tac-Toe Experience
       </p>
 
       {/* System Status Card */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold text-pong-light mb-4">
-          System Status
-        </h2>
+        <h2 className="text-xl font-semibold text-pong-light mb-4">System Status</h2>
 
         <div className="space-y-3">
           {/* Frontend */}
@@ -50,22 +46,14 @@ function App() {
           {/* Database */}
           <StatusRow
             label="Database (PostgreSQL)"
-            status={
-              health?.database === "connected"
-                ? "ok"
-                : error
-                  ? "error"
-                  : "loading"
-            }
+            status={health?.database === "connected" ? "ok" : error ? "error" : "loading"}
           />
 
           {/* WebSocket placeholder */}
           <StatusRow label="WebSocket (Socket.io)" status="pending" />
         </div>
 
-        {error && (
-          <p className="mt-4 text-sm text-red-400">Backend error: {error}</p>
-        )}
+        {error && <p className="mt-4 text-sm text-red-400">Backend error: {error}</p>}
       </div>
 
       {/* Footer */}

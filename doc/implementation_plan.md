@@ -1,23 +1,22 @@
 # Implementation Plan — ft_transcendence
 
-## Goal: Multiplayer Pong with Social Features (18 Points Target)
+## Goal: Multiplayer Tic-Tac-Toe with Social Features (18 Points Target)
 
-This plan outlines the strategy to build a robust multiplayer Pong application, adhering to the 42 subject requirements and securing 18 evaluation points (14 core + 4 safety buffer).
+This plan outlines the strategy to build a multiplayer Tic-Tac-Toe platform, adhering to the 42 subject requirements and securing 18 evaluation points (14 core + 4 safety buffer).
 
 ---
 
 ## Team Roles (Ref: Subject II.1.1)
 
+With 5 team members, roles are fully specialized as recommended by the subject.
+
 | Role | Assigned To | Responsibilities |
 | :--- | :--- | :--- |
-| **Product Owner (PO)** | [teammate_3] | Feature scope, module prioritization, final delivery verification |
-| **Project Manager (PM)** | [teammate_3] | Progress tracking, task management, risk management |
-| **Tech Lead / Architect** | mgodawat | Docker, repo structure, tech stack decisions, code reviews |
-| **Backend Developer** | [teammate_2] | Express API, auth, database, WebSocket gateway |
-| **Frontend Developer** | [teammate_1] | React components, TailwindCSS, game canvas, responsive design |
-| **Game Developer** | Shared | Game loop, physics, AI opponent, multiplayer sync |
-
-*Note: mgodawat is currently covering all roles solo. When teammates join, tasks should be redistributed based on the role assignments above. All unstarted tasks in [tasks.md](tasks.md) are available for pickup.*
+| **Tech Lead / Architect** | mgodawat | Docker, repo structure, tech stack decisions, HTTPS, code reviews |
+| **Frontend Developer / UI Designer** | [teammate_1] | React pages, TailwindCSS, game board UI, responsive design |
+| **Backend Developer** | [teammate_2] | Express API, auth, Prisma, AI opponent, tournament logic |
+| **Fullstack / Real-Time Specialist** | [teammate_3] | Socket.io gateway, multiplayer sync, chat, real-time features |
+| **Product Owner (PO) / Project Manager (PM)** | [teammate_4] | Requirements, task tracking, QA, Privacy Policy, ToS, evaluation prep |
 
 ---
 
@@ -35,7 +34,8 @@ This plan outlines the strategy to build a robust multiplayer Pong application, 
 │  └──────────────┘  └──────────────┘  └──────────────┘  │
 │         │                  │                             │
 │         └──── WebSocket ───┘                             │
-│              (real-time)                                  │
+│           (turn-based sync                               │
+│            + real-time chat)                              │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -52,28 +52,45 @@ This plan outlines the strategy to build a robust multiplayer Pong application, 
 
 ---
 
+## Why Tic-Tac-Toe Instead of Pong
+
+Tic-Tac-Toe earns the same module points as Pong but is dramatically simpler to implement:
+
+| Aspect | Pong | Tic-Tac-Toe |
+| :--- | :--- | :--- |
+| Rendering | Canvas API, 60fps animation | 9 HTML div elements in a CSS grid |
+| Game physics | Ball velocity, collision math | None — click a cell, place X or O |
+| Game logic | Continuous real-time simulation | Check 8 winning lines after each move |
+| Network sync | Continuous state at 60Hz | One message per turn |
+| AI opponent | Paddle tracking heuristic | Minimax algorithm (~20 lines) |
+| Input handling | Continuous keyboard events | Single click event per turn |
+
+This lets the team focus on delivering polished auth, chat, profiles, and tournament features instead of struggling with game physics.
+
+---
+
 ## Module Strategy (18 Points)
 
 ### Core Modules (14 Points — MUST complete)
 
-| # | Module | Pts | Priority | Dependencies |
-| :--- | :--- | :--- | :--- | :--- |
-| 1 | Web frameworks (React + Express) | 2 | Day 1 | None |
-| 2 | Prisma ORM | 1 | Day 1 | None |
-| 3 | Real-time WebSockets | 2 | Day 4-5 | #1 |
-| 4 | User interaction (chat + profiles + friends) | 2 | Day 3 | #1, #5 |
-| 5 | Standard user management | 2 | Day 2 | #1, #2 |
-| 6 | Web-based Pong game | 2 | Day 4 | #1 |
-| 7 | Remote players | 2 | Day 5 | #3, #6 |
-| 8 | Tournament system | 1 | Day 5-6 | #6 |
+| # | Module | Pts | Day | Owner(s) | Dependencies |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | Web frameworks (React + Express) | 2 | Day 1 | All | None |
+| 2 | Prisma ORM | 1 | Day 1 | teammate_2 | None |
+| 3 | Real-time WebSockets | 2 | Day 3-4 | teammate_3 | #1 |
+| 4 | User interaction (chat + profiles + friends) | 2 | Day 3 | teammate_1, teammate_3 | #1, #5 |
+| 5 | Standard user management | 2 | Day 2 | mgodawat, teammate_2 | #1, #2 |
+| 6 | Web-based Tic-Tac-Toe game | 2 | Day 3-4 | teammate_1, teammate_3 | #1 |
+| 7 | Remote players | 2 | Day 4 | teammate_3 | #3, #6 |
+| 8 | Tournament system | 1 | Day 5 | teammate_2, teammate_4 | #6 |
 
 ### Bonus Modules (4 Points — implement after core is stable)
 
-| # | Module | Pts | Priority | Dependencies |
-| :--- | :--- | :--- | :--- | :--- |
-| 9 | AI Opponent | 2 | Day 6 | #6 |
-| 10 | Game customization | 1 | Day 6 | #6 |
-| 11 | Game statistics & match history | 1 | Day 6 | #5, #6 |
+| # | Module | Pts | Day | Owner(s) | Dependencies |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 9 | AI Opponent | 2 | Day 5 | teammate_2 | #6 |
+| 10 | Game customization | 1 | Day 5 | teammate_1 | #6 |
+| 11 | Game statistics & match history | 1 | Day 5-6 | teammate_1, teammate_2 | #5, #6 |
 
 ### Drop Strategy
 
@@ -83,124 +100,283 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 ## 7-Day Development Timeline
 
-### Day 1 — Foundation
+### Day 1 — Foundation (All Hands)
 
-**Goal:** Docker runs, frontend and backend respond, database connects.
+**Goal:** Docker runs, frontend and backend respond, database connects. Everyone has local dev environment working.
 
-- Install Docker, Node.js, Git (if needed)
-- Create project directory structure
-- Write Dockerfiles for frontend and backend
-- Write docker-compose.yml (frontend + backend + PostgreSQL)
-- Initialize React app (Vite + TailwindCSS)
-- Initialize Express app (TypeScript + basic route)
-- Initialize Prisma with PostgreSQL connection
-- Create initial database schema (Users table)
-- Verify: `docker compose up --build` → see React page + Express API responding
+**mgodawat (Tech Lead):**
+- Verify Docker setup works for all team members
+- Fix any OS-specific Docker issues (SELinux, permissions, etc.)
+- Set up Git branching strategy (feature branches → main)
+- Configure ESLint + Prettier for consistent code style
+
+**teammate_1 (Frontend):**
+- Install dependencies locally (`cd frontend && npm install`)
+- Understand React project structure (main.tsx → App.tsx → pages)
+- Create layout shell: navbar, footer, main content area
+- Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`
+
+**teammate_2 (Backend):**
+- Install dependencies locally (`cd backend && npm install`)
+- Understand Express project structure (index.ts → routes → middleware)
+- Review Prisma schema, run `npx prisma generate` locally
+- Create route file structure: `routes/auth.ts`, `routes/users.ts`, `routes/games.ts`
+
+**teammate_3 (Fullstack/Real-Time):**
+- Set up local dev environment
+- Study Socket.io docs — understand `emit()`, `on()`, rooms, namespaces
+- Test existing Socket.io connection (already in index.ts)
+- Plan WebSocket event structure for chat and game
+
+**teammate_4 (PO/PM):**
+- Create GitHub Issues for all Phase 2 tasks
+- Set up GitHub Project board (To Do / In Progress / Done)
+- Write Privacy Policy page content (draft)
+- Write Terms of Service page content (draft)
 
 **Modules progressed:** #1 (Web frameworks), #2 (ORM)
 
+---
+
 ### Day 2 — User Authentication & Management
 
-**Goal:** Users can sign up, log in, and have JWT-protected sessions.
+**Goal:** Users can sign up, log in, view and edit their profile.
 
-- Implement Prisma schema for Users (email, username, password_hash, avatar_url, etc.)
-- Create Express auth routes: POST /api/auth/signup, POST /api/auth/login
-- Implement password hashing with bcrypt
-- Implement JWT token generation and middleware
-- Create React pages: Login form, Signup form
-- Connect frontend auth to backend API
-- Input validation on both frontend and backend
-- Verify: Can sign up a new user, log in, and access a protected route
+**mgodawat (Tech Lead):**
+- Review all PRs and code quality
+- Implement HTTPS self-signed certificate configuration
+- Help debug any Docker/environment issues
+
+**teammate_1 (Frontend):**
+- Build Login page (email + password form, validation, error display)
+- Build Signup page (email + username + password + confirm, validation)
+- Build basic Profile page (display user info, edit form)
+- Create auth context (React Context to store current user + JWT)
+- Create protected route wrapper (redirect to `/login` if not authenticated)
+
+**teammate_2 (Backend):**
+- Implement `POST /api/auth/signup` — validate, hash password, create user, return JWT
+- Implement `POST /api/auth/login` — verify credentials, return JWT
+- Implement `GET /api/auth/me` — return current user from JWT
+- Create auth middleware (verify JWT on protected routes)
+- Implement `GET /api/users/:id` — get user profile
+- Implement `PUT /api/users/me` — update profile (display name, avatar)
+- Input validation on all endpoints
+
+**teammate_3 (Fullstack/Real-Time):**
+- Add JWT authentication to Socket.io connections
+- Implement online status tracking (set online on connect, offline on disconnect)
+- Start planning chat message event structure
+
+**teammate_4 (PO/PM):**
+- Test signup and login flows, report bugs
+- Finalize Privacy Policy page content
+- Finalize Terms of Service page content
+- Update GitHub Issues with Day 3 tasks
 
 **Modules progressed:** #5 (Standard user management)
 
-### Day 3 — Profiles, Friends & Chat
+---
 
-**Goal:** Social features are functional. Users can view profiles, manage friends, and chat.
+### Day 3 — Social Features + Game Start
 
-- Implement user profile API (GET/PUT /api/users/:id)
-- Avatar upload endpoint (with default avatar fallback)
-- Friends system API (send request, accept, remove, list friends)
-- Online status tracking (updated via WebSocket connection)
-- Basic chat system with Socket.io (send/receive direct messages)
-- React pages: Profile page (view/edit), Friends list, Chat sidebar
+**Goal:** Friends, chat, and profile fully working. Game board rendering starts.
+
+**mgodawat (Tech Lead):**
+- Code reviews for all auth + profile PRs
+- Help with any integration issues between frontend and backend
+- Avatar upload endpoint (file storage + default fallback)
+
+**teammate_1 (Frontend):**
+- Friends list component (online/offline indicators)
+- Friend request UI (send, accept, reject)
+- User search to find and add friends
+- Start Tic-Tac-Toe game board component (3x3 grid of clickable cells)
+- Game board renders X, O, or empty for each cell
+
+**teammate_2 (Backend):**
+- Friends API: `POST /api/friends/request/:userId`, `POST /api/friends/accept/:id`, `DELETE /api/friends/:id`, `GET /api/friends`
+- Start game logic: win detection function (check 8 winning lines)
+- Game API: `POST /api/games` (create), `GET /api/games/:id` (get state)
+
+**teammate_3 (Fullstack/Real-Time):**
+- Chat system: Socket.io events for `send_message`, `receive_message`
+- Chat UI: sidebar/overlay with message list, input, send button
 - Store messages in database (Messages table)
-- Verify: Two users can add each other as friends and exchange chat messages
+- Chat history: load previous messages from API on open
 
-**Modules progressed:** #4 (User interaction), #5 (Standard user management — completed)
+**teammate_4 (PO/PM):**
+- Test friends and chat features
+- Create Privacy Policy and ToS React pages with content
+- Link them from footer
+- Report bugs and track progress
 
-### Day 4 — Pong Game (Local)
+**Modules progressed:** #4 (User interaction), #5 (completed), #6 (started)
 
-**Goal:** Playable local Pong game in the browser.
+---
 
-- HTML5 Canvas game rendering (ball, paddles, score)
-- Game loop (requestAnimationFrame at 60fps)
-- Physics: ball movement, wall bouncing, paddle collision
-- Keyboard input handling (W/S and Up/Down arrows)
-- Scoring system and win condition
-- Game over screen with restart option
-- React component wrapping the canvas
-- Verify: Two players on the same keyboard can play a full game of Pong
+### Day 4 — Game Complete + Multiplayer
 
-**Modules progressed:** #6 (Web-based game)
+**Goal:** Tic-Tac-Toe fully playable locally and remotely between two players.
 
-### Day 5 — Multiplayer & Real-Time
+**mgodawat (Tech Lead):**
+- Code reviews for game and multiplayer PRs
+- Help debug WebSocket synchronization issues
+- Ensure game state is server-authoritative (prevent cheating)
 
-**Goal:** Two players on different computers can play Pong together.
+**teammate_1 (Frontend):**
+- Complete game board: click to place mark, show whose turn it is
+- Game states: waiting, playing, finished (win/draw)
+- Win animation (highlight winning line)
+- Game over screen with winner display and "Play Again" button
+- Pre-game lobby: choose local vs online vs AI
 
-- Server-side game state management (Express + Socket.io)
-- Matchmaking queue (find opponent or create room)
-- WebSocket events: game state sync, player input relay
-- Client-side prediction for smooth gameplay
-- Handle disconnection and reconnection gracefully
-- Room management (create, join, leave, spectate)
-- Save match results to database (Games table)
-- Verify: Open two browser tabs/windows → match found → play a full remote game
+**teammate_2 (Backend):**
+- Server-side game state management (authoritative — server validates every move)
+- Game move validation: correct turn, cell not taken, game not over
+- Save completed games to database
 
-**Modules progressed:** #3 (Real-time WebSockets), #7 (Remote players)
+**teammate_3 (Fullstack/Real-Time):**
+- Matchmaking: `find_game` event → wait for opponent → create room → start game
+- Game WebSocket events: `make_move` (client → server), `game_update` (server → clients), `game_over`
+- Handle disconnection: pause game, timeout, forfeit
+- Handle reconnection: rejoin room, restore game state
+- Test: two browser windows can play a full remote game
 
-### Day 6 — Bonus Modules & Tournament
+**teammate_4 (PO/PM):**
+- Test multiplayer from two different browsers
+- Verify game rules work correctly (all win conditions, draw detection)
+- Update task tracker
 
-**Goal:** Tournament system works. AI opponent is playable. Game has customization and stats.
+**Modules progressed:** #3 (Real-time WebSockets), #6 (completed), #7 (Remote players)
 
-- Tournament system:
-    - Create tournament, register players
-    - Auto-generate bracket (power of 2 seeding)
-    - Progress through rounds, determine winner
-    - React pages: Tournament list, bracket view, registration
-- AI Opponent:
-    - Server-side bot that tracks ball Y position
-    - Add reaction delay and random offset for human-like imperfection
-    - Difficulty settings (easy/medium/hard = more/less offset)
-- Game Customization:
-    - Settings menu before game: paddle color, ball speed, map theme
-    - Store preferences, apply during gameplay
-    - Default options always available
-- Game Statistics:
-    - Match history page (opponent, score, date, result)
-    - User stats (wins, losses, win rate, ranking)
-    - Leaderboard page (top players by wins)
-- Verify: Can play in a tournament, beat/lose to AI, customize game, see stats
+---
+
+### Day 5 — Bonus Modules
+
+**Goal:** Tournament, AI opponent, customization, and statistics all working.
+
+**mgodawat (Tech Lead):**
+- Code reviews
+- Performance check: multiple concurrent games
+- Ensure no console errors in Chrome
+
+**teammate_1 (Frontend):**
+- Game customization UI: theme selector (classic/neon/retro), symbol selector (X/O, custom emoji), board size option (3x3, 4x4, 5x5)
+- Statistics section on profile page (wins, losses, win rate)
+- Match history page (date, opponent, result)
+- Leaderboard page (top players by wins)
+- Tournament bracket visualization
+
+**teammate_2 (Backend):**
+- AI opponent: Minimax algorithm with alpha-beta pruning
+- AI difficulty: Easy (random moves 50% of time), Medium (random 20%), Hard (pure minimax)
+- Tournament API: create, join, list, bracket generation, progression
+- Statistics API: `GET /api/users/:id/stats`, `GET /api/users/:id/matches`, `GET /api/leaderboard`
+
+**teammate_3 (Fullstack/Real-Time):**
+- Tournament WebSocket events: notify when it's your turn, auto-redirect to game
+- AI game mode: client sends `play_ai` → server creates game → AI responds to each move via WebSocket
+
+**teammate_4 (PO/PM):**
+- Test all bonus features
+- Verify tournament flow end-to-end
+- Verify AI plays competently but not perfectly
+- Test customization options apply correctly
 
 **Modules progressed:** #8 (Tournament), #9 (AI Opponent), #10 (Customization), #11 (Statistics)
 
-### Day 7 — Mandatory Checks, Polish & Submission
+---
+
+### Day 6 — Integration & Bug Fixing
+
+**Goal:** All features integrated, bugs fixed, edge cases handled.
+
+**All team members:**
+- Fix bugs reported during Day 5 testing
+- Cross-test each other's features
+- Handle edge cases: what if both players disconnect? What if tournament has odd number of players? What if user submits empty form?
+- Ensure all forms validate on both frontend AND backend
+- Remove any `console.log` statements from production code
+- Check responsive design on different screen sizes
+
+---
+
+### Day 7 — Mandatory Checks & Submission
 
 **Goal:** Project passes all subject mandatory requirements. Ready for evaluation.
 
-- Privacy Policy page (accessible from footer, relevant content)
-- Terms of Service page (accessible from footer, relevant content)
-- HTTPS configuration (self-signed certificate for development)
-- Check: zero warnings or errors in browser console
-- Check: responsive design works on different screen sizes
-- Check: all forms have frontend AND backend validation
-- Check: .env is gitignored, .env.example is committed
-- Full Docker test: `docker compose down && docker compose up --build` from scratch
-- Update README.md with final details (contributions, module justifications)
-- Final manual testing of all features as an evaluator would
-- Prepare for evaluation: each team member should be able to explain their part
-
 **Nothing new built — this day is purely for hardening and verification.**
+
+- Privacy Policy page: accessible from footer, relevant content (teammate_4)
+- Terms of Service page: accessible from footer, relevant content (teammate_4)
+- HTTPS working on all endpoints (mgodawat)
+- Zero console errors or warnings in Chrome (all)
+- All forms validate on frontend AND backend (all)
+- `.env` gitignored, `.env.example` committed (mgodawat)
+- Responsive design works on different screen sizes (teammate_1)
+- Multi-user test: open 2+ browsers, both work simultaneously (all)
+- Clean Docker test: `make fclean && make` from scratch (mgodawat)
+- Full user flow test: signup → login → edit profile → add friend → chat → play game (all)
+- Multiplayer test: two browsers, remote game, verify sync (teammate_3)
+- AI test: play vs bot, verify it wins sometimes but not always (teammate_2)
+- Tournament test: create → join → play through → winner declared (teammate_4)
+- Update README.md with final contributions and module justifications (all)
+- Each team member can explain their contributions (evaluation prep)
+
+---
+
+## Tic-Tac-Toe Game — Technical Details
+
+### Game State
+
+The game state is a simple array of 9 values (for a 3x3 board):
+
+```
+board = [null, null, null,   // cells 0, 1, 2  (top row)
+         null, null, null,   // cells 3, 4, 5  (middle row)
+         null, null, null]   // cells 6, 7, 8  (bottom row)
+```
+
+Each cell is either `null` (empty), `"X"`, or `"O"`.
+
+### Win Detection
+
+Check 8 possible winning lines:
+
+```
+Rows:      [0,1,2]  [3,4,5]  [6,7,8]
+Columns:   [0,3,6]  [1,4,7]  [2,5,8]
+Diagonals: [0,4,8]  [2,4,6]
+```
+
+If all three cells in any line contain the same non-null value, that player wins. If all 9 cells are filled with no winner, it's a draw.
+
+### Multiplayer Flow (WebSocket)
+
+```
+Player A clicks cell 4
+    → Client sends: { event: "make_move", data: { gameId: 123, cell: 4 } }
+    → Server validates: correct turn? cell empty? game active?
+    → Server updates board: board[4] = "X"
+    → Server checks for win/draw
+    → Server broadcasts: { event: "game_update", data: { board, currentTurn, winner, status } }
+    → Both clients re-render the board
+```
+
+One message per turn. Compare this to Pong which would send 60 messages per second.
+
+### AI Opponent (Minimax)
+
+The Minimax algorithm evaluates every possible future game state and picks the optimal move. For Tic-Tac-Toe:
+- The AI considers all empty cells
+- For each, it simulates the move and recursively evaluates the opponent's best response
+- It picks the move with the highest score (win = +10, loss = -10, draw = 0)
+
+To make the AI feel human:
+- **Easy:** 50% of moves are random instead of optimal
+- **Medium:** 20% random moves
+- **Hard:** Pure minimax (unbeatable)
 
 ---
 
@@ -210,7 +386,7 @@ These are non-negotiable. Failing any of these = project rejection.
 
 - [ ] Web application with frontend, backend, and database
 - [ ] Git with clear commits from all team members
-- [ ] Single-command deployment via Docker Compose
+- [ ] Single-command deployment via Docker Compose (`make`)
 - [ ] Compatible with latest stable Google Chrome
 - [ ] No warnings or errors in browser console
 - [ ] Privacy Policy page (accessible, relevant content)
@@ -228,39 +404,15 @@ These are non-negotiable. Failing any of these = project rejection.
 
 ## Teammate Onboarding Guide
 
-If you are joining the team mid-project:
-
-1. **Read** this document and the [README.md](../README.md) first.
-2. **Check** [tasks.md](tasks.md) for unassigned or in-progress tasks.
+1. **Read** this document and the [README.md](../README.md).
+2. **Check** [tasks.md](tasks.md) for tasks matching your role.
 3. **Setup** your local environment:
     - Clone the repo
     - Copy `.env.example` to `.env`
-    - Run `docker compose up --build`
-    - Verify you can see the frontend and backend running
-4. **Pick a role** from the Team Roles table above and update the README.
-5. **Pick tasks** from [tasks.md](tasks.md) that match your role.
-6. **Create a branch** for your feature: `git checkout -b feature/your-feature-name`
-7. **Communicate** on Discord before starting any major work.
-
----
-
-## Verification Plan
-
-### Automated Checks
-
-- `npm run lint` — Code quality (ESLint + Prettier)
-- `npm run test` — Backend unit tests (if time allows)
-- `docker compose up --build` — Full integration test
-
-### Manual Verification (Day 7)
-
-- [ ] Fresh `docker compose up --build` works on a clean machine
-- [ ] Chrome: no console errors or warnings
-- [ ] Sign up → Log in → Edit profile → Upload avatar
-- [ ] Add friend → Send chat message → See online status
-- [ ] Play local Pong → Play remote Pong → Play vs AI
-- [ ] Create tournament → Play through bracket → See winner
-- [ ] Customize game → Settings applied in gameplay
-- [ ] View match history → View leaderboard
-- [ ] Privacy Policy and ToS pages accessible and have content
-- [ ] HTTPS working on all endpoints
+    - Run `make` (or `docker compose up --build`)
+    - Run `cd backend && npm install` and `cd frontend && npm install` (for editor support)
+    - Verify frontend at `http://localhost:5173` and backend at `https://localhost:3000/api/health`
+4. **Pick tasks** from [tasks.md](tasks.md) that match your role.
+5. **Create a branch** for your feature: `git checkout -b feature/your-feature-name`
+6. **Communicate** on Discord before starting any major work.
+7. **Push and create a PR** when your feature is ready for review.

@@ -1,4 +1,4 @@
-// ─── Prisma Schema ─────────────────────────────────────────────────────────
+// Prisma Schema — ft_transcendence (Tic-Tac-Toe)
 // Docs: https://www.prisma.io/docs/orm/prisma-schema
 
 generator client {
@@ -13,25 +13,27 @@ datasource db {
 // ─── Users ─────────────────────────────────────────────────────────────────
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  avatarUrl    String?  @map("avatar_url")
-  isOnline     Boolean  @default(false) @map("is_online")
-  wins         Int      @default(0)
-  losses       Int      @default(0)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String    @map("password_hash")
+  avatarUrl     String?   @map("avatar_url")
+  displayName   String?   @map("display_name")
+  isOnline      Boolean   @default(false) @map("is_online")
+  wins          Int       @default(0)
+  losses        Int       @default(0)
+  draws         Int       @default(0)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  gamesAsPlayer1    Game[]                  @relation("Player1Games")
-  gamesAsPlayer2    Game[]                  @relation("Player2Games")
-  gamesWon          Game[]                  @relation("WinnerGames")
-  sentFriendReqs    Friend[]                @relation("FriendRequester")
-  recvFriendReqs    Friend[]                @relation("FriendAddressee")
-  sentMessages      Message[]               @relation("MessageSender")
-  recvMessages      Message[]               @relation("MessageReceiver")
+  gamesAsPlayer1  Game[]    @relation("Player1Games")
+  gamesAsPlayer2  Game[]    @relation("Player2Games")
+  gamesWon        Game[]    @relation("WinnerGames")
+  sentFriendReqs  Friend[]  @relation("FriendRequester")
+  recvFriendReqs  Friend[]  @relation("FriendAddressee")
+  sentMessages    Message[] @relation("MessageSender")
+  recvMessages    Message[] @relation("MessageReceiver")
   tournamentEntries TournamentParticipant[]
 
   @@map("users")
@@ -40,25 +42,27 @@ model User {
 // ─── Games (Match History) ─────────────────────────────────────────────────
 
 model Game {
-  id         Int        @id @default(autoincrement())
-  player1Id  Int        @map("player1_id")
-  player2Id  Int?       @map("player2_id") // null = AI opponent
-  winnerId   Int?       @map("winner_id") // null = in progress
-  scoreP1    Int        @default(0) @map("score_p1")
-  scoreP2    Int        @default(0) @map("score_p2")
-  gameType   GameType   @default(CLASSIC) @map("game_type")
-  status     GameStatus @default(WAITING) @map("status")
-  createdAt  DateTime   @default(now()) @map("created_at")
-  finishedAt DateTime?  @map("finished_at")
+  id          Int         @id @default(autoincrement())
+  player1Id   Int         @map("player1_id")
+  player2Id   Int?        @map("player2_id")    // null = AI opponent
+  winnerId    Int?        @map("winner_id")      // null = in progress or draw
+  boardState  Json        @default("[null,null,null,null,null,null,null,null,null]") @map("board_state")
+  boardSize   Int         @default(3) @map("board_size")  // 3 = 3x3, 4 = 4x4, 5 = 5x5
+  currentTurn String      @default("X") @map("current_turn") // "X" or "O"
+  gameType    GameType    @default(CLASSIC) @map("game_type")
+  status      GameStatus  @default(WAITING) @map("status")
+  settings    Json?       // { theme: "neon", symbols: ["X", "O"], boardSize: 3 }
+  createdAt   DateTime    @default(now()) @map("created_at")
+  finishedAt  DateTime?   @map("finished_at")
 
   // Tournament link (nullable: not all games are tournament games)
-  tournamentId Int?        @map("tournament_id")
+  tournamentId Int?       @map("tournament_id")
   tournament   Tournament? @relation(fields: [tournamentId], references: [id])
 
   // Relations
-  player1 User  @relation("Player1Games", fields: [player1Id], references: [id])
-  player2 User? @relation("Player2Games", fields: [player2Id], references: [id])
-  winner  User? @relation("WinnerGames", fields: [winnerId], references: [id])
+  player1     User        @relation("Player1Games", fields: [player1Id], references: [id])
+  player2     User?       @relation("Player2Games", fields: [player2Id], references: [id])
+  winner      User?       @relation("WinnerGames", fields: [winnerId], references: [id])
 
   @@map("games")
 }
@@ -67,26 +71,28 @@ enum GameType {
   CLASSIC
   CUSTOM
   TOURNAMENT
+  AI
 }
 
 enum GameStatus {
   WAITING
   IN_PROGRESS
   FINISHED
+  DRAW
   CANCELLED
 }
 
 // ─── Friends ───────────────────────────────────────────────────────────────
 
 model Friend {
-  id          Int          @id @default(autoincrement())
-  requesterId Int          @map("requester_id")
-  addresseeId Int          @map("addressee_id")
-  status      FriendStatus @default(PENDING)
-  createdAt   DateTime     @default(now()) @map("created_at")
+  id            Int           @id @default(autoincrement())
+  requesterId   Int           @map("requester_id")
+  addresseeId   Int           @map("addressee_id")
+  status        FriendStatus  @default(PENDING)
+  createdAt     DateTime      @default(now()) @map("created_at")
 
-  requester User @relation("FriendRequester", fields: [requesterId], references: [id])
-  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id])
+  requester     User @relation("FriendRequester", fields: [requesterId], references: [id])
+  addressee     User @relation("FriendAddressee", fields: [addresseeId], references: [id])
 
   @@unique([requesterId, addresseeId])
   @@map("friends")
@@ -101,14 +107,14 @@ enum FriendStatus {
 // ─── Messages (Chat) ──────────────────────────────────────────────────────
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  senderId   Int      @map("sender_id")
-  receiverId Int      @map("receiver_id")
-  content    String
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          Int      @id @default(autoincrement())
+  senderId    Int      @map("sender_id")
+  receiverId  Int      @map("receiver_id")
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  sender   User @relation("MessageSender", fields: [senderId], references: [id])
-  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender      User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver    User @relation("MessageReceiver", fields: [receiverId], references: [id])
 
   @@map("messages")
 }
@@ -116,13 +122,13 @@ model Message {
 // ─── Tournaments ──────────────────────────────────────────────────────────
 
 model Tournament {
-  id         Int              @id @default(autoincrement())
-  name       String
-  status     TournamentStatus @default(REGISTERING)
-  maxPlayers Int              @default(8) @map("max_players")
-  createdAt  DateTime         @default(now()) @map("created_at")
-  startedAt  DateTime?        @map("started_at")
-  finishedAt DateTime?        @map("finished_at")
+  id          Int               @id @default(autoincrement())
+  name        String
+  status      TournamentStatus  @default(REGISTERING)
+  maxPlayers  Int               @default(8) @map("max_players")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  startedAt   DateTime?         @map("started_at")
+  finishedAt  DateTime?         @map("finished_at")
 
   participants TournamentParticipant[]
   games        Game[]
@@ -131,15 +137,15 @@ model Tournament {
 }
 
 model TournamentParticipant {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      @map("tournament_id")
-  userId       Int      @map("user_id")
-  seed         Int? // bracket position
-  eliminatedAt Int?     @map("eliminated_at") // round eliminated
-  joinedAt     DateTime @default(now()) @map("joined_at")
+  id            Int      @id @default(autoincrement())
+  tournamentId  Int      @map("tournament_id")
+  userId        Int      @map("user_id")
+  seed          Int?     // bracket position
+  eliminatedAt  Int?     @map("eliminated_at") // round eliminated
+  joinedAt      DateTime @default(now()) @map("joined_at")
 
-  tournament Tournament @relation(fields: [tournamentId], references: [id])
-  user       User       @relation(fields: [userId], references: [id])
+  tournament    Tournament @relation(fields: [tournamentId], references: [id])
+  user          User       @relation(fields: [userId], references: [id])
 
   @@unique([tournamentId, userId])
   @@map("tournament_participants")
