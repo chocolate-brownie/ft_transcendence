@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "dev": "tsx watch -p config/tsconfig.json src/index.ts",
+    "build": "tsc -p config/tsconfig.json",
     "start": "node dist/index.js",
-    "lint": "eslint src/",
+    "lint": "eslint src/ --config config/eslint.config.mjs",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate"
