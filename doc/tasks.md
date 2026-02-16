@@ -23,21 +23,26 @@
 
 ### Backend Setup — [Backend: teammate_2]
 
-- [ ] Review Express project structure (`backend/src/index.ts`)
+- [x] Review Express project structure (`backend/src/index.ts`) — mgodawat
 - [ ] Install dependencies locally (`cd backend && npm install`)
-- [ ] Review Prisma schema (`backend/prisma/schema.prisma`)
+- [x] Review Prisma schema (`backend/prisma/schema.prisma`) — mgodawat
 - [ ] Run `npx prisma generate` locally (for editor type support)
-- [ ] Create route file structure: `routes/auth.ts`, `routes/users.ts`, `routes/games.ts`
-- [ ] Create middleware directory: `middleware/auth.ts`
+- [x] Create route file structure: `routes/*.routes.ts` (auth, users, friends, games, chat, tournaments) — mgodawat
+- [x] Create controller file structure: `controllers/*.controller.ts` — mgodawat
+- [x] Create service file structure: `services/*.service.ts` — mgodawat
+- [x] Create middleware directory: `middleware/auth.ts` — mgodawat
+- [x] Create shared Prisma client: `lib/prisma.ts` — mgodawat
 - [ ] Verify backend health check works: `curl -k https://localhost:3000/api/health`
 
 ### Frontend Setup — [Frontend: teammate_1]
 
 - [ ] Install dependencies locally (`cd frontend && npm install`)
-- [ ] Review React project structure (`frontend/src/App.tsx`, `main.tsx`)
-- [ ] Install React Router: `npm install react-router-dom`
-- [ ] Create layout shell: Navbar component, Footer component, main content area
-- [ ] Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`
+- [x] Review React project structure (`frontend/src/App.tsx`, `main.tsx`) — mgodawat
+- [x] Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`, `/tournaments`, `/leaderboard`, `/privacy`, `/terms` — mgodawat
+- [x] Create layout shell: Navbar component, Footer component, main content area — mgodawat
+- [x] Create frontend service files: `services/*.service.ts` (auth, users, games, friends) — mgodawat
+- [x] Create shared TypeScript types: `types/index.ts` (User, Game, Message, Friend, Tournament) — mgodawat
+- [x] Create auth context placeholder: `context/AuthContext.tsx` — mgodawat
 - [ ] Create reusable UI components: Button, Input, Card (TailwindCSS)
 - [ ] Verify hot-reload works (edit App.tsx, see changes in browser)
 

@@ -76,23 +76,36 @@ Verify: `make ps` should show three containers with status `Up`.
 
 ```
 ft_transcendence/
-├── Makefile                  # make, make down, make logs, make fclean, etc.
-├── docker-compose.yml        # 3 services: frontend, backend, db
-├── .env / .env.example       # Environment variables
+├── Makefile                        # make, make down, make logs, make fclean, etc.
+├── docker-compose.yml              # 3 services: frontend, backend, db
+├── .env / .env.example             # Environment variables
 ├── backend/
-│   ├── prisma/schema.prisma  # DATABASE SCHEMA — read this first!
-│   └── src/index.ts          # Express server entry point
+│   ├── prisma/schema.prisma        # DATABASE SCHEMA — read this first!
+│   └── src/
+│       ├── index.ts                # Server setup + route mounting
+│       ├── lib/prisma.ts           # Shared Prisma client
+│       ├── middleware/auth.ts      # JWT verification
+│       ├── routes/                 # URL definitions (*.routes.ts)
+│       ├── controllers/            # HTTP request/response handling
+│       └── services/               # Business logic (no HTTP concepts)
 ├── frontend/
 │   └── src/
-│       ├── main.tsx          # React entry point
-│       └── App.tsx           # Root component
+│       ├── main.tsx                # React entry point
+│       ├── App.tsx                 # React Router + Layout
+│       ├── pages/                  # One component per route
+│       ├── components/             # Reusable UI (Navbar, Footer, etc.)
+│       ├── context/                # React Context (auth state, etc.)
+│       ├── services/               # API call functions
+│       └── types/index.ts          # TypeScript interfaces
 └── doc/
-    ├── implementation_plan.md  # Architecture + timeline
-    ├── tasks.md                # YOUR TASKS — find your role here
-    └── subject.md              # 42 project requirements
+    ├── implementation_plan.md      # Architecture + timeline
+    ├── tasks.md                    # YOUR TASKS — find your role here
+    └── subject.md                  # 42 project requirements
 ```
 
-**Read in this order:** tasks.md → implementation_plan.md → schema.prisma → index.ts → App.tsx
+**Backend architecture:** Routes define URLs → Controllers handle HTTP → Services contain logic. See `doc/implementation_plan.md` for details.
+
+**Read in this order:** tasks.md → implementation_plan.md → schema.prisma → backend/src/index.ts → frontend/src/App.tsx
 
 ## Step 7: Find Your Tasks
 

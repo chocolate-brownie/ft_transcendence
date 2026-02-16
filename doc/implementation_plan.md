@@ -118,16 +118,17 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 **teammate_1 (Frontend):**
 
 - Install dependencies locally (`cd frontend && npm install`)
-- Understand React project structure (main.tsx → App.tsx → pages)
-- Create layout shell: navbar, footer, main content area
-- Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`
+- Understand React project structure (main.tsx → App.tsx → pages/ → components/ → services/ → types/)
+- ~~Create layout shell~~ ✅ Done (Navbar, Footer, Layout with React Router)
+- ~~Set up React Router with placeholder pages~~ ✅ Done (all routes configured in App.tsx)
+- Create reusable UI components: Button, Input, Card (TailwindCSS)
 
 **teammate_2 (Backend):**
 
 - Install dependencies locally (`cd backend && npm install`)
-- Understand Express project structure (index.ts → routes → middleware)
+- Understand Express project structure (index.ts → routes/ → controllers/ → services/ → middleware/)
 - Review Prisma schema, run `npx prisma generate` locally
-- Create route file structure: `routes/auth.ts`, `routes/users.ts`, `routes/games.ts`
+- ~~Create route file structure~~ ✅ Done (routes/, controllers/, services/, middleware/, lib/)
 
 **teammate_3 (Fullstack/Real-Time):**
 
@@ -549,8 +550,12 @@ These are non-negotiable. Failing any of these = project rejection.
    - Copy `.env.example` to `.env`
    - Run `make` (or `docker compose up --build`)
    - Run `cd backend && npm install` and `cd frontend && npm install` (for editor support)
-   - Verify frontend at `http://localhost:5173` and backend at `https://localhost:3000/api/health`
-4. **Pick tasks** from [tasks.md](tasks.md) that match your role.
-5. **Create a branch** for your feature: `git checkout -b feature/your-feature-name`
-6. **Communicate** on Discord before starting any major work.
-7. **Push and create a PR** when your feature is ready for review.
+   - Verify frontend at `http://localhost:5173` (should show System Status dashboard with Navbar and Footer)
+   - Verify backend at `https://localhost:3000/api/health` (accept self-signed cert warning)
+4. **Understand the architecture:**
+   - Backend: `index.ts` (server setup) → `routes/` (URLs) → `controllers/` (HTTP handling) → `services/` (business logic)
+   - Frontend: `App.tsx` (Router + Layout) → `pages/` (one per route) → `components/` (reusable UI) → `services/` (API calls)
+5. **Pick tasks** from [tasks.md](tasks.md) that match your role.
+6. **Create a branch** for your feature: `git checkout -b feature/your-feature-name`
+7. **Communicate** on Discord before starting any major work.
+8. **Push and create a PR** when your feature is ready for review.
