@@ -1,6 +1,7 @@
 // ─── ft_transcendence Backend ──────────────────────────────────────────────
 // Express + HTTPS + Socket.io server
-// Think of this like main() in C — everything starts here.
+// This is the entry point — server setup and route mounting only.
+// All business logic lives in services/, controllers handle HTTP, routes define URLs.
 
 import express from "express";
 import https from "https";
@@ -8,17 +9,22 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import { Server as SocketIOServer } from "socket.io";
-import { PrismaClient } from "@prisma/client";
+import prisma from "./lib/prisma";
+
+// Route imports
+import authRoutes from "./routes/auth.routes";
+import usersRoutes from "./routes/users.routes";
+import friendsRoutes from "./routes/friends.routes";
+import gamesRoutes from "./routes/games.routes";
+import chatRoutes from "./routes/chat.routes";
+import tournamentsRoutes from "./routes/tournaments.routes";
 
 // ─── Initialize ────────────────────────────────────────────────────────────
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = Number(process.env.PORT) || 3000;
 
 // ─── Middleware ─────────────────────────────────────────────────────────────
-// Middleware = functions that run on EVERY request before your route handler.
-// Like a pipeline: Request → cors → json parser → your route handler → Response
 
 app.use(
   cors({
@@ -26,14 +32,14 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json()); // Parse JSON bodies (like scanf but for HTTP)
+app.use(express.json());
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 
 // Health check — verifies the server + database are alive
 app.get("/api/health", async (_req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`; // Ping the database
+    await prisma.$queryRaw`SELECT 1`;
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
@@ -48,14 +54,12 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-// Placeholder for future API routes
-app.get("/api", (_req, res) => {
-  res.json({
-    message: "ft_transcendence API",
-    version: "1.0.0",
-    endpoints: ["/api/health"],
-  });
-});
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/friends", friendsRoutes);
+app.use("/api/games", gamesRoutes);
+app.use("/api/messages", chatRoutes);
+app.use("/api/tournaments", tournamentsRoutes);
 
 // ─── HTTPS Server + Socket.io ──────────────────────────────────────────────
 
@@ -65,17 +69,14 @@ const keyPath = path.join(__dirname, "..", "certs", "key.pem");
 let server: https.Server;
 
 if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-  // Production-like: HTTPS with self-signed cert
   const httpsOptions = {
     cert: fs.readFileSync(certPath),
     key: fs.readFileSync(keyPath),
   };
   server = https.createServer(httpsOptions, app);
-  console.log("🔒 HTTPS mode enabled");
+  console.log("HTTPS mode enabled");
 } else {
-  // Fallback: HTTP (should not happen with entrypoint.sh)
-  console.warn("⚠️  No SSL certs found, falling back to HTTP");
-  // TypeScript trick: http.Server and https.Server are compatible for Socket.io
+  console.warn("No SSL certs found, falling back to HTTP");
   const http = require("http");
   server = http.createServer(app);
 }
@@ -90,23 +91,23 @@ const io = new SocketIOServer(server, {
 
 // Basic Socket.io connection handler
 io.on("connection", (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
+  console.log(`Client connected: ${socket.id}`);
 
   socket.on("disconnect", () => {
-    console.log(`❌ Client disconnected: ${socket.id}`);
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`\n🚀 Backend running on https://0.0.0.0:${PORT}`);
-  console.log(`   Health check: https://localhost:${PORT}/api/health\n`);
+  console.log(`\nBackend running on https://0.0.0.0:${PORT}`);
+  console.log(`Health check: https://localhost:${PORT}/api/health\n`);
 });
 
-// Graceful shutdown (like signal handlers in C)
+// Graceful shutdown
 const shutdown = () => {
-  console.log("\n🛑 Shutting down...");
+  console.log("\nShutting down...");
   prisma.$disconnect().catch(() => {});
   server.close(() => process.exit(0));
 };
