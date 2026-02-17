@@ -21,7 +21,7 @@
 - [x] Set up Git branching strategy and branch protection rules
 - [x] Configure ESLint for backend and frontend
 
-### Backend Setup — [Backend: teammate_2]
+### Backend Setup — [Backend: mgodawat]
 
 - [x] Review Express project structure (`backend/src/index.ts`) — mgodawat
 - [x] Install dependencies locally (`cd backend && npm install`)
@@ -34,7 +34,7 @@
 - [x] Create shared Prisma client: `lib/prisma.ts` — mgodawat
 - [x] Verify backend health check works: `curl -k https://localhost:3000/api/health`
 
-### Frontend Setup — [Frontend: teammate_1]
+### Frontend Setup — [Frontend: mgodawat]
 
 - [x] Install dependencies locally (`cd frontend && npm install`)
 - [x] Review React project structure (`frontend/src/App.tsx`, `main.tsx`) — mgodawat
@@ -54,7 +54,7 @@
 - [ ] Test from frontend: connect to Socket.io, log `connected` in console
 - [ ] Plan WebSocket event structure document (events for chat + game)
 
-### Project Management — [PM: teammate_4]
+### Project Management — [PM: mgodawat]
 
 - [ ] Create GitHub Issues for all Phase 2 tasks
 - [x] Set up GitHub Project board (To Do / In Progress / Done / Review)
@@ -66,7 +66,7 @@
 
 ## Phase 2: User Authentication & Management (Day 2)
 
-### Backend Auth API — [Backend: teammate_2]
+### Backend Auth API — [Backend: tzizi]
 
 - [ ] Install bcrypt and jsonwebtoken: `npm install bcrypt jsonwebtoken`
 - [ ] Install types: `npm install -D @types/bcrypt @types/jsonwebtoken`
@@ -111,10 +111,6 @@
 - [ ] Test login flow: valid credentials, wrong password, non-existent email
 - [ ] Test protected route: with token, without token, expired token
 - [ ] Report bugs as GitHub Issues
-
-### Modules Progressed
-
-- Module #5 — Standard User Management: **In Progress**
 
 ---
 
@@ -375,6 +371,6 @@ Module #2 (ORM) ────────────┤
 | :---------- | :---------------------------- | :----------------------------------------------------- |
 | mgodawat    | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions            |
 | teammate_1  | Frontend UI                   | React pages, game board, TailwindCSS, customization UI |
-| teammate_2  | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
+| tzizi       | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
 | teammate_3  | Real-Time Features            | Socket.io, multiplayer sync, chat, online status       |
 | teammate_4  | Project Management + QA       | GitHub Issues, testing, Privacy Policy, ToS, README    |
