@@ -24,19 +24,19 @@
 ### Backend Setup — [Backend: teammate_2]
 
 - [x] Review Express project structure (`backend/src/index.ts`) — mgodawat
-- [ ] Install dependencies locally (`cd backend && npm install`)
+- [x] Install dependencies locally (`cd backend && npm install`)
 - [x] Review Prisma schema (`backend/prisma/schema.prisma`) — mgodawat
-- [ ] Run `npx prisma generate` locally (for editor type support)
+- [x] Run `npx prisma generate` locally (for editor type support)
 - [x] Create route file structure: `routes/*.routes.ts` (auth, users, friends, games, chat, tournaments) — mgodawat
 - [x] Create controller file structure: `controllers/*.controller.ts` — mgodawat
 - [x] Create service file structure: `services/*.service.ts` — mgodawat
 - [x] Create middleware directory: `middleware/auth.ts` — mgodawat
 - [x] Create shared Prisma client: `lib/prisma.ts` — mgodawat
-- [ ] Verify backend health check works: `curl -k https://localhost:3000/api/health`
+- [x] Verify backend health check works: `curl -k https://localhost:3000/api/health`
 
 ### Frontend Setup — [Frontend: teammate_1]
 
-- [ ] Install dependencies locally (`cd frontend && npm install`)
+- [x] Install dependencies locally (`cd frontend && npm install`)
 - [x] Review React project structure (`frontend/src/App.tsx`, `main.tsx`) — mgodawat
 - [x] Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`, `/tournaments`, `/leaderboard`, `/privacy`, `/terms` — mgodawat
 - [x] Create layout shell: Navbar component, Footer component, main content area — mgodawat
@@ -57,15 +57,10 @@
 ### Project Management — [PM: teammate_4]
 
 - [ ] Create GitHub Issues for all Phase 2 tasks
-- [ ] Set up GitHub Project board (To Do / In Progress / Done / Review)
+- [x] Set up GitHub Project board (To Do / In Progress / Done / Review)
 - [ ] Draft Privacy Policy page content
 - [ ] Draft Terms of Service page content
 - [ ] Ensure all team members have Docker working
-
-### Modules Progressed
-
-- Module #1 — Web Frameworks (React + Express): **In Progress**
-- Module #2 — ORM (Prisma): **In Progress**
 
 ---
 
