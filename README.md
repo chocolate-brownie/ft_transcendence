@@ -28,39 +28,40 @@ ft_transcendence is a web-based multiplayer Tic-Tac-Toe platform that allows use
 
 1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/your-repo/ft_transcendence.git
-   cd ft_transcendence
-   ```
+```bash
+git clone https://github.com/your-repo/ft_transcendence.git
+cd ft_transcendence
+```
 
 2. Set up environment variables:
 
-   ```bash
-   cp .env.example .env
-   # Edit .env with your specific configuration if needed
-   ```
+```bash
+cp .env.example .env
+# Edit .env with your specific configuration if needed
+```
 
 3. Run the application (single command as required by the subject):
 
-   ```bash
-   make
-   ```
+```bash
+make
+```
 
 4. Access the application:
-   - **Frontend:** https://localhost:5173
-   - **Backend API:** https://localhost:3000
+
+- **Frontend:** https://localhost:5173
+- **Backend API:** https://localhost:3000
 
 5. To stop the application:
 
-   ```bash
-   make down
-   ```
+```bash
+make down
+```
 
 6. To fully clean (remove containers, volumes, images):
 
-   ```bash
-   make fclean
-   ```
+```bash
+make fclean
+```
 
 ### Development Setup (for contributors)
 
@@ -69,21 +70,21 @@ If you are joining the team and want to develop locally outside Docker:
 1. Install Node.js (v22 LTS recommended).
 2. Backend:
 
-   ```bash
-   cd backend && npm install && npm run dev
-   ```
+```bash
+cd backend && npm install && npm run dev
+```
 
 3. Frontend:
 
-   ```bash
-   cd frontend && npm install && npm run dev
-   ```
+```bash
+cd frontend && npm install && npm run dev
+```
 
 4. Database: Ensure PostgreSQL is running locally or use the Docker container:
 
-   ```bash
-   docker compose up db
-   ```
+```bash
+docker compose up db
+```
 
 ## Resources
 
@@ -112,24 +113,24 @@ If you are joining the team and want to develop locally outside Docker:
 _(Roles assigned as per Subject II.1.1. With 5 team members, roles are specialized as recommended by the subject.)_
 
 - **mgodawat**
-  - **Role(s):** Tech Lead / Architect
-  - **Responsibilities:** Architecture design, Docker setup, tech stack decisions, code reviews, HTTPS configuration, code quality standards.
+- **Role(s):** Tech Lead / Architect
+- **Responsibilities:** Architecture design, Docker setup, tech stack decisions, code reviews, HTTPS configuration, code quality standards.
 
 - **[teammate_1]**
-  - **Role(s):** Frontend Developer / UI Designer
-  - **Responsibilities:** React components, TailwindCSS styling, game board rendering, responsive design, page layouts.
+- **Role(s):** Frontend Developer / UI Designer
+- **Responsibilities:** React components, TailwindCSS styling, game board rendering, responsive design, page layouts.
 
 - **tzizi**
-  - **Role(s):** Backend Developer
-  - **Responsibilities:** Express API routes, Prisma ORM queries, database schema, authentication endpoints, game logic API.
+- **Role(s):** Backend Developer
+- **Responsibilities:** Express API routes, Prisma ORM queries, database schema, authentication endpoints, game logic API.
 
 - **[teammate_3]**
-  - **Role(s):** Fullstack Developer / Real-Time Specialist
-  - **Responsibilities:** WebSocket gateway (Socket.io), multiplayer game synchronization, chat system, real-time features.
+- **Role(s):** Fullstack Developer / Real-Time Specialist
+- **Responsibilities:** WebSocket gateway (Socket.io), multiplayer game synchronization, chat system, real-time features.
 
 - **[teammate_4]**
-  - **Role(s):** Product Owner (PO) / Project Manager (PM)
-  - **Responsibilities:** Requirement analysis, task tracking, QA testing, evaluation preparation, README finalization, Privacy Policy and ToS pages.
+- **Role(s):** Product Owner (PO) / Project Manager (PM)
+- **Responsibilities:** Requirement analysis, task tracking, QA testing, evaluation preparation, README finalization, Privacy Policy and ToS pages.
 
 ## Project Management
 
@@ -178,16 +179,16 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 | Feature                              | Status     | Owner(s)               | Description                                                    |
 | :----------------------------------- | :--------- | :--------------------- | :------------------------------------------------------------- |
 | Project Setup & Dockerization        | ✅ Done    | mgodawat               | Docker Compose with frontend, backend, and database containers |
-| User Authentication (email/password) | 🔲 Planned | teammate_2             | Signup, login, JWT tokens, password hashing with bcrypt        |
-| User Profiles (view/edit/avatar)     | 🔲 Planned | teammate_1, teammate_2 | Profile page, avatar upload, display name editing              |
-| Friends System                       | 🔲 Planned | teammate_2, teammate_3 | Add/remove friends, online status, friend requests             |
+| User Authentication (email/password) | 🔲 Planned | tzizi                  | Signup, login, JWT tokens, password hashing with bcrypt        |
+| User Profiles (view/edit/avatar)     | 🔲 Planned | teammate_1, tzizi      | Profile page, avatar upload, display name editing              |
+| Friends System                       | 🔲 Planned | tzizi, teammate_3      | Add/remove friends, online status, friend requests             |
 | Real-Time Chat                       | 🔲 Planned | teammate_3             | Direct messages via WebSockets, chat history                   |
 | Tic-Tac-Toe Game (local)             | 🔲 Planned | teammate_1, teammate_3 | React component grid, game logic, win detection                |
 | Remote Multiplayer                   | 🔲 Planned | teammate_3             | Online 1v1 via WebSockets with turn synchronization            |
-| AI Opponent                          | 🔲 Planned | teammate_2             | Minimax algorithm with adjustable difficulty                   |
-| Tournament System                    | 🔲 Planned | teammate_2, teammate_4 | Bracket generation, matchmaking, progression                   |
+| AI Opponent                          | 🔲 Planned | tzizi                  | Minimax algorithm with adjustable difficulty                   |
+| Tournament System                    | 🔲 Planned | tzizi, teammate_4      | Bracket generation, matchmaking, progression                   |
 | Game Customization                   | 🔲 Planned | teammate_1             | Board themes, X/O symbols, grid size variants                  |
-| Game Statistics & Match History      | 🔲 Planned | teammate_1, teammate_2 | Wins/losses, rankings, match history, leaderboard              |
+| Game Statistics & Match History      | 🔲 Planned | teammate_1, tzizi      | Wins/losses, rankings, match history, leaderboard              |
 | Privacy Policy Page                  | 🔲 Planned | teammate_4             | Accessible from footer, relevant content                       |
 | Terms of Service Page                | 🔲 Planned | teammate_4             | Accessible from footer, relevant content                       |
 | HTTPS Configuration                  | 🔲 Planned | mgodawat               | SSL/TLS for all backend communication                          |
@@ -199,16 +200,16 @@ The subject requires a minimum of 14 points. We target 18 points to provide a sa
 | #   | Category  | Module                                       | Type      | Points | Owner(s)               | Implementation Notes                                   |
 | :-- | :-------- | :------------------------------------------- | :-------- | :----- | :--------------------- | :----------------------------------------------------- |
 | 1   | Web       | Use frameworks (React + Express)             | Major     | 2      | All                    | React for frontend, Express for backend                |
-| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | teammate_2             | Type-safe queries, auto migrations                     |
+| 2   | Web       | Database ORM (Prisma)                        | Minor     | 1      | tzizi                  | Type-safe queries, auto migrations                     |
 | 3   | Web       | Real-time WebSockets (Socket.io)             | Major     | 2      | teammate_3             | Game sync, chat, live notifications                    |
 | 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | teammate_1, teammate_3 | Chat system, profile pages, friends list               |
-| 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, teammate_2   | Auth, avatars, profiles, online status                 |
+| 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, tzizi        | Auth, avatars, profiles, online status                 |
 | 6   | Gaming    | Web-based Tic-Tac-Toe game                   | Major     | 2      | teammate_1, teammate_3 | React component grid with game logic and win detection |
 | 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | teammate_3             | WebSocket turn sync, reconnection logic                |
-| 8   | Gaming    | Tournament system                            | Minor     | 1      | teammate_2, teammate_4 | Bracket system, matchmaking, registration              |
-| 9   | AI        | AI Opponent                                  | Major     | 2      | teammate_2             | Minimax algorithm with human-like imperfection         |
+| 8   | Gaming    | Tournament system                            | Minor     | 1      | tzizi, teammate_4      | Bracket system, matchmaking, registration              |
+| 9   | AI        | AI Opponent                                  | Major     | 2      | tzizi                  | Minimax algorithm with human-like imperfection         |
 | 10  | Gaming    | Game customization                           | Minor     | 1      | teammate_1             | Board themes, custom symbols, grid size options        |
-| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | teammate_1, teammate_2 | Win/loss tracking, leaderboard, match history page     |
+| 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | teammate_1, tzizi      | Win/loss tracking, leaderboard, match history page     |
 |     |           |                                              | **Total** | **18** |                        |                                                        |
 
 **Point Breakdown:** 7 Major modules (14 pts) + 4 Minor modules (4 pts) = **18 points**
@@ -233,7 +234,7 @@ _(This section will be updated throughout development. Each team member must be 
 
 - **[teammate_1]:** _(To be updated — React page components, TailwindCSS theme, game board UI, profile pages, customization UI, statistics display)_
 
-- **[teammate_2]:** _(To be updated — Prisma schema, Express API routes, auth system, AI opponent logic, tournament backend, game statistics API)_
+- **[tzizi]:** _(To be updated — Prisma schema, Express API routes, auth system, AI opponent logic, tournament backend, game statistics API)_
 
 - **[teammate_3]:** _(To be updated — Socket.io gateway, multiplayer game sync, chat system, real-time notifications, friends online status)_
 
