@@ -52,7 +52,7 @@
 - [x] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
 - [x] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
 - [x] Test from frontend: connect to Socket.io, log `connected` in console
-- [ ] Plan WebSocket event structure document (events for chat + game)
+- [x] Plan WebSocket event structure document (events for chat + game)
 
 ### Project Management — [PM: mgodawat]
 
