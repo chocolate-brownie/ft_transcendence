@@ -49,9 +49,9 @@
 ### Real-Time Setup — [Real-Time: mgodawat]
 
 - [x] Install dependencies locally (`cd backend && npm install` + `cd frontend && npm install`)
-- [ ] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
-- [ ] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
-- [ ] Test from frontend: connect to Socket.io, log `connected` in console
+- [x] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
+- [x] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
+- [x] Test from frontend: connect to Socket.io, log `connected` in console
 - [ ] Plan WebSocket event structure document (events for chat + game)
 
 ### Project Management — [PM: mgodawat]
