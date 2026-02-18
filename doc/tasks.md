@@ -46,21 +46,21 @@
 - [x] Create reusable UI components: Button, Input, Card (TailwindCSS) — mgodawat
 - [x] Verify hot-reload works (edit App.tsx, see changes in browser)
 
-### Real-Time Setup — [Real-Time: teammate_3]
+### Real-Time Setup — [Real-Time: mgodawat]
 
-- [ ] Install dependencies locally (`cd backend && npm install` + `cd frontend && npm install`)
-- [ ] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
-- [ ] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
-- [ ] Test from frontend: connect to Socket.io, log `connected` in console
-- [ ] Plan WebSocket event structure document (events for chat + game)
+- [x] Install dependencies locally (`cd backend && npm install` + `cd frontend && npm install`)
+- [x] Study Socket.io docs: `emit()`, `on()`, rooms, namespaces
+- [x] Test existing Socket.io connection (already configured in `backend/src/index.ts`)
+- [x] Test from frontend: connect to Socket.io, log `connected` in console
+- [x] Plan WebSocket event structure document (events for chat + game)
 
 ### Project Management — [PM: mgodawat]
 
-- [ ] Create GitHub Issues for all Phase 2 tasks
+- [x] Create GitHub Issues for all Phase 2 tasks
 - [x] Set up GitHub Project board (To Do / In Progress / Done / Review)
-- [ ] Draft Privacy Policy page content
-- [ ] Draft Terms of Service page content
-- [ ] Ensure all team members have Docker working
+- [x] Draft Privacy Policy page content
+- [x] Draft Terms of Service page content
+- [x] Ensure all team members have Docker working
 
 ---
 

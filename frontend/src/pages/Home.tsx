@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Card from "../components/Card";
@@ -44,12 +45,22 @@ function StatusRow({
 export default function Home() {
   const [health, setHealth] = useState<HealthStatus>(null);
   const [error, setError] = useState<string | null>(null);
+  const [socketStatus, setSocketStatus] = useState<"ok" | "error" | "loading">("loading");
 
   useEffect(() => {
     fetch("/api/health")
       .then((res) => res.json())
       .then((data) => setHealth(data))
       .catch((err) => setError(err.message));
+  }, []);
+
+  useEffect(() => {
+    const socket = io({ path: "/socket.io" });
+    socket.on("connect", () => setSocketStatus("ok"));
+    socket.on("connect_error", () => setSocketStatus("error"));
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   return (
@@ -70,7 +81,7 @@ export default function Home() {
             label="Database (PostgreSQL)"
             status={health?.database === "connected" ? "ok" : error ? "error" : "loading"}
           />
-          <StatusRow label="WebSocket (Socket.io)" status="pending" />
+          <StatusRow label="WebSocket (Socket.io)" status={socketStatus} />
         </div>
 
         {error && <p className="mt-4 text-sm text-red-400">Backend error: {error}</p>}
