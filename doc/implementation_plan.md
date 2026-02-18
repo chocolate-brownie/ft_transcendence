@@ -23,20 +23,19 @@ With 5 team members, roles are fully specialized as recommended by the subject.
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Docker Compose                       │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Frontend   │  │   Backend    │  │  PostgreSQL  │   │
-│  │   (React +   │  │  (Express +  │  │  (Database)  │   │
-│  │    Vite)     │──│  Socket.io)  │──│              │   │
-│  │  Port: 5173  │  │  Port: 3000  │  │  Port: 5432  │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│         │                  │                            │
-│         └──── WebSocket ───┘                            │
-│           (turn-based sync                              │
-│            + real-time chat)                            │
-└─────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────
+│                          Docker Compose
+│
+│  ┌──────────────     ───────────────     ───────────────
+│  │   Frontend    │    │    Backend    │    │   PostgreSQL  │
+│  │  (React +     │ ---│  (Express +   │--- │   (Database)  │
+│  │   Vite)       │    │   Socket.io)  │    │               │
+│  │  Port: 5173   │    │  Port: 3000   │    │  Port: 5432   │
+│  └──────────────     ───────────────     ───────────────
+│          │                      │
+│          └──────── WebSocket ──┘
+│            (turn-based sync + real-time chat)
+└─────────────────────────────────────────────────────────────
 ```
 
 **Tech Stack:**

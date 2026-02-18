@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by mgodawat, mamahtal, atrabut, [teammate_3], [teammate_4]._
+_This project has been created as part of the 42 curriculum by mgodawat, mamahtal, atrabut, tzizi, [teammate_4]._
 
 # ft_transcendence — The Ultimate Multiplayer Tic-Tac-Toe Experience
 
@@ -119,7 +119,7 @@ _(Roles assigned as per Subject II.1.1. With 5 team members, roles are specializ
   - **Role(s):** Frontend Developer / UI Designer
   - **Responsibilities:** React components, TailwindCSS styling, game board rendering, responsive design, page layouts.
 
-- **[teammate_2]**
+- **tzizi**
   - **Role(s):** Backend Developer
   - **Responsibilities:** Express API routes, Prisma ORM queries, database schema, authentication endpoints, game logic API.
 

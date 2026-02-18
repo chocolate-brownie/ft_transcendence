@@ -21,22 +21,22 @@
 - [x] Set up Git branching strategy and branch protection rules
 - [x] Configure ESLint for backend and frontend
 
-### Backend Setup — [Backend: teammate_2]
+### Backend Setup — [Backend: mgodawat]
 
 - [x] Review Express project structure (`backend/src/index.ts`) — mgodawat
-- [ ] Install dependencies locally (`cd backend && npm install`)
+- [x] Install dependencies locally (`cd backend && npm install`)
 - [x] Review Prisma schema (`backend/prisma/schema.prisma`) — mgodawat
-- [ ] Run `npx prisma generate` locally (for editor type support)
+- [x] Run `npx prisma generate` locally (for editor type support)
 - [x] Create route file structure: `routes/*.routes.ts` (auth, users, friends, games, chat, tournaments) — mgodawat
 - [x] Create controller file structure: `controllers/*.controller.ts` — mgodawat
 - [x] Create service file structure: `services/*.service.ts` — mgodawat
 - [x] Create middleware directory: `middleware/auth.ts` — mgodawat
 - [x] Create shared Prisma client: `lib/prisma.ts` — mgodawat
-- [ ] Verify backend health check works: `curl -k https://localhost:3000/api/health`
+- [x] Verify backend health check works: `curl -k https://localhost:3000/api/health`
 
-### Frontend Setup — [Frontend: teammate_1]
+### Frontend Setup — [Frontend: mgodawat]
 
-- [ ] Install dependencies locally (`cd frontend && npm install`)
+- [x] Install dependencies locally (`cd frontend && npm install`)
 - [x] Review React project structure (`frontend/src/App.tsx`, `main.tsx`) — mgodawat
 - [x] Set up React Router with placeholder pages: `/`, `/login`, `/signup`, `/profile`, `/game`, `/tournaments`, `/leaderboard`, `/privacy`, `/terms` — mgodawat
 - [x] Create layout shell: Navbar component, Footer component, main content area — mgodawat
@@ -54,24 +54,19 @@
 - [ ] Test from frontend: connect to Socket.io, log `connected` in console
 - [ ] Plan WebSocket event structure document (events for chat + game)
 
-### Project Management — [PM: teammate_4]
+### Project Management — [PM: mgodawat]
 
 - [ ] Create GitHub Issues for all Phase 2 tasks
-- [ ] Set up GitHub Project board (To Do / In Progress / Done / Review)
+- [x] Set up GitHub Project board (To Do / In Progress / Done / Review)
 - [ ] Draft Privacy Policy page content
 - [ ] Draft Terms of Service page content
 - [ ] Ensure all team members have Docker working
-
-### Modules Progressed
-
-- Module #1 — Web Frameworks (React + Express): **In Progress**
-- Module #2 — ORM (Prisma): **In Progress**
 
 ---
 
 ## Phase 2: User Authentication & Management (Day 2)
 
-### Backend Auth API — [Backend: teammate_2]
+### Backend Auth API — [Backend: tzizi]
 
 - [ ] Install bcrypt and jsonwebtoken: `npm install bcrypt jsonwebtoken`
 - [ ] Install types: `npm install -D @types/bcrypt @types/jsonwebtoken`
@@ -116,10 +111,6 @@
 - [ ] Test login flow: valid credentials, wrong password, non-existent email
 - [ ] Test protected route: with token, without token, expired token
 - [ ] Report bugs as GitHub Issues
-
-### Modules Progressed
-
-- Module #5 — Standard User Management: **In Progress**
 
 ---
 
@@ -380,6 +371,6 @@ Module #2 (ORM) ────────────┤
 | :---------- | :---------------------------- | :----------------------------------------------------- |
 | mgodawat    | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions            |
 | teammate_1  | Frontend UI                   | React pages, game board, TailwindCSS, customization UI |
-| teammate_2  | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
+| tzizi       | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
 | teammate_3  | Real-Time Features            | Socket.io, multiplayer sync, chat, online status       |
 | teammate_4  | Project Management + QA       | GitHub Issues, testing, Privacy Policy, ToS, README    |
