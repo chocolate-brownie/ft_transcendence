@@ -30,4 +30,4 @@ function auth(req: AuthRequest, res: Response, next: NextFunction) {
 	}
 }
 
-module.exports(auth);
+module.exports = auth;
