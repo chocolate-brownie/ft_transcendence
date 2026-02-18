@@ -43,8 +43,8 @@
 - [x] Create frontend service files: `services/*.service.ts` (auth, users, games, friends) — mgodawat
 - [x] Create shared TypeScript types: `types/index.ts` (User, Game, Message, Friend, Tournament) — mgodawat
 - [x] Create auth context placeholder: `context/AuthContext.tsx` — mgodawat
-- [ ] Create reusable UI components: Button, Input, Card (TailwindCSS)
-- [ ] Verify hot-reload works (edit App.tsx, see changes in browser)
+- [x] Create reusable UI components: Button, Input, Card (TailwindCSS) — mgodawat
+- [x] Verify hot-reload works (edit App.tsx, see changes in browser)
 
 ### Real-Time Setup — [Real-Time: teammate_3]
 

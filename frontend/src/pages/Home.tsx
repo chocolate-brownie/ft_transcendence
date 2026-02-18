@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import Card from "../components/Card";
 
 type HealthStatus = {
   status: string;
@@ -56,9 +59,7 @@ export default function Home() {
         The Ultimate Multiplayer Tic-Tac-Toe Experience
       </p>
 
-      <div className="bg-white/5 border border-white/10 rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold text-pong-light mb-4">System Status</h2>
-
+      <Card title="System Status" className="w-full max-w-md">
         <div className="space-y-3">
           <StatusRow label="Frontend (React)" status="ok" />
           <StatusRow
@@ -73,7 +74,55 @@ export default function Home() {
         </div>
 
         {error && <p className="mt-4 text-sm text-red-400">Backend error: {error}</p>}
-      </div>
+      </Card>
+
+      <Card title="UI Components Demo" className="w-full max-w-md mt-6">
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-pong-light/50 mb-2">Buttons</p>
+            <div className="flex gap-3">
+              <Button variant="primary">Primary</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="danger">Danger</Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-pong-light/50 mb-2">Disabled Buttons</p>
+            <div className="flex gap-3">
+              <Button variant="primary" disabled>
+                Primary
+              </Button>
+              <Button variant="secondary" disabled>
+                Secondary
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-pong-light/50 mb-2">Inputs</p>
+            <div className="space-y-3">
+              <Input label="Username" placeholder="Enter your name" />
+              <Input label="Email" type="email" placeholder="you@example.com" />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-pong-light/50 mb-2">Card Variants</p>
+            <div className="space-y-3">
+              <Card variant="default" title="Default">
+                <p className="text-sm text-pong-light/60">Glass morphism border</p>
+              </Card>
+              <Card variant="elevated" title="Elevated">
+                <p className="text-sm text-pong-light/60">Stronger contrast</p>
+              </Card>
+              <Card variant="flat" title="Flat">
+                <p className="text-sm text-pong-light/60">No border</p>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
