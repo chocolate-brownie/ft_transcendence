@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import GridBackground from "./components/GridBackground";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -50,20 +51,25 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route element={<HomeLayout />}>
           <Route path="/" element={<Home />} />
         </Route>
         <Route element={<Layout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/game" element={<GameLobby />} />
-          <Route path="/game/:id" element={<Game />} />
           <Route path="/tournaments" element={<Tournaments />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+
+          {/* Protected routes — redirect to /login if not authenticated */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/game" element={<GameLobby />} />
+            <Route path="/game/:id" element={<Game />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
