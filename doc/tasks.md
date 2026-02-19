@@ -78,7 +78,7 @@
 - [ ] Input validation: email format, password min length (8 chars), username min length (3 chars)
 - [ ] Error responses: 400 (bad input), 401 (wrong credentials), 409 (email/username taken)
 
-### Frontend Auth Pages — [Frontend: teammate_1]
+### Frontend Auth Pages — [Frontend: mgodawat]
 
 - [ ] Create Login page (`pages/Login.tsx`):
   - [ ] Email + password form fields

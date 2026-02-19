@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animated grid background */
+@keyframes symbolAppear {
+  0%   { opacity: 0; transform: scale(0.6); }
+  15%  { opacity: 1; transform: scale(1.05); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
 /* Global base styles */
 body {
     margin: 0;

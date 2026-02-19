@@ -13,8 +13,8 @@ export default function Button({
 }: ButtonProps) {
   const base = "px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50";
   const variants = {
-    primary: "bg-pong-accent text-pong-dark hover:bg-pong-accent/80",
-    secondary: "bg-white/10 text-pong-light hover:bg-white/20 border border-white/10",
+    primary: "bg-pong-accent text-pong-background hover:bg-pong-accentDark",
+    secondary: "bg-black/10 text-pong-text hover:bg-black/20 border border-black/10",
     danger: "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30",
   };
 
