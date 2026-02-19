@@ -80,12 +80,12 @@
 
 ### Frontend Auth Pages — [Frontend: mgodawat]
 
-- [ ] Create Login page (`pages/Login.tsx`):
-  - [ ] Email + password form fields
-  - [ ] Form validation (required fields, email format)
-  - [ ] Submit → call `POST /api/auth/login`
-  - [ ] On success → store JWT, redirect to home
-  - [ ] On error → display error message
+- [x] Create Login page (`pages/Login.tsx`):
+  - [x] Email + password form fields
+  - [x] Form validation (required fields, email format)
+  - [x] Submit → call `POST /api/auth/login`
+  - [x] On success → store JWT, redirect to home
+  - [x] On error → display error message
 - [ ] Create Signup page (`pages/Signup.tsx`):
   - [ ] Email + username + password + confirm password fields
   - [ ] Form validation (matching passwords, email format, min lengths)
