@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import GridBackground from "./components/GridBackground";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -12,11 +13,32 @@ import Leaderboard from "./pages/Leaderboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
+function HomeLayout() {
+  return (
+    <div className="relative min-h-screen flex flex-col bg-pong-background overflow-hidden">
+      <GridBackground />
+      <Navbar />
+      <main className="relative flex-1 flex items-center justify-center p-6">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function Layout() {
   return (
-    <div className="min-h-screen flex flex-col bg-pong-dark">
+    <div className="relative min-h-screen flex flex-col bg-pong-background overflow-hidden">
+      <GridBackground />
+      {/* Background watermark logo */}
+      <img
+        src="/logo.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 m-auto w-[200px] h-[200px] object-contain opacity-10 pointer-events-none select-none"
+      />
       <Navbar />
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="relative flex-1 flex items-center justify-center p-6">
         <Outlet />
       </main>
       <Footer />
@@ -28,8 +50,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
+        <Route element={<HomeLayout />}>
           <Route path="/" element={<Home />} />
+        </Route>
+        <Route element={<Layout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />

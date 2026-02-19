@@ -2,12 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animated grid background */
+@keyframes symbolAppear {
+  0%   { opacity: 0; transform: scale(0.6); }
+  15%  { opacity: 1; transform: scale(1.05); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
 /* Global base styles */
 body {
     margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-        Arial, sans-serif;
+    font-family: "DynaPuff", system-ui;
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
