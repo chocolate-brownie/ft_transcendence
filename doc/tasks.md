@@ -86,17 +86,17 @@
   - [x] Submit → call `POST /api/auth/login`
   - [x] On success → store JWT, redirect to home
   - [x] On error → display error message
-- [ ] Create Signup page (`pages/Signup.tsx`):
-  - [ ] Email + username + password + confirm password fields
-  - [ ] Form validation (matching passwords, email format, min lengths)
-  - [ ] Submit → call `POST /api/auth/signup`
-  - [ ] On success → store JWT, redirect to home
-  - [ ] On error → display error message
-- [ ] Create auth context (`context/AuthContext.tsx`):
-  - [ ] Store current user + JWT token in React state
-  - [ ] Provide `login()`, `signup()`, `logout()` functions
-  - [ ] On app load → call `GET /api/auth/me` to restore session
-- [ ] Create ProtectedRoute wrapper (redirect to `/login` if not authenticated)
+- [x] Create Signup page (`pages/Signup.tsx`):
+  - [x] Email + username + password + confirm password fields
+  - [x] Form validation (matching passwords, email format, min lengths)
+  - [x] Submit → call `POST /api/auth/signup`
+  - [x] On success → store JWT, redirect to home
+  - [x] On error → display error message
+- [x] Create auth context (`context/AuthContext.tsx`):
+  - [x] Store current user + JWT token in React state
+  - [x] Provide `login()`, `signup()`, `logout()` functions
+  - [x] On app load → call `GET /api/auth/me` to restore session
+- [x] Create ProtectedRoute wrapper (redirect to `/login` if not authenticated)
 
 ### Real-Time Auth — [Real-Time: teammate_3]
 

@@ -2,7 +2,7 @@
 import { ButtonHTMLAttributes } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "lime";
 };
 
 export default function Button({
@@ -16,6 +16,7 @@ export default function Button({
     primary: "bg-pong-accent text-pong-background hover:bg-pong-accentDark",
     secondary: "bg-black/10 text-pong-text hover:bg-black/20 border border-black/10",
     danger: "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30",
+    lime: "bg-pong-secondary text-white hover:bg-lime-moss-700",
   };
 
   return (
