@@ -15,9 +15,9 @@ export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, saltRounds);
 }
 
-export function generateToken(userId: number, email: string): string {
+export function generateToken(id: number, email: string, username: string): string {
   return jwt.sign(
-    { userId, email },
+    { id, email, username },
     jwtSecret,
     { expiresIn: '1m' }
   );
@@ -56,12 +56,12 @@ export async function signup(email: string, username: string, password: string):
 	},
   });
 
-  return generateToken(user.id, user.email);
+  return generateToken(user.id, user.email, user.username);
 }
 
 export async function login(email: string, password: string): Promise<string> {
   if (!email || !password) {
-    throw new Error('Email or password missing');
+    throw new Error('Email and password are required');
   }
   const user = await prisma.user.findUnique({
 	  where: { email },
@@ -77,5 +77,5 @@ export async function login(email: string, password: string): Promise<string> {
     data: { isOnline: true, updatedAt: new Date() },
   });
 
-  return generateToken(user.id, user.email);
+  return generateToken(user.id, user.email, user.username);
 }

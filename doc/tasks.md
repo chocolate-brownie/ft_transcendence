@@ -68,15 +68,15 @@
 
 ### Backend Auth API — [Backend: tzizi]
 
-- [ ] Install bcrypt and jsonwebtoken: `npm install bcrypt jsonwebtoken`
-- [ ] Install types: `npm install -D @types/bcrypt @types/jsonwebtoken`
-- [ ] Create `middleware/auth.ts` — JWT token verification middleware
-- [ ] Create `routes/auth.ts`:
-  - [ ] `POST /api/auth/signup` — validate input, hash password, create user, return JWT
-  - [ ] `POST /api/auth/login` — verify email + password, return JWT
-  - [ ] `GET /api/auth/me` — return current user from JWT (protected route)
-- [ ] Input validation: email format, password min length (8 chars), username min length (3 chars)
-- [ ] Error responses: 400 (bad input), 401 (wrong credentials), 409 (email/username taken)
+- [x] Install bcrypt and jsonwebtoken: `npm install bcrypt jsonwebtoken`
+- [x] Install types: `npm install -D @types/bcrypt @types/jsonwebtoken`
+- [x] Create `middleware/auth.ts` — JWT token verification middleware
+- [x] Create `routes/auth.ts`:
+  - [x] `POST /api/auth/signup` — validate input, hash password, create user, return JWT
+  - [x] `POST /api/auth/login` — verify email + password, return JWT
+  - [x] `GET /api/auth/me` — return current user from JWT (protected route)
+- [x] Input validation: email format, password min length (8 chars), username min length (3 chars)
+- [x] Error responses: 400 (bad input), 401 (wrong credentials), 409 (email/username taken)
 
 ### Frontend Auth Pages — [Frontend: mgodawat]
 

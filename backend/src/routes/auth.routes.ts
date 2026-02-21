@@ -8,8 +8,8 @@ const router = Router();
 // POST /api/auth/login
 // GET  /api/auth/me
 
-router.get('/api/auth/me', auth, getMeController);
-router.post('/api/auth/signup', signupController);
-router.post('/api/auth/login', loginController);
+router.get('/me', auth, getMeController);
+router.post('/signup', signupController);
+router.post('/login', loginController);
 
 export default router;
