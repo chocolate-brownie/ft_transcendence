@@ -8,7 +8,8 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, Socket } from "socket.io";
+import jwt from "jsonwebtoken";
 import prisma from "./lib/prisma";
 
 // Route imports
@@ -89,9 +90,34 @@ const io = new SocketIOServer(server, {
   },
 });
 
+/** ref: https://socket.io/docs/v4/middlewares/
+ * [x] Add JWT authentication to Socket.io connection handshake */
+io.use((socket: Socket, next: (err?: Error) => void) => {
+  /* if auth exists, get token. If auth is undefined, just return undefined instead of crashing. */
+  const token = socket.handshake.auth?.token;
+
+  if (!token || !token.startsWith("Bearer ")) {
+    return next(new Error("No token provided"));
+  }
+
+  try {
+    // veryify the validity of the jwt token
+    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET!);
+    socket.data.user = decoded;
+    next();
+  } catch (err: any) {
+    if (err.name === "TokenExpiredError") {
+      return next(new Error("Token expired"));
+    }
+    return next(new Error("Invalid token"));
+  }
+});
+
 // Basic Socket.io connection handler
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
+
+  //[x] On connect: set user `isOnline = true` in database
 
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);

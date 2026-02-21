@@ -72,6 +72,7 @@ export async function login(email: string, password: string): Promise<string> {
     throw new Error('Invalid email or password');
   }
 
+  /** Find the user with this ID and set their isOnline to true */
   await prisma.user.update({
     where: { id: user.id },
     data: { isOnline: true, updatedAt: new Date() },

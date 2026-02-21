@@ -98,9 +98,9 @@
   - [x] On app load → call `GET /api/auth/me` to restore session
 - [x] Create ProtectedRoute wrapper (redirect to `/login` if not authenticated)
 
-### Real-Time Auth — [Real-Time: teammate_3]
+### Real-Time Auth — [Real-Time: mgodawat]
 
-- [ ] Add JWT authentication to Socket.io connection handshake
+- [x] Add JWT authentication to Socket.io connection handshake
 - [ ] On connect: set user `isOnline = true` in database
 - [ ] On disconnect: set user `isOnline = false` in database
 - [ ] Broadcast online status changes to friends
