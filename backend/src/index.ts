@@ -62,6 +62,16 @@ app.use("/api/games", gamesRoutes);
 app.use("/api/messages", chatRoutes);
 app.use("/api/tournaments", tournamentsRoutes);
 
+// ─── Global error handler ──────────────────────────────────────────────────
+// Catches any error passed via next(err) or thrown synchronously in a route.
+// Must have exactly 4 parameters so Express recognises it as an error handler.
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("[Global Error Handler]", err);
+  if (!res.headersSent) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // ─── HTTPS Server + Socket.io ──────────────────────────────────────────────
 
 const certPath = path.join(__dirname, "..", "certs", "cert.pem");
@@ -160,6 +170,12 @@ const shutdown = () => {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+// Catch unhandled promise rejections — prevents Node.js from crashing and
+// logs the actual error so we can see what went wrong.
+process.on("unhandledRejection", (reason) => {
+  console.error("[Unhandled Rejection]", reason);
+});
 
 // ─── Utils functions ─────────────────────────────────────────────────────────────────
 async function notifyFriends(userId: number, event: "user_online" | "user_offline") {

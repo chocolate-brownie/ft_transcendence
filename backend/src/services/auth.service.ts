@@ -3,10 +3,9 @@
 // No HTTP concepts here — just plain functions
 
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import prisma from "../lib/prisma";
 
-const prisma = new PrismaClient();
 const saltRounds = 12;
 const jwtSecret = process.env.JWT_SECRET || "default-secret-key";
 
@@ -41,10 +40,14 @@ export async function signup(
   username: string,
   password: string,
 ): Promise<AuthResult> {
-  if (username.length < 3 || password.length < 8) {
+  if (username.length < 3 || password.length < 8 || password.length > 64) {
     throw new Error(
-      "Username must be at least 3 characters and password must be at least 8 characters long",
+      "Username must be at least 3 characters and password must be between 8 and 64 characters",
     );
+  }
+
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    throw new Error("Username can only contain letters, numbers, and underscores");
   }
 
   if (!/\S+@\S+\.\S+/.test(email)) {
@@ -63,7 +66,6 @@ export async function signup(
   const user = await prisma.user.create({
     data: { email, username, passwordHash: hashedPassword },
   });
-
   const token = generateToken(user.id, user.email, user.username);
   return {
     token,

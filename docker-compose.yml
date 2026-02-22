@@ -34,6 +34,7 @@ services:
       PORT: 3000
     ports:
       - "3000:3000"
+      - "5555:5555"
     volumes:
       # :z flag = SELinux relabeling (required on Fedora/RHEL)
       # Without it, SELinux blocks the container from reading host files
