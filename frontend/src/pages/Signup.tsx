@@ -19,8 +19,11 @@ export default function Signup() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Invalid email format.";
     if (!username.trim()) return "Username is required.";
     if (username.trim().length < 3) return "Username must be at least 3 characters.";
+    if (!/^[a-zA-Z0-9_]+$/.test(username.trim()))
+      return "Username can only contain letters, numbers, and underscores.";
     if (!password) return "Password is required.";
     if (password.length < 8) return "Password must be at least 8 characters.";
+    if (password.length > 64) return "Password cannot exceed 64 characters.";
     if (password !== confirmPassword) return "Passwords do not match.";
     return null;
   };
@@ -62,7 +65,6 @@ export default function Signup() {
 
   return (
     <div className="w-full max-w-md">
-
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-pong-accent">Create Account</h1>
@@ -71,7 +73,6 @@ export default function Signup() {
 
       <Card variant="elevated">
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
-
           {/* Error banner */}
           {error && (
             <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -118,18 +119,19 @@ export default function Signup() {
           <Button type="submit" variant="lime" className="w-full mt-2" disabled={loading}>
             {loading ? "Creating account…" : "Sign Up"}
           </Button>
-
         </form>
       </Card>
 
       {/* Footer link */}
       <p className="mt-6 text-sm text-center text-pong-text/40">
         Already have an account?{" "}
-        <Link to="/login" className="text-pong-accent hover:text-pong-accentDark transition-colors">
+        <Link
+          to="/login"
+          className="text-pong-accent hover:text-pong-accentDark transition-colors"
+        >
           Log in
         </Link>
       </p>
-
     </div>
   );
 }

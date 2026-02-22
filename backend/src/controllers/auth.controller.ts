@@ -7,9 +7,8 @@ import type { AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 
 export async function signupController(req: AuthRequest, res: Response) {
-  const { email, username, password } = req.body;
-
   try {
+    const { email, username, password } = req.body;
     const result = await signup(email, username, password);
     res.status(201).json(result);
   } catch (err: any) {
@@ -24,6 +23,7 @@ export async function signupController(req: AuthRequest, res: Response) {
         res.status(409).json({ message: err.message });
         break;
       default:
+        console.error('[signupController] unexpected error:', err);
         res.status(500).json({ message: 'Internal server error' });
         break;
     }
@@ -31,9 +31,8 @@ export async function signupController(req: AuthRequest, res: Response) {
 }
 
 export async function loginController(req: AuthRequest, res: Response) {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
     const result = await login(email, password);
     res.status(200).json(result);
   } catch (err: any) {
@@ -45,6 +44,7 @@ export async function loginController(req: AuthRequest, res: Response) {
         res.status(401).json({ message: err.message });
         break;
       default:
+        console.error('[loginController] unexpected error:', err);
         res.status(500).json({ message: 'Internal server error' });
         break;
     }
