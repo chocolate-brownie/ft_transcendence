@@ -1,16 +1,17 @@
 // Auth controller — handles HTTP request/response for authentication
 // Calls auth.service.ts for business logic
 
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { signup, login } from '../services/auth.service';
 import type { AuthRequest } from '../middleware/auth';
+import prisma from '../lib/prisma';
 
-export async function signupController(req: Request, res: Response) {
+export async function signupController(req: AuthRequest, res: Response) {
   const { email, username, password } = req.body;
 
   try {
-    const token = await signup(email, username, password);
-    res.status(201).json({ token });
+    const result = await signup(email, username, password);
+    res.status(201).json(result);
   } catch (err: any) {
     switch (err.message) {
       case 'Username must be at least 3 characters and password must be at least 8 characters long':
@@ -29,12 +30,12 @@ export async function signupController(req: Request, res: Response) {
   }
 }
 
-export async function loginController(req: Request, res: Response) {
+export async function loginController(req: AuthRequest, res: Response) {
   const { email, password } = req.body;
 
   try {
-    const token = await login(email, password);
-    res.status(200).json({ token });
+    const result = await login(email, password);
+    res.status(200).json(result);
   } catch (err: any) {
     switch (err.message) {
       case 'Email and password are required':
@@ -50,8 +51,34 @@ export async function loginController(req: Request, res: Response) {
   }
 }
 
+// Returns fresh user data from the database, not just the JWT payload.
+// The JWT payload can be stale (e.g. username/avatar changed after token was issued).
 export async function getMeController(req: AuthRequest, res: Response) {
-  const user = req.user;
-  const { id, email, username } = user;
-  res.status(200).json({ user: { id, email, username } });
+  const userId = req.user.id;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+        isOnline: true,
+        wins: true,
+        losses: true,
+        draws: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ user });
+  } catch {
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }

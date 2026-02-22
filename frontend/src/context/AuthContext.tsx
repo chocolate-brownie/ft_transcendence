@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then((data: User) => setUser(data))
+      .then((data: { user: User }) => setUser(data.user))
       .catch(() => localStorage.removeItem("token"))
       .finally(() => setIsLoading(false));
   }, []);
