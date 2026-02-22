@@ -101,9 +101,9 @@
 ### Real-Time Auth — [Real-Time: mgodawat]
 
 - [x] Add JWT authentication to Socket.io connection handshake
-- [ ] On connect: set user `isOnline = true` in database
-- [ ] On disconnect: set user `isOnline = false` in database
-- [ ] Broadcast online status changes to friends
+- [x] On connect: set user `isOnline = true` in database
+- [x] On disconnect: set user `isOnline = false` in database
+- [x] Broadcast online status changes to friends
 
 ### QA & Testing — [PM: teammate_4]
 

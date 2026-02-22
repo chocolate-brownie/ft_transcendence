@@ -114,13 +114,33 @@ io.use((socket: Socket, next: (err?: Error) => void) => {
 });
 
 // Basic Socket.io connection handler
+
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  //[x] On connect: set user `isOnline = true` in database
+  const userId = socket.data.user.id;
 
+  // Each user joins a personal room so others can send them targeted events
+  socket.join(`user:${userId}`);
+
+  // [x] On connect: set user `isOnline = true` in database
+  prisma.user
+    .update({ where: { id: userId }, data: { isOnline: true } })
+    .catch((error) => console.error("Failed to set user online:", error));
+
+  // [x] Broadcast online status to friends
+  notifyFriends(userId, "user_online").catch(console.error);
+
+  // [x] On disconnect: set user `isOnline = false` in database + notify friends
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
+
+    prisma.user
+      .update({ where: { id: userId }, data: { isOnline: false } })
+      .catch((error) => console.error("Failed to set user offline:", error));
+
+    // [x] Broadcast online status to friends
+    notifyFriends(userId, "user_offline").catch(console.error);
   });
 });
 
@@ -140,3 +160,19 @@ const shutdown = () => {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+// ─── Utils functions ─────────────────────────────────────────────────────────────────
+async function notifyFriends(userId: number, event: "user_online" | "user_offline") {
+  const friends = await prisma.friend.findMany({
+    where: {
+      OR: [{ requesterId: userId }, { addresseeId: userId }],
+      status: "ACCEPTED",
+    },
+  });
+
+  friends.forEach((friend) => {
+    const friendId =
+      friend.requesterId === userId ? friend.addresseeId : friend.requesterId;
+    io.to(`user:${friendId}`).emit(event, { userId });
+  });
+}
