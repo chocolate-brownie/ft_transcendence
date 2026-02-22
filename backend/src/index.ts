@@ -8,7 +8,8 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, Socket } from "socket.io";
+import jwt from "jsonwebtoken";
 import prisma from "./lib/prisma";
 
 // Route imports
@@ -89,12 +90,57 @@ const io = new SocketIOServer(server, {
   },
 });
 
+/** ref: https://socket.io/docs/v4/middlewares/
+ * [x] Add JWT authentication to Socket.io connection handshake */
+io.use((socket: Socket, next: (err?: Error) => void) => {
+  /* if auth exists, get token. If auth is undefined, just return undefined instead of crashing. */
+  const token = socket.handshake.auth?.token;
+
+  if (!token || !token.startsWith("Bearer ")) {
+    return next(new Error("No token provided"));
+  }
+
+  try {
+    // veryify the validity of the jwt token
+    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET!);
+    socket.data.user = decoded;
+    next();
+  } catch (err: any) {
+    if (err.name === "TokenExpiredError") {
+      return next(new Error("Token expired"));
+    }
+    return next(new Error("Invalid token"));
+  }
+});
+
 // Basic Socket.io connection handler
+
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  const userId = socket.data.user.id;
+
+  // Each user joins a personal room so others can send them targeted events
+  socket.join(`user:${userId}`);
+
+  // [x] On connect: set user `isOnline = true` in database
+  prisma.user
+    .update({ where: { id: userId }, data: { isOnline: true } })
+    .catch((error) => console.error("Failed to set user online:", error));
+
+  // [x] Broadcast online status to friends
+  notifyFriends(userId, "user_online").catch(console.error);
+
+  // [x] On disconnect: set user `isOnline = false` in database + notify friends
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
+
+    prisma.user
+      .update({ where: { id: userId }, data: { isOnline: false } })
+      .catch((error) => console.error("Failed to set user offline:", error));
+
+    // [x] Broadcast online status to friends
+    notifyFriends(userId, "user_offline").catch(console.error);
   });
 });
 
@@ -114,3 +160,19 @@ const shutdown = () => {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+// ─── Utils functions ─────────────────────────────────────────────────────────────────
+async function notifyFriends(userId: number, event: "user_online" | "user_offline") {
+  const friends = await prisma.friend.findMany({
+    where: {
+      OR: [{ requesterId: userId }, { addresseeId: userId }],
+      status: "ACCEPTED",
+    },
+  });
+
+  friends.forEach((friend) => {
+    const friendId =
+      friend.requesterId === userId ? friend.addresseeId : friend.requesterId;
+    io.to(`user:${friendId}`).emit(event, { userId });
+  });
+}
