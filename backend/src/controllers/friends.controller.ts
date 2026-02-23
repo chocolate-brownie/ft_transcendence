@@ -6,6 +6,7 @@ import { AuthRequest } from "../middleware/auth";
 import {
   createFriendRequest,
   acceptFriendRequest,
+  removeFriend,
 } from "../services/friends.service";
 
 //      SEND FRIEND REQUEST
@@ -74,6 +75,39 @@ export async function acceptFriendRequestController(req: AuthRequest, res: Respo
       return;
     }
     console.error("acceptFriendRequest error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+//    DELETE FRIEND / REJECT REQUEST
+
+export async function deleteFriend(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId: number = req.user.id;
+    const friendIdParam = req.params.friendId;
+
+    if (!friendIdParam) {
+      res.status(400).json({ error: "Invalid friend ID" });
+      return;
+    }
+
+    const friendId = parseInt(friendIdParam as string, 10);
+
+    if (isNaN(friendId)) {
+      res.status(400).json({ error: "Invalid friend ID" });
+      return;
+    }
+
+    await removeFriend(friendId, currentUserId);
+
+    res.status(204).send();
+
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    console.error("deleteFriend error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
