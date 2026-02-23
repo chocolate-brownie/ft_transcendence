@@ -7,6 +7,7 @@ import {
   createFriendRequest,
   acceptFriendRequest,
   removeFriend,
+  getAcceptedFriends,
 } from "../services/friends.service";
 
 //      SEND FRIEND REQUEST
@@ -108,6 +109,26 @@ export async function deleteFriend(req: AuthRequest, res: Response): Promise<voi
       return;
     }
     console.error("deleteFriend error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+//  GET FRIEND LIST
+
+export async function getFriendsList(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId: number = req.user.id;
+
+    const friends = await getAcceptedFriends(currentUserId);
+
+    res.status(200).json(friends);
+
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    console.error("getFriendsList error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }

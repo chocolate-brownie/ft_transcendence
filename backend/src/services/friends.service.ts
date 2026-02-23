@@ -129,3 +129,69 @@ export async function removeFriend(friendUserId: number, currentUserId: number) 
     where: { id: friendship.id },
   });
 }
+
+//          GET ACCEPTED FRIENDS LIST
+
+// Type for Friend return
+interface FriendInfo {
+  id: number;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  isOnline: boolean;
+}
+
+export async function getAcceptedFriends(currentUserId: number) {
+
+  // Seek ACCEPTED status
+  const friendships = await prisma.friend.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [
+        { requesterId: currentUserId },
+        { addresseeId: currentUserId },
+      ],
+    },
+    // Include related user details for each friendship
+    include: {
+      requester: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          isOnline: true,
+        },
+      },
+      addressee: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          isOnline: true,
+        },
+      },
+    },
+  });
+
+  // Map friendships to get the other user in each friendship
+  const friends: FriendInfo[] = friendships.map((friendship: typeof friendships[number]) => {
+    if (friendship.requesterId === currentUserId) {
+      return friendship.addressee;
+    } else {
+      return friendship.requester;
+    }
+  });
+
+  // Sort : online priority
+  friends.sort((a: FriendInfo, b: FriendInfo) => {
+    if (a.isOnline !== b.isOnline) {
+      return a.isOnline ? -1 : 1;
+    }
+    // Sort : string compare
+    return a.username.localeCompare(b.username);
+  });
+
+  return friends;
+}
