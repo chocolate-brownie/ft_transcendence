@@ -57,3 +57,46 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
 
   return friendRequest;
 }
+
+//          ACCEPT FRIEND REQUEST
+
+//Accept Friend Request
+export async function acceptFriendRequest(requestId: number, currentUserId: number) {
+
+  //Check Friend Request available
+  const friendRequest = await prisma.friend.findUnique({
+    where: { id: requestId },
+  });
+
+  if (!friendRequest) {
+    throw { status: 404, message: "Friend request not found" };
+  }
+
+  //Check destinataire
+  if (friendRequest.addresseeId !== currentUserId) {
+    throw { status: 403, message: "You can only accept requests sent to you" };
+  }
+
+  //Check "PENDING" Etat
+  if (friendRequest.status !== "PENDING") {
+    throw { status: 400, message: `Friend request is already ${friendRequest.status.toLowerCase()}` };
+  }
+
+  //Switch "PENDING" to "ACCEPTED"
+  const updatedRequest = await prisma.friend.update({
+    where: { id: requestId },
+    data: {
+      status: "ACCEPTED",
+    },
+    include: {
+      requester: {
+        select: { id: true, username: true },
+      },
+      addressee: {
+        select: { id: true, username: true },
+      },
+    },
+  });
+
+  return updatedRequest;
+}

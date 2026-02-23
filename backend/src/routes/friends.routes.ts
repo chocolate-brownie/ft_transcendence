@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth";
 import {
-  sendFriendRequest,
+    acceptFriendRequestController,
+    sendFriendRequest,
 } from "../controllers/friends.controller";
 
 const router = Router();
@@ -13,6 +14,7 @@ const router = Router();
 router.post("/request/:userId", auth, sendFriendRequest);
 
 // POST   /api/friends/accept/:requestId
+router.post("/accept/:requestId", auth, acceptFriendRequestController);
 // DELETE /api/friends/:friendId
 
 export default router;
