@@ -2,8 +2,9 @@ import { Router } from "express";
 import { auth } from "../middleware/auth";
 import {
     getFriendsList,
-    acceptFriendRequestController,
+    getPendingRequestsController,
     sendFriendRequest,
+    acceptFriendRequestController,
     deleteFriend,
 } from "../controllers/friends.controller";
 
@@ -11,7 +12,9 @@ const router = Router();
 
 // GET    /api/friends
 router.get("/", auth, getFriendsList);
+
 // GET    /api/friends/requests
+router.get("/requests", auth, getPendingRequestsController);
 
 // POST   /api/friends/request/:userId
 router.post("/request/:userId", auth, sendFriendRequest);

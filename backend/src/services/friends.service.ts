@@ -195,3 +195,41 @@ export async function getAcceptedFriends(currentUserId: number) {
 
   return friends;
 }
+
+//          GET PENDING FRIEND REQUESTS (incoming)
+
+export async function getPendingRequests(currentUserId: number) {
+
+  // Seek PENDING status
+  const requests = await prisma.friend.findMany({
+    where: {
+      addresseeId: currentUserId,
+      status: "PENDING",
+    },
+    select: {
+      id: true,
+      requesterId: true,
+      createdAt: true,
+      requester: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    // Recently first
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Build request 
+  return requests.map((req: typeof requests[number]) => ({
+    id: req.id,
+    senderId: req.requesterId,
+    sender: req.requester,
+    createdAt: req.createdAt,
+  }));
+}
