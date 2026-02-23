@@ -3,6 +3,7 @@ import { auth } from "../middleware/auth";
 import {
     acceptFriendRequestController,
     sendFriendRequest,
+    deleteFriend,
 } from "../controllers/friends.controller";
 
 const router = Router();
@@ -15,6 +16,8 @@ router.post("/request/:userId", auth, sendFriendRequest);
 
 // POST   /api/friends/accept/:requestId
 router.post("/accept/:requestId", auth, acceptFriendRequestController);
+
 // DELETE /api/friends/:friendId
+router.delete("/:friendId", auth, deleteFriend);
 
 export default router;

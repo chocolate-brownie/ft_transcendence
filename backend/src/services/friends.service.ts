@@ -100,3 +100,32 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
 
   return updatedRequest;
 }
+
+//          DELETE FRIEND / REJECT REQUEST
+
+export async function removeFriend(friendUserId: number, currentUserId: number) {
+
+  // Self-check
+  if (friendUserId === currentUserId) {
+    throw { status: 400, message: "Invalid friend ID" };
+  }
+
+  // Seek the relationship between two users
+  const friendship = await prisma.friend.findFirst({
+    where: {
+      OR: [
+        { requesterId: currentUserId, addresseeId: friendUserId },
+        { requesterId: friendUserId, addresseeId: currentUserId },
+      ],
+    },
+  });
+
+  if (!friendship) {
+    throw { status: 404, message: "Friendship or friend request not found" };
+  }
+
+  // Hard delete
+  await prisma.friend.delete({
+    where: { id: friendship.id },
+  });
+}
