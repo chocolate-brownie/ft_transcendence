@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth";
 import {
+    getFriendsList,
     acceptFriendRequestController,
     sendFriendRequest,
     deleteFriend,
@@ -9,6 +10,7 @@ import {
 const router = Router();
 
 // GET    /api/friends
+router.get("/", auth, getFriendsList);
 // GET    /api/friends/requests
 
 // POST   /api/friends/request/:userId
