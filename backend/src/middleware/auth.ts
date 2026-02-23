@@ -4,8 +4,7 @@
 // Sets req.user with the decoded user data
 
 import { Request  , Response, NextFunction } from "express";
-
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 //We ned to extend the Request type to include our user property
 export interface AuthRequest extends Request {
 	user?: any;
@@ -24,7 +23,7 @@ export function auth(req: AuthRequest, res: Response, next: NextFunction) {
   const token = auth.split(' ')[1];
 
 	try {
-		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		const decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		req.user = decoded;
 		next();
 	} catch (err: any) {

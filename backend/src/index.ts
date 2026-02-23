@@ -5,9 +5,14 @@
 
 import express from "express";
 import https from "https";
+import http from "http";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import prisma from "./lib/prisma";
@@ -65,19 +70,29 @@ app.use("/api/tournaments", tournamentsRoutes);
 // ─── Global error handler ──────────────────────────────────────────────────
 // Catches any error passed via next(err) or thrown synchronously in a route.
 // Must have exactly 4 parameters so Express recognises it as an error handler.
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("[Global Error Handler]", err);
-  if (!res.headersSent) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    console.error("[Global Error Handler]", err);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+);
+
+// Export app for testing (Supertest uses the Express app directly)
+export { app };
 
 // ─── HTTPS Server + Socket.io ──────────────────────────────────────────────
 
 const certPath = path.join(__dirname, "..", "certs", "cert.pem");
 const keyPath = path.join(__dirname, "..", "certs", "key.pem");
 
-let server: https.Server;
+let server: https.Server | http.Server;
 
 if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
   const httpsOptions = {
@@ -88,7 +103,6 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
   console.log("HTTPS mode enabled");
 } else {
   console.warn("No SSL certs found, falling back to HTTP");
-  const http = require("http");
   server = http.createServer(app);
 }
 
@@ -131,7 +145,7 @@ io.on("connection", (socket) => {
   const userId = socket.data.user.id;
 
   // Each user joins a personal room so others can send them targeted events
-  socket.join(`user:${userId}`);
+  void socket.join(`user:${userId}`);
 
   // [x] On connect: set user `isOnline = true` in database
   prisma.user
@@ -155,11 +169,14 @@ io.on("connection", (socket) => {
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
+// Skip listening when imported by tests (Supertest binds its own ephemeral port)
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`\nBackend running on https://0.0.0.0:${PORT}`);
-  console.log(`Health check: https://localhost:${PORT}/api/health\n`);
-});
+if (process.env.NODE_ENV !== "test") {
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`\nBackend running on https://0.0.0.0:${PORT}`);
+    console.log(`Health check: https://localhost:${PORT}/api/health\n`);
+  });
+}
 
 // Graceful shutdown
 const shutdown = () => {
