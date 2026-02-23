@@ -5,6 +5,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import {
   createFriendRequest,
+  acceptFriendRequest,
 } from "../services/friends.service";
 
 //      SEND FRIEND REQUEST
@@ -40,6 +41,39 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
       return;
     }
     console.error("sendFriendRequest error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+//    ACCEPT FRIEND REQUEST
+
+export async function acceptFriendRequestController(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId: number = req.user.id;
+    const requestIdParam = req.params.requestId;
+
+    if (!requestIdParam) {
+      res.status(400).json({ error: "Invalid request ID" });
+      return;
+    }
+
+    const requestId = parseInt(requestIdParam as string, 10);
+
+    if (isNaN(requestId)) {
+      res.status(400).json({ error: "Invalid request ID" });
+      return;
+    }
+
+    const updatedRequest = await acceptFriendRequest(requestId, currentUserId);
+
+    res.status(200).json(updatedRequest);
+
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    console.error("acceptFriendRequest error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
