@@ -8,6 +8,7 @@ import {
   acceptFriendRequest,
   removeFriend,
   getAcceptedFriends,
+  getPendingRequests,
 } from "../services/friends.service";
 
 //      SEND FRIEND REQUEST
@@ -129,6 +130,26 @@ export async function getFriendsList(req: AuthRequest, res: Response): Promise<v
       return;
     }
     console.error("getFriendsList error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+//    GET PENDING FRIEND REQUESTS
+
+export async function getPendingRequestsController(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId: number = req.user.id;
+
+    const requests = await getPendingRequests(currentUserId);
+
+    res.status(200).json(requests);
+
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    console.error("getPendingRequests error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
