@@ -7,6 +7,8 @@ import {
   createFriendRequest,
 } from "../services/friends.service";
 
+//      SEND FRIEND REQUEST
+
 export async function sendFriendRequest(req: AuthRequest, res: Response): Promise<void> {
   try {
     const requesterId: number = req.user.id;
@@ -20,7 +22,7 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
     }
 
     //Extract ID
-    const addresseeId = parseInt(userIdParam, 10);  // ← corrigé
+    const addresseeId = parseInt(userIdParam, 10);
 
     if (isNaN(addresseeId)) {
       res.status(400).json({ error: "Invalid user ID" });
@@ -28,7 +30,7 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
     }
 
     //Call service
-    const friendRequest = await createFriendRequest(requesterId, addresseeId);  // ← corrigé
+    const friendRequest = await createFriendRequest(requesterId, addresseeId);
 
     res.status(201).json(friendRequest);
 

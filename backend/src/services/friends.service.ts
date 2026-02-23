@@ -17,7 +17,7 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
   });
 
   if (!addressee) {
-    throw { status: 400, message: "User not found" };
+    throw { status: 404, message: "User not found" };
   }
 
   //Check if FriendRequest available (A→B ou B→A, pending/accepted)
