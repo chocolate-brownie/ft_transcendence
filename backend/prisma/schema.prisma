@@ -17,7 +17,7 @@ model User {
   email         String    @unique
   username      String    @unique
   passwordHash  String    @map("password_hash")
-  avatarUrl     String?   @map("avatar_url")
+  avatarUrl     String    @default("/uploads/avatars/default.png") @map("avatar_url")
   displayName   String?   @map("display_name")
   isOnline      Boolean   @default(false) @map("is_online")
   wins          Int       @default(0)
