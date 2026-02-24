@@ -25,3 +25,7 @@ doc/codeguide/
 # ── Logs ──────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*
+
+# ── Uploaded files (keep folder structure, ignore actual uploads) ─────────
+uploads/avatars/*
+!uploads/avatars/.gitkeep

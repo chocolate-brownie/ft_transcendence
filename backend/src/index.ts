@@ -40,6 +40,10 @@ app.use(
 );
 app.use(express.json());
 
+// Serve uploaded files (avatars, etc.) as static assets
+// Example: GET /uploads/avatars/42-1709049600000.jpg
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // ─── Routes ────────────────────────────────────────────────────────────────
 
 // Health check — verifies the server + database are alive
