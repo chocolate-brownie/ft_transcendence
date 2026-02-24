@@ -1,0 +1,105 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Project Infrastructure and Docker Environment Setup",
+      "status": "pending",
+      "details": "Create a monorepo structure with `backend` and `frontend` directories. Configure `docker-compose.yml` to spin up a PostgreSQL container, a Node.js backend container (dev mode), and a Vite frontend container. Create a `Makefile` with commands for `up`, `down`, `build`, and `logs`. Ensure hot-reloading works for both frontend and backend in the containerized environment.",
+      "priority": "high",
+      "description": "Initialize the project repository, configure Docker Compose for full-stack containerization, and set up the Makefile for automation.",
+      "dependencies": [],
+      "testStrategy": "Run `make up` and verify all containers start healthy. Access the frontend via localhost:3000 and backend API via localhost:4000/health. Verify changes in source code trigger hot reloads."
+    },
+    {
+      "id": 2,
+      "title": "Database Modeling and Prisma Configuration",
+      "status": "pending",
+      "details": "Install Prisma in the backend. Define `schema.prisma` with models: `User` (id, email, password_hash, stats), `Game` (id, players, status, winner), `Message` (sender, content, timestamp), and `Tournament`. Establish relationships (e.g., User-to-Game, User-to-Friends). Configure the connection string in `.env` to point to the Dockerized Postgres instance.",
+      "priority": "high",
+      "description": "Define the data models for Users, Games, Messages, and Tournaments using Prisma and apply migrations to the PostgreSQL database.",
+      "dependencies": [],
+      "testStrategy": "Run `npx prisma migrate dev`. Use Prisma Studio (`npx prisma studio`) to inspect the database and manually create a test User record to verify connectivity and schema correctness."
+    },
+    {
+      "id": 3,
+      "title": "Backend Authentication Module Implementation",
+      "status": "pending",
+      "details": "Create Express routes for `/auth/register` and `/auth/login`. Implement bcrypt for password hashing before storage. On successful login, generate a signed JWT containing the user ID. Create an authentication middleware to protect API routes. Implement a `/auth/me` endpoint to retrieve the current user's profile based on the token.",
+      "priority": "high",
+      "description": "Implement secure user registration, login, and JWT issuance using Passport.js or custom middleware with bcrypt.",
+      "dependencies": [],
+      "testStrategy": "Use Postman to send POST requests to register and login. Verify that login returns a valid JWT. Attempt to access a protected route without a token and verify a 401 Unauthorized response."
+    },
+    {
+      "id": 4,
+      "title": "Frontend Setup, Routing, and Auth Integration",
+      "status": "pending",
+      "details": "Scaffold the Vite React app. Configure TailwindCSS. Set up `react-router-dom` with routes for Login, Register, Dashboard, and Game. Create an `AuthContext` that checks for a stored JWT on load, handles login/logout state, and redirects unauthenticated users from protected routes. Build basic forms for Login and Signup.",
+      "priority": "high",
+      "description": "Initialize the React application with TailwindCSS, set up React Router, and implement the Authentication Context.",
+      "dependencies": [],
+      "testStrategy": "Open the app in a browser. Verify redirection to Login if not authenticated. complete the login form and verify redirection to the Dashboard. Refresh the page to ensure the session persists."
+    },
+    {
+      "id": 5,
+      "title": "WebSocket Infrastructure and Handshake Authentication",
+      "status": "pending",
+      "details": "Initialize `socket.io` on the Express HTTP server. Implement middleware in Socket.io to validate the JWT from the client handshake query or headers. Map socket IDs to User IDs in a server-side `Map` or Redis (if scaling). On the frontend, initialize the socket client within a `SocketContext` that connects only after the user is authenticated.",
+      "priority": "high",
+      "description": "Set up the Socket.io server on the backend and client on the frontend, ensuring only authenticated users can connect.",
+      "dependencies": [],
+      "testStrategy": "Connect a client with a valid token and verify the server logs 'User connected'. Attempt connection with an invalid token and verify the server disconnects the socket immediately."
+    },
+    {
+      "id": 6,
+      "title": "Core Game Engine and State Management (Backend)",
+      "status": "pending",
+      "details": "Create a `GameService` class. Handle events: `join_queue`, `create_game`, `make_move`. Implement logic to manage board state (3x3 grid), validate turn order, check for win/draw conditions after every move, and broadcast `game_update` events to room participants. Persist game results to the database upon completion.",
+      "priority": "high",
+      "description": "Implement the server-side Tic-Tac-Toe logic, room management, and move validation.",
+      "dependencies": [],
+      "testStrategy": "Write unit tests for the game logic (win detection, illegal moves). Simulate two socket clients joining a room, playing a full game, and verify the final `game_end` event contains the correct winner."
+    },
+    {
+      "id": 7,
+      "title": "Interactive Game Board UI and Gameplay Integration",
+      "status": "pending",
+      "details": "Create a `GameBoard` component that renders the grid based on state received from the server. Implement click handlers that emit `make_move` events. Listen for `game_start`, `game_update`, and `game_end` events to update the UI. Add visual indicators for 'Your Turn', 'Opponent's Turn', and game results.",
+      "priority": "high",
+      "description": "Build the frontend game interface and integrate it with the backend WebSocket events.",
+      "dependencies": [],
+      "testStrategy": "Manually play a game between two browser windows. Verify that a move in Window A instantly updates the board in Window B. Verify that invalid moves (clicking an occupied cell) do not trigger server requests."
+    },
+    {
+      "id": 8,
+      "title": "Social System: Friends and Real-Time Chat",
+      "status": "pending",
+      "details": "Create DB relations for friends. Implement API routes to add/remove friends. Build a Chat UI sidebar. Use Socket.io to emit `send_message` and listen for `receive_message`. Implement presence tracking: when a socket connects/disconnects, broadcast status updates (Online/Offline/In-Game) to friends.",
+      "priority": "medium",
+      "description": "Implement friend management and a real-time chat system with online status tracking.",
+      "dependencies": [],
+      "testStrategy": "Open two clients who are friends. Send a message and verify instant delivery. Disconnect one client and verify the other client sees the status change to 'Offline' immediately."
+    },
+    {
+      "id": 9,
+      "title": "Minimax AI Opponent Implementation",
+      "status": "pending",
+      "details": "Create a specific game mode `vs_ai`. Implement the Minimax algorithm in the backend `GameService`. When it is the AI's turn, calculate the optimal move and update the board state. Ensure the AI runs efficiently to prevent event loop blocking (consider `setImmediate` or worker threads if depth is high).",
+      "priority": "medium",
+      "description": "Develop the single-player mode with a server-side AI using the Minimax algorithm.",
+      "dependencies": [],
+      "testStrategy": "Play against the AI. Verify it blocks immediate winning moves by the player and takes winning moves when available. Ensure the server does not crash or lag during AI calculation."
+    },
+    {
+      "id": 10,
+      "title": "Tournament System and Leaderboard Aggregation",
+      "status": "pending",
+      "details": "Create a `TournamentManager` to handle bracket generation (4 or 8 players). Manage game creation for tournament branches automatically. Upon game completion, advance the winner. Create a Leaderboard API endpoint that aggregates user wins/losses using Prisma `groupBy` or raw SQL for performance.",
+      "priority": "medium",
+      "description": "Implement tournament bracket logic and global leaderboards based on user statistics.",
+      "dependencies": [],
+      "testStrategy": "Create a 4-player tournament. Simulate matches moving winners to the next round until a final winner is declared. Check the Leaderboard page to ensure win counts and rankings are updated correctly."
+    }
+  ],
+  "expanded_tasks": []
+}

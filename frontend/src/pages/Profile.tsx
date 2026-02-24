@@ -10,39 +10,54 @@ export default function Profile() {
   const { id } = useParams();
   const { user } = useAuth();
 
-  let targetUserId: string;
+  // Compute target user ID before any hooks.
+  // isMeAlias → will redirect to /profile (no id param).
+  // resolvedId null (no id, no user) → will redirect to /login.
+  const isMeAlias = id === "me";
+  const resolvedId: string | null = isMeAlias
+    ? null
+    : id != null
+    ? id
+    : user?.id != null
+    ? user.id.toString()
+    : null;
 
-  if (id == "me" && (user && user.id != null)) {
-    return <Navigate to="/profile" replace />;
-  }
-
-  if (id) {
-    targetUserId = id;
-  } else if (user && user.id != null) {
-    targetUserId = user.id.toString();
-  } else {
-    return <Navigate to="/login" replace />;
-  }
-
+  // All hooks unconditionally at the top — React rules of hooks
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    if (resolvedId == null) return;
 
-    fetch(`/api/users/${targetUserId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("User not found");
-        return res.json();
-      })
-      .then((data) => setProfile(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [targetUserId]);
+    const doFetch = () => {
+      setLoading(true);
+      setError(null);
+      fetch(`/api/users/${resolvedId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("User not found");
+          return res.json();
+        })
+        .then((data) => setProfile(data))
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    };
 
-  if (loading) {
+    doFetch();
+
+    // Re-fetch when the tab regains focus so isOnline stays fresh
+    const onVisible = () => {
+      if (document.visibilityState === "visible") doFetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [resolvedId]);
+
+  // Conditional redirects AFTER all hooks
+  if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
+  if (resolvedId == null) return <Navigate to="/login" replace />;
+
+  if (loading && !profile) {
     return (
       <div className="w-full max-w-2xl mx-auto flex justify-center py-8">
         <div className="flex flex-col items-center gap-2">
