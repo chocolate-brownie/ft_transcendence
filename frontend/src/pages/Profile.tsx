@@ -6,7 +6,6 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 
 export default function Profile() {
-
   const { id } = useParams();
   const { user } = useAuth();
 
@@ -17,10 +16,10 @@ export default function Profile() {
   const resolvedId: string | null = isMeAlias
     ? null
     : id != null
-    ? id
-    : user?.id != null
-    ? user.id.toString()
-    : null;
+      ? id
+      : user?.id != null
+        ? user.id.toString()
+        : null;
 
   // All hooks unconditionally at the top — React rules of hooks
   const [profile, setProfile] = useState<User | null>(null);
@@ -90,8 +89,8 @@ export default function Profile() {
   if (!profile) return null;
 
   function handleEditClick() {
-    if (!profile) return ;
-  
+    if (!profile) return;
+
     let initialName = "";
 
     if (profile.displayName) {
@@ -182,7 +181,11 @@ export default function Profile() {
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
                 <div className="h-full w-full overflow-hidden rounded-full bg-black/10">
-                  <img src={avatarSrc} alt="Avatar" className="h-full w-full object-cover" />
+                  <img
+                    src={avatarSrc}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <span
                   className={
@@ -215,7 +218,9 @@ export default function Profile() {
               {isMine && isEditing && (
                 <div className="mt-4 space-y-3 text-left">
                   <div>
-                    <p className="mb-1 block text-xs font-medium text-pong-text/60">Display name</p>
+                    <p className="mb-1 block text-xs font-medium text-pong-text/60">
+                      Display name
+                    </p>
                     <input
                       type="text"
                       className="w-full rounded-md border border-black/10 bg-black/10 px-3 py-2 text-sm outline-none focus:border-pong-accent"
@@ -231,14 +236,16 @@ export default function Profile() {
                       variant="primary"
                       className="flex-1"
                       onClick={handleSave}
-                      disabled={saving}>
+                      disabled={saving}
+                    >
                       {saving ? "Saving..." : "Save"}
                     </Button>
                     <Button
                       variant="secondary"
                       type="button"
                       className="flex-1"
-                      onClick={handleCancelEdit}>
+                      onClick={handleCancelEdit}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -250,7 +257,7 @@ export default function Profile() {
               )}
             </div>
           </Card>
-              
+
           {/* Stats card */}
           <Card variant="elevated">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
@@ -260,21 +267,30 @@ export default function Profile() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
                 <p className="text-xs text-pong-text/50">Wins</p>
-                <p className="text-lg font-bold text-pong-text/100">{profile.wins ? profile.wins : 0}</p>
+                <p className="text-lg font-bold text-pong-text/100">
+                  {profile.wins ? profile.wins : 0}
+                </p>
               </div>
               <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
                 <p className="text-xs text-pong-text/50">Losses</p>
-                <p className="text-lg font-bold text-pong-text/100">{profile.losses ? profile.losses : 0}</p>
+                <p className="text-lg font-bold text-pong-text/100">
+                  {profile.losses ? profile.losses : 0}
+                </p>
               </div>
               <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
                 <p className="text-xs text-pong-text/50">Draws</p>
-                <p className="text-lg font-bold text-pong-text/100">{profile.draws ? profile.draws : 0}</p>
+                <p className="text-lg font-bold text-pong-text/100">
+                  {profile.draws ? profile.draws : 0}
+                </p>
               </div>
               <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
                 <p className="text-xs text-pong-text/50">Win Rate</p>
                 <p className="text-lg font-bold text-pong-text/100">
                   {profile.wins + profile.losses + profile.draws > 0
-                    ? Math.round((profile.wins / (profile.wins + profile.losses + profile.draws)) * 100)
+                    ? Math.round(
+                        (profile.wins / (profile.wins + profile.losses + profile.draws)) *
+                          100,
+                      )
                     : 0}
                   %
                 </p>

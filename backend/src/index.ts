@@ -42,7 +42,7 @@ app.use(express.json());
 
 // Serve uploaded files (avatars, etc.) as static assets
 // Example: GET /uploads/avatars/42-1709049600000.jpg
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 

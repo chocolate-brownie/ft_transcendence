@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) return null; // Transient server error — keep token, try again next load
         return res.json();
       })
-      .then((data: { user: User } | null) => { if (data) setUser(data.user); })
+      .then((data: { user: User } | null) => {
+        if (data) setUser(data.user);
+      })
       .catch(() => {}) // Network error — keep token, don't log out
       .finally(() => setIsLoading(false));
   }, []);

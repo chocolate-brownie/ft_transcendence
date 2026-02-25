@@ -1,11 +1,10 @@
 // Friends service — business logic for friend operations
 // Send request, accept, reject, remove, list friends
 
-import prisma from '../lib/prisma';
+import prisma from "../lib/prisma";
 
 //     SEND FRIEND REQUEST
 export async function createFriendRequest(requesterId: number, addresseeId: number) {
-
   //Self-FriendRequest Check
   if (requesterId === addresseeId) {
     throw { status: 400, message: "You cannot send a friend request to yourself" };
@@ -35,7 +34,10 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
     if (existing.status === "ACCEPTED") {
       throw { status: 409, message: "You are already friends with this user" };
     }
-    throw { status: 409, message: "A friend request already exists between you and this user" };
+    throw {
+      status: 409,
+      message: "A friend request already exists between you and this user",
+    };
   }
 
   //Create FriendRequest
@@ -62,7 +64,6 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
 
 //Accept Friend Request
 export async function acceptFriendRequest(requestId: number, currentUserId: number) {
-
   //Check Friend Request available
   const friendRequest = await prisma.friend.findUnique({
     where: { id: requestId },
@@ -79,7 +80,10 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
 
   //Check "PENDING" Etat
   if (friendRequest.status !== "PENDING") {
-    throw { status: 400, message: `Friend request is already ${friendRequest.status.toLowerCase()}` };
+    throw {
+      status: 400,
+      message: `Friend request is already ${friendRequest.status.toLowerCase()}`,
+    };
   }
 
   //Switch "PENDING" to "ACCEPTED"
@@ -104,7 +108,6 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
 //          DELETE FRIEND / REJECT REQUEST
 
 export async function removeFriend(friendUserId: number, currentUserId: number) {
-
   // Self-check
   if (friendUserId === currentUserId) {
     throw { status: 400, message: "Invalid friend ID" };
@@ -142,15 +145,11 @@ interface FriendInfo {
 }
 
 export async function getAcceptedFriends(currentUserId: number) {
-
   // Seek ACCEPTED status
   const friendships = await prisma.friend.findMany({
     where: {
       status: "ACCEPTED",
-      OR: [
-        { requesterId: currentUserId },
-        { addresseeId: currentUserId },
-      ],
+      OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
     },
     // Include related user details for each friendship
     include: {
@@ -176,13 +175,15 @@ export async function getAcceptedFriends(currentUserId: number) {
   });
 
   // Map friendships to get the other user in each friendship
-  const friends: FriendInfo[] = friendships.map((friendship: typeof friendships[number]) => {
-    if (friendship.requesterId === currentUserId) {
-      return friendship.addressee;
-    } else {
-      return friendship.requester;
-    }
-  });
+  const friends: FriendInfo[] = friendships.map(
+    (friendship: (typeof friendships)[number]) => {
+      if (friendship.requesterId === currentUserId) {
+        return friendship.addressee;
+      } else {
+        return friendship.requester;
+      }
+    },
+  );
 
   // Sort : online priority
   friends.sort((a: FriendInfo, b: FriendInfo) => {
@@ -199,7 +200,6 @@ export async function getAcceptedFriends(currentUserId: number) {
 //          GET PENDING FRIEND REQUESTS (incoming)
 
 export async function getPendingRequests(currentUserId: number) {
-
   // Seek PENDING status
   const requests = await prisma.friend.findMany({
     where: {
@@ -225,8 +225,8 @@ export async function getPendingRequests(currentUserId: number) {
     },
   });
 
-  // Build request 
-  return requests.map((req: typeof requests[number]) => ({
+  // Build request
+  return requests.map((req: (typeof requests)[number]) => ({
     id: req.id,
     senderId: req.requesterId,
     sender: req.requester,

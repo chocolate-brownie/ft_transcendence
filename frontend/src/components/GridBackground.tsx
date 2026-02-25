@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 const CELL_SIZE = 100;
 const COLORS = [
-  "rgba(117, 153, 51,",  // lime-moss
-  "rgba(240, 139, 15,",  // carrot-orange
+  "rgba(117, 153, 51,", // lime-moss
+  "rgba(240, 139, 15,", // carrot-orange
 ];
 
 type GridSymbol = {

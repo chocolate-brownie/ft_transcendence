@@ -55,7 +55,7 @@ export default function Signup() {
       }
 
       localStorage.setItem("token", data.token);
-      navigate("/");
+      void navigate("/");
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -72,7 +72,7 @@ export default function Signup() {
       </div>
 
       <Card variant="elevated">
-        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        <form className="space-y-5" onSubmit={(e) => { void handleSubmit(e); }} noValidate>
           {/* Error banner */}
           {error && (
             <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
