@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import type { User } from "../types";
+import { authService } from "../services/auth.service";
+import { ApiError } from "../lib/apiClient";
 
 // --- Types ---
 
@@ -28,61 +30,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-    fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 401) {
+    authService
+      .me()
+      .then((data) => setUser(data.user))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
           // Token is invalid or expired — clear it
           localStorage.removeItem("token");
-          return null;
         }
-        if (!res.ok) return null; // Transient server error — keep token, try again next load
-        return res.json();
+        // Other errors: transient server error — keep token, try again next load
       })
-      .then((data: { user: User } | null) => {
-        if (data) setUser(data.user);
-      })
-      .catch(() => {}) // Network error — keep token, don't log out
       .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || "Login failed.");
+    const data = await authService.login(email, password);
     localStorage.setItem("token", data.token);
     setUser(data.user);
   };
 
   const signup = async (email: string, username: string, password: string) => {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, username, password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || "Signup failed.");
+    const data = await authService.signup(email, username, password);
     localStorage.setItem("token", data.token);
     setUser(data.user);
   };
 
   const logout = () => {
-    const token = localStorage.getItem("token");
+    // Fire-and-forget logout — must be called before clearing localStorage
+    // so apiClient can still read the token
+    authService.logout();
     localStorage.removeItem("token");
     setUser(null);
-    // Tell the server to mark the user offline immediately instead of waiting
-    // for the socket to disconnect on its own (which can take several seconds)
-    if (token) {
-      fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {}); // best-effort — don't block the UI
-    }
   };
 
   return (

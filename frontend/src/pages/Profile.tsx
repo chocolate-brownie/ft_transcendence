@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { User } from "../types";
+import { usersService } from "../services/users.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
 
@@ -38,13 +39,10 @@ export default function Profile() {
     const doFetch = () => {
       setLoading(true);
       setError(null);
-      fetch(`/api/users/${resolvedId}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("User not found");
-          return res.json();
-        })
+      usersService
+        .getUserById(Number(resolvedId))
         .then((data) => setProfile(data))
-        .catch((err) => setError(err.message))
+        .catch((err) => setError(err instanceof Error ? err.message : "User not found"))
         .finally(() => setLoading(false));
     };
 
@@ -123,23 +121,8 @@ export default function Profile() {
     setSaving(true);
     setEditError(null);
 
-    const token = localStorage.getItem("token");
-
-    fetch("/api/users/me", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify({ displayName: trimmed }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message ?? "Failed to update profile");
-        }
-        return res.json();
-      })
+    usersService
+      .updateMe({ displayName: trimmed })
       .then((data) => {
         if (!profile) {
           setIsEditing(false);
@@ -157,7 +140,7 @@ export default function Profile() {
         setSuccessMessage("Profile updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
-      .catch((err) => setEditError(err.message))
+      .catch((err) => setEditError(err instanceof Error ? err.message : "Failed to update profile"))
       .finally(() => setSaving(false));
   }
 
