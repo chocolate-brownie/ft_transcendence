@@ -24,3 +24,5 @@ const sorted = React.useMemo(() => {
   });
 }, [friends]);
 
+export function FriendsList({ friends, onRemoveFriend, className }: FriendsListProps) {}
+
