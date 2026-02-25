@@ -45,6 +45,14 @@ export interface Friend {
   createdAt: string;
 }
 
+export interface FriendInfo {
+  id: number;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  isOnline: boolean;
+}
+
 export interface Tournament {
   id: number;
   name: string;

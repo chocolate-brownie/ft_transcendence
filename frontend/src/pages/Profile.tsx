@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { User } from "../types";
+import { usersService } from "../services/users.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
 
 export default function Profile() {
-
   const { id } = useParams();
   const { user } = useAuth();
 
@@ -22,7 +22,6 @@ export default function Profile() {
     ? user.id.toString()
     : null;
 
-  // All hooks unconditionally at the top — React rules of hooks
   // ── State
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -46,13 +45,12 @@ export default function Profile() {
     const doFetch = () => {
       setLoading(true);
       setError(null);
-      fetch(`/api/users/${resolvedId}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("User not found");
-          return res.json();
-        })
+      usersService
+        .getUserById(Number(resolvedId))
         .then((data) => setProfile(data))
-        .catch((err) => setError(err.message))
+        .catch((err) =>
+          setError(err instanceof Error ? err.message : "User not found"),
+        )
         .finally(() => setLoading(false));
     };
 
@@ -99,27 +97,24 @@ export default function Profile() {
 
   // ── Handlers: display name
   function handleEditClick() {
-    if (!profile) return ;
-  
-    let initialName = "";
+    if (!profile) return;
 
-    if (profile.displayName) {
-      initialName = profile.displayName;
-    } else {
-      initialName = profile.username;
-    }
+    const initialName = profile.displayName || profile.username;
 
     setEditError(null);
     setSuccessMessage(null);
     setEditDisplayName(initialName);
     setIsEditing(true);
   }
+
   function handleCancelEdit() {
     setIsEditing(false);
   }
+
   function handleDisplayNameChange(e: any) {
     setEditDisplayName(e.target.value);
   }
+
   function handleSave() {
     const trimmed = editDisplayName.trim();
     if (trimmed.length < 1 || trimmed.length > 50) {
@@ -130,20 +125,8 @@ export default function Profile() {
     setSaving(true);
     setEditError(null);
 
-    const token = localStorage.getItem("token");
-
-    fetch("/api/users/me", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify({ displayName: trimmed }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to update profile");
-        return res.json();
-      })
+    usersService
+      .updateMe({ displayName: trimmed })
       .then((data) => {
         if (!profile) {
           setIsEditing(false);
@@ -160,7 +143,11 @@ export default function Profile() {
         setSuccessMessage("Profile updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
-      .catch((err) => setEditError(err.message))
+      .catch((err) =>
+        setEditError(
+          err instanceof Error ? err.message : "Failed to update profile",
+        ),
+      )
       .finally(() => setSaving(false));
   }
 
@@ -174,35 +161,22 @@ export default function Profile() {
       setAvatarError("File is too large (max 5MB).");
       return;
     }
-  
+
     setAvatarError(null);
     handleAvatarUpload(file);
-
   }
+
   function handleAvatarUpload(file: File) {
     setAvatarSaving(true);
     setAvatarError(null);
 
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    fetch("/api/users/me/avatar", {
-      method: "POST",
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: formData,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to upload avatar");
-        return res.json();
-      })
+    usersService
+      .uploadAvatar(file)
       .then((data) => {
         if (!profile) {
           return;
         }
-        
+
         const updatedProfile: User = {
           ...profile,
           avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl,
@@ -212,23 +186,29 @@ export default function Profile() {
         setSuccessMessage("Avatar updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
-      .catch((err) => setAvatarError(err.message))
+      .catch((err) =>
+        setAvatarError(
+          err instanceof Error ? err.message : "Failed to upload avatar",
+        ),
+      )
       .finally(() => setAvatarSaving(false));
   }
 
-  // // ── Derived values
+  // ── Derived values
   const isMine = user && user.id != null && user.id === profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
-// Base URL du backend pour les fichiers statiques
-const BACKEND_ORIGIN = "https://localhost:3000";
-// Si on a un preview (blob:), on l'utilise.
-// Sinon, si on a un avatarUrl qui commence par /uploads, on le préfixe avec le backend.
-// Sinon, fallback sur le logo par défaut.
-const rawAvatar = profile.avatarUrl ?? null;
-const avatarSrc =
-  rawAvatar && rawAvatar.startsWith("/uploads/")
-    ? `${BACKEND_ORIGIN}${rawAvatar}` // ex: https://localhost:3000/uploads/avatars/...
-    : rawAvatar || "/logo-friends.png";
+
+  // Backend URL base for static files
+  const BACKEND_ORIGIN = "https://localhost:3000";
+
+  // If we have an avatarUrl that starts with /uploads, prefix it with the backend URL.
+// Otherwise, fall back to the fallback logo.
+  const rawAvatar = profile.avatarUrl ?? null;
+  const avatarSrc =
+    rawAvatar && rawAvatar.startsWith("/uploads/")
+      ? `${BACKEND_ORIGIN}${rawAvatar}`
+      : rawAvatar || "/logo-friends.png";
+
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -254,9 +234,9 @@ const avatarSrc =
                   className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
                   onClick={() => {
                     if (!isMine || avatarSaving) return;
-                    if (fileInputRef.current) { //
+                    if (fileInputRef.current) {
                       fileInputRef.current.click();
-                    } //
+                    }
                   }}
                   disabled={!isMine || avatarSaving}
                 >

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -41,23 +43,10 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.message || "Signup failed. Please try again.");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      navigate("/");
-    } catch {
-      setError("Network error. Please try again.");
+      await signup(email.trim(), username.trim(), password);
+      void navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +61,7 @@ export default function Signup() {
       </div>
 
       <Card variant="elevated">
-        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        <form className="space-y-5" onSubmit={(e) => { void handleSubmit(e); }} noValidate>
           {/* Error banner */}
           {error && (
             <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
