@@ -85,7 +85,7 @@ export default function Profile() {
 
   const isMine = user && user.id != null && user.id == profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
-  const avatarSrc = profile.avatarUrl ? profile.avatarUrl : "/logo-friends.png";
+  const avatarSrc = profile.avatarUrl ? profile.avatarUrl : "/z.png";
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -111,7 +111,7 @@ export default function Profile() {
                 </div>
                 <span
                   className={
-                    "absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white " +
+                    "absolute bottom-1 right-2 h-3 w-3 rounded-full border-2 border-white " +
                     (profile.isOnline ? "bg-green-500" : "bg-gray-400")
                   }
                 />
