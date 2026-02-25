@@ -10,45 +10,54 @@ export default function Profile() {
   const { id } = useParams();
   const { user } = useAuth();
 
-  let targetUserId: string;
+  // Compute target user ID before any hooks.
+  // isMeAlias → will redirect to /profile (no id param).
+  // resolvedId null (no id, no user) → will redirect to /login.
+  const isMeAlias = id === "me";
+  const resolvedId: string | null = isMeAlias
+    ? null
+    : id != null
+    ? id
+    : user?.id != null
+    ? user.id.toString()
+    : null;
 
-  if (id == "me" && (user && user.id != null)) {
-    return <Navigate to="/profile" replace />;
-  }
-
-  if (id) {
-    targetUserId = id;
-  } else if (user && user.id != null) {
-    targetUserId = user.id.toString();
-  } else {
-    return <Navigate to="/login" replace />;
-  }
-
+  // All hooks unconditionally at the top — React rules of hooks
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    if (resolvedId == null) return;
 
-    fetch(`/api/users/${targetUserId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("User not found");
-        return res.json();
-      })
-      .then((data) => setProfile(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [targetUserId]);
+    const doFetch = () => {
+      setLoading(true);
+      setError(null);
+      fetch(`/api/users/${resolvedId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("User not found");
+          return res.json();
+        })
+        .then((data) => setProfile(data))
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    };
 
-  if (loading) {
+    doFetch();
+
+    // Re-fetch when the tab regains focus so isOnline stays fresh
+    const onVisible = () => {
+      if (document.visibilityState === "visible") doFetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [resolvedId]);
+
+  // Conditional redirects AFTER all hooks
+  if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
+  if (resolvedId == null) return <Navigate to="/login" replace />;
+
+  if (loading && !profile) {
     return (
       <div className="w-full max-w-2xl mx-auto flex justify-center py-8">
         <div className="flex flex-col items-center gap-2">
@@ -73,72 +82,6 @@ export default function Profile() {
     );
   }
   if (!profile) return null;
-
-  function handleEditClick() {
-    let initialName = "";
-
-    if (profile) {
-      if (profile.displayName) {
-        initialName = profile.displayName;
-      } else {
-        initialName = profile.username;
-      }
-    }
-    setEditError(null);
-    setSuccessMessage(null);
-    setEditDisplayName(initialName);
-    setIsEditing(true);
-  }
-  function handleCancelEdit() {
-    setIsEditing(false);
-  }
-  function handleDisplayNameChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setEditDisplayName(e.target.value);
-  }
-  function handleSave() {
-    const trimmed = editDisplayName.trim();
-    if (trimmed.length < 1 || trimmed.length > 50) {
-      setEditError("Display name must be between 1 and 50 characters.");
-      return;
-    }
-  
-    setSaving(true);
-    setEditError(null);
-
-    const token = localStorage.getItem("token");
-
-    fetch("/api/users/me", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify({ displayName: trimmed }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to update profile");
-        return res.json();
-      })
-      .then((data) => {
-        if (!profile) {
-          setIsEditing(false);
-          return;
-        }
-        const updatedProfile: User = {
-          ...profile,
-          displayName: data.displayName ? data.displayName : profile.displayName,
-          // avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl,
-        };
-
-        setProfile(updatedProfile);
-        setIsEditing(false);
-        setSuccessMessage("Profile updated");
-
-        setTimeout(() => setSuccessMessage(null), 3000);
-      })
-      .catch((err) => setEditError(err.message))
-      .finally(() => setSaving(false));
-  }
 
   const isMine = user && user.id != null && user.id == profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
@@ -185,55 +128,12 @@ export default function Profile() {
                 Joined {joined}
               </p>
 
-              {isMine && !isEditing && (
+              {isMine && (
                 <div className="mt-4">
-                  <Button variant="primary" className="w-full" onClick={handleEditClick}>
+                  <Button variant="primary" className="w-full">
                     Edit Profile
                   </Button>
                 </div>
-              )}
-              {isMine && isEditing && (
-                <div className="mt-4 space-y-3 text-left">
-                  <div>
-                    <p className="mb-1 block text-xs font-medium text-pong-text/60">
-                      Display name
-                    </p>
-                    <input
-                      type="text"
-                      className="w-full rounded-md border border-black/10 bg-black/10 px-3 py-2 text-sm outline-none focus:border-pong-accent"
-                      value={editDisplayName}
-                      onChange={handleDisplayNameChange}
-                    />
-                  </div>
-
-                  {editError && (
-                    <p className="text-xs text-red-400">
-                      {editError}
-                    </p>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={handleSave}
-                      disabled={saving}>
-                      {saving ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      type="button"
-                      className="flex-1"
-                      onClick={handleCancelEdit}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {successMessage && (
-                <p className="mt-2 text-xs text-green-400">
-                  {successMessage}
-                </p>
               )}
             </div>
           </Card>
