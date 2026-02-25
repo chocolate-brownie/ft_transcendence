@@ -23,6 +23,17 @@ export const getUserById = async (id: number) => {
     },
   });
 
+  if (!user) {
+    return null;
+  }
+
+  let avatarUrl = user.avatarUrl;
+  if (!avatarUrl || avatarUrl.includes("default.png")) {
+    avatarUrl = null;
+  }
+
+  user.avatarUrl = avatarUrl;
+
   return user;
 };
 
