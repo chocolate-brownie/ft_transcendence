@@ -16,12 +16,17 @@ backend/certs/*.key
 # ── IDE / OS ──────────────────────────────────────────────────────────────
 .vscode/
 .claude/
-doc/codeguide/
+.codex/
 .idea/
 .DS_Store
 *.swp
 *.swo
+AGENTS.md
 
 # ── Logs ──────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*
+
+# ── Uploaded files (keep folder structure, ignore actual uploads) ─────────
+uploads/avatars/*
+!uploads/avatars/.gitkeep

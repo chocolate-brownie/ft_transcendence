@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Card from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,23 +34,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.message || "Invalid credentials.");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
+      await login(email, password);
       navigate("/");
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }

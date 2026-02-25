@@ -32,11 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error();
+        if (res.status === 401) {
+          // Token is invalid or expired — clear it
+          localStorage.removeItem("token");
+          return null;
+        }
+        if (!res.ok) return null; // Transient server error — keep token, try again next load
         return res.json();
       })
-      .then((data: { user: User }) => setUser(data.user))
-      .catch(() => localStorage.removeItem("token"))
+      .then((data: { user: User } | null) => { if (data) setUser(data.user); })
+      .catch(() => {}) // Network error — keep token, don't log out
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -65,8 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const token = localStorage.getItem("token");
     localStorage.removeItem("token");
     setUser(null);
+    // Tell the server to mark the user offline immediately instead of waiting
+    // for the socket to disconnect on its own (which can take several seconds)
+    if (token) {
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {}); // best-effort — don't block the UI
+    }
   };
 
   return (

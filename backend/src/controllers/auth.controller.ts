@@ -51,6 +51,21 @@ export async function loginController(req: AuthRequest, res: Response) {
   }
 }
 
+// Sets isOnline = false immediately on explicit logout instead of waiting
+// for the socket to disconnect (which can take several seconds).
+export async function logoutController(req: AuthRequest, res: Response) {
+  const userId = req.user.id;
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isOnline: false },
+    });
+    res.status(204).send();
+  } catch {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 // Returns fresh user data from the database, not just the JWT payload.
 // The JWT payload can be stale (e.g. username/avatar changed after token was issued).
 export async function getMeController(req: AuthRequest, res: Response) {
