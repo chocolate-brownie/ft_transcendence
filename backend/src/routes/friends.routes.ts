@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth";
 import {
-    getFriendsList,
-    getPendingRequestsController,
-    sendFriendRequest,
-    acceptFriendRequestController,
-    deleteFriend,
+  getFriendsList,
+  getPendingRequestsController,
+  sendFriendRequest,
+  acceptFriendRequestController,
+  deleteFriend,
 } from "../controllers/friends.controller";
 
 const router = Router();

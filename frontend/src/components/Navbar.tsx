@@ -7,7 +7,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    void navigate("/");
   };
 
   return (
@@ -16,13 +16,22 @@ export default function Navbar() {
         Home
       </Link>
       <div className="flex items-center gap-4">
-        <Link to="/game" className="text-pong-text/80 hover:text-pong-text">Play</Link>
-        <Link to="/tournaments" className="text-pong-text/80 hover:text-pong-text">Tournaments</Link>
-        <Link to="/leaderboard" className="text-pong-text/80 hover:text-pong-text">Leaderboard</Link>
+        <Link to="/game" className="text-pong-text/80 hover:text-pong-text">
+          Play
+        </Link>
+        <Link to="/tournaments" className="text-pong-text/80 hover:text-pong-text">
+          Tournaments
+        </Link>
+        <Link to="/leaderboard" className="text-pong-text/80 hover:text-pong-text">
+          Leaderboard
+        </Link>
 
         {user ? (
           <>
-            <Link to="/profile" className="text-pong-secondary font-medium hover:text-pong-secondary/80">
+            <Link
+              to="/profile"
+              className="text-pong-secondary font-medium hover:text-pong-secondary/80"
+            >
               {user.username}
             </Link>
             <button
@@ -33,7 +42,9 @@ export default function Navbar() {
             </button>
           </>
         ) : (
-          <Link to="/login" className="text-pong-text/80 hover:text-pong-text">Login</Link>
+          <Link to="/login" className="text-pong-text/80 hover:text-pong-text">
+            Login
+          </Link>
         )}
       </div>
     </nav>

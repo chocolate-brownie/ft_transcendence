@@ -132,9 +132,9 @@
 
 - [x] Profile page (`pages/Profile.tsx`):
   - [x] Display: avatar, username, display name, online status, join date
-  - [ ] Edit mode: change display name, upload avatar
-  - [ ] Avatar upload with preview before saving
-- [ ] Friends list component:
+  - [x] Edit mode: change display name, upload avatar
+  - [x] Avatar upload with preview before saving
+- [x] Friends list component:
   - [ ] Show friends with online/offline indicator (green/gray dot)
   - [ ] "Remove friend" button
 - [ ] Friend request UI:
