@@ -44,16 +44,20 @@ model User {
 model Game {
   id          Int         @id @default(autoincrement())
   player1Id   Int         @map("player1_id")
-  player2Id   Int?        @map("player2_id")    // null = AI opponent
-  winnerId    Int?        @map("winner_id")      // null = in progress or draw
+  player2Id   Int?        @map("player2_id")
+  winnerId    Int?        @map("winner_id")
   boardState  Json        @default("[null,null,null,null,null,null,null,null,null]") @map("board_state")
-  boardSize   Int         @default(3) @map("board_size")  // 3 = 3x3, 4 = 4x4, 5 = 5x5
-  currentTurn String      @default("X") @map("current_turn") // "X" or "O"
+  boardSize   Int         @default(3) @map("board_size")
+  currentTurn String      @default("X") @map("current_turn")
   gameType    GameType    @default(CLASSIC) @map("game_type")
   status      GameStatus  @default(WAITING) @map("status")
-  settings    Json?       // { theme: "neon", symbols: ["X", "O"], boardSize: 3 }
-  createdAt   DateTime    @default(now()) @map("created_at")
-  finishedAt  DateTime?   @map("finished_at")
+  settings    Json?
+  player1Symbol String    @default("X") @map("player1_symbol")
+  player2Symbol String    @default("O") @map("player2_symbol")
+
+  startedAt     DateTime? @map("started_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  finishedAt   DateTime?  @map("finished_at")
 
   // Tournament link (nullable: not all games are tournament games)
   tournamentId Int?       @map("tournament_id")
@@ -80,6 +84,7 @@ enum GameStatus {
   FINISHED
   DRAW
   CANCELLED
+  ABANDONED
 }
 
 // ─── Friends ───────────────────────────────────────────────────────────────
