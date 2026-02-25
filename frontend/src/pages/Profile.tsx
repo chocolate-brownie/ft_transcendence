@@ -27,6 +27,12 @@ export default function Profile() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (resolvedId == null) return;
 
@@ -83,9 +89,82 @@ export default function Profile() {
   }
   if (!profile) return null;
 
-  const isMine = user && user.id != null && user.id == profile.id;
+  function handleEditClick() {
+    if (!profile) return ;
+  
+    let initialName = "";
+
+    if (profile.displayName) {
+      initialName = profile.displayName;
+    } else {
+      initialName = profile.username;
+    }
+
+    setEditError(null);
+    setSuccessMessage(null);
+    setEditDisplayName(initialName);
+    setIsEditing(true);
+  }
+
+  function handleCancelEdit() {
+    setIsEditing(false);
+  }
+
+  function handleDisplayNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setEditDisplayName(e.target.value);
+  }
+
+  function handleSave() {
+    const trimmed = editDisplayName.trim();
+    if (trimmed.length < 1 || trimmed.length > 50) {
+      setEditError("Display name must be between 1 and 50 characters.");
+      return;
+    }
+
+    setSaving(true);
+    setEditError(null);
+
+    const token = localStorage.getItem("token");
+
+    fetch("/api/users/me", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ displayName: trimmed }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message ?? "Failed to update profile");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!profile) {
+          setIsEditing(false);
+          return;
+        }
+
+        const updatedProfile: User = {
+          ...profile,
+          displayName: data.displayName ? data.displayName : profile.displayName,
+          // avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl, // pour plus tard
+        };
+
+        setProfile(updatedProfile);
+        setIsEditing(false);
+        setSuccessMessage("Profile updated");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      })
+      .catch((err) => setEditError(err.message))
+      .finally(() => setSaving(false));
+  }
+
+  const isMine = user && user.id != null && user.id === profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
-  const avatarSrc = profile.avatarUrl ? profile.avatarUrl : "/logo-friends.png";
+  const avatarSrc = profile.avatarUrl ? profile.avatarUrl : "/logo.png";
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -103,11 +182,7 @@ export default function Profile() {
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
                 <div className="h-full w-full overflow-hidden rounded-full bg-black/10">
-                  <img
-                    src={avatarSrc}
-                    alt="Avatar"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={avatarSrc} alt="Avatar" className="h-full w-full object-cover" />
                 </div>
                 <span
                   className={
@@ -128,16 +203,54 @@ export default function Profile() {
                 Joined {joined}
               </p>
 
-              {isMine && (
+              {/* View mode */}
+              {isMine && !isEditing && (
                 <div className="mt-4">
-                  <Button variant="primary" className="w-full">
+                  <Button variant="primary" className="w-full" onClick={handleEditClick}>
                     Edit Profile
                   </Button>
                 </div>
               )}
+              {/* Edit mode */}
+              {isMine && isEditing && (
+                <div className="mt-4 space-y-3 text-left">
+                  <div>
+                    <p className="mb-1 block text-xs font-medium text-pong-text/60">Display name</p>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-black/10 bg-black/10 px-3 py-2 text-sm outline-none focus:border-pong-accent"
+                      value={editDisplayName}
+                      onChange={handleDisplayNameChange}
+                    />
+                  </div>
+
+                  {editError && <p className="text-xs text-red-400">{editError}</p>}
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      className="flex-1"
+                      onClick={handleSave}
+                      disabled={saving}>
+                      {saving ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      className="flex-1"
+                      onClick={handleCancelEdit}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {successMessage && (
+                <p className="mt-2 text-xs text-green-400">{successMessage}</p>
+              )}
             </div>
           </Card>
-
+              
           {/* Stats card */}
           <Card variant="elevated">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
