@@ -110,7 +110,7 @@ export default function Profile() {
     setIsEditing(false);
   }
 
-  function handleDisplayNameChange(e: any) {
+  function handleDisplayNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     setEditDisplayName(e.target.value);
   }
 
@@ -134,8 +134,11 @@ export default function Profile() {
       },
       body: JSON.stringify({ displayName: trimmed }),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to update profile");
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message ?? "Failed to update profile");
+        }
         return res.json();
       })
       .then((data) => {

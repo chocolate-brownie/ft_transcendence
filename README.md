@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by mgodawat, mamahtal, atrabut, tzizi, [teammate_4]._
+_This project has been created as part of the 42 curriculum by mgodawat, mamahtal, tzizi, zamgar
 
 # ft_transcendence — The Ultimate Multiplayer Tic-Tac-Toe Experience
 
