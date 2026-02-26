@@ -72,6 +72,8 @@ export default function Profile() {
   // ── Fetch friends list (current user's accepted friends)
   useEffect(() => {
     if (!user) {
+      setFriends([]);
+      setFriendsError(null);
       setFriendsLoading(false);
       return;
     }
