@@ -500,11 +500,11 @@ export default function Profile() {
                 <div className="mt-4">
           {isAlreadyFriend ? (
             <Button
-              variant="danger"
-              className="w-full"
-              onClick={() => void handleRemoveFriend(profile.id)}
+              variant="lime"
+              className="w-full cursor-default"
+              disabled
             >
-              Remove Friend
+              Friends ✓
             </Button>
           ) : incomingRequest ? (
             <div className="flex gap-2">

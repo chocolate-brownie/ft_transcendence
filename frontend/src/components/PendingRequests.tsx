@@ -1,5 +1,17 @@
 import type { PendingRequest } from "../types";
 
+function timeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
+
 interface PendingRequestsProps {
   requests: PendingRequest[];
   onAccept: (requestId: number) => void;
@@ -39,7 +51,9 @@ export default function PendingRequests({
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-50">{name}</p>
-              <p className="truncate text-xs text-slate-400">@{req.sender.username}</p>
+              <p className="truncate text-xs text-slate-400">
+                @{req.sender.username} · {timeAgo(req.createdAt)}
+              </p>
             </div>
             <div className="flex flex-shrink-0 gap-2">
               <button
@@ -50,7 +64,7 @@ export default function PendingRequests({
               </button>
               <button
                 onClick={() => onReject(req.senderId)}
-                className="rounded-md border border-slate-600/50 px-3 py-1 text-xs font-semibold text-slate-400 transition hover:bg-slate-500/10 hover:text-slate-200"
+                className="rounded-md border border-red-400/50 px-3 py-1 text-xs font-semibold text-red-400 transition hover:bg-red-500/10 hover:text-red-300"
               >
                 Decline
               </button>
