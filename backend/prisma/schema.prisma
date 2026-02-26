@@ -111,6 +111,7 @@ model Message {
   senderId    Int      @map("sender_id")
   receiverId  Int      @map("receiver_id")
   content     String
+  read        Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
 
   sender      User @relation("MessageSender", fields: [senderId], references: [id])

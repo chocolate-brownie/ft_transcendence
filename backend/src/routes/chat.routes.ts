@@ -1,7 +1,9 @@
 import { Router } from "express";
+import { getChatHistory } from "../controllers/chat.controller";
+import { auth } from "../middleware/auth";
 
 const router = Router();
 
-// GET /api/messages/:userId  (chat history with a specific user)
+router.get("/:userId", auth, getChatHistory);
 
 export default router;
