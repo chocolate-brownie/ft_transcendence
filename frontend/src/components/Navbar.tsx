@@ -1,6 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+// TEMP
+import UserSearch from "./UserSearch";
+// TEMP
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -11,7 +15,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-pong-surface/60 backdrop-blur-md border-b border-black/10">
+    <nav className="relative z-20 flex items-center justify-between px-6 py-4 bg-pong-surface/60 backdrop-blur-md border-b border-black/10">
       <Link to="/" className="text-xl font-bold text-pong-accent">
         Home
       </Link>
@@ -25,6 +29,12 @@ export default function Navbar() {
         <Link to="/leaderboard" className="text-pong-text/80 hover:text-pong-text">
           Leaderboard
         </Link>
+
+        {/* TEMP */}
+        {user && (
+            <UserSearch className="w-64"/>
+        )}
+        {/* TEMP */}
 
         {user ? (
           <>
