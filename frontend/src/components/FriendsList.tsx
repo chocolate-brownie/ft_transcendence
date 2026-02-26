@@ -43,7 +43,7 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
           >
             <div className="flex items-center gap-3">
               <img
-                src={friend.avatarUrl ?? "/logo-friends.png"}
+                src={friend.avatarUrl ?? "/default-avatar.png"}
                 alt={`${friend.username} avatar`}
                 className="h-12 w-12 rounded-full object-cover border border-slate-700"
               />
