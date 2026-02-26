@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { User } from "../types";
@@ -17,15 +17,17 @@ export default function Profile() {
   const resolvedId: string | null = isMeAlias
     ? null
     : id != null
-      ? id
-      : user?.id != null
-        ? user.id.toString()
-        : null;
+    ? id
+    : user?.id != null
+    ? user.id.toString()
+    : null;
 
-  // All hooks unconditionally at the top — React rules of hooks
+  // ── State
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -33,6 +35,10 @@ export default function Profile() {
   const [editError, setEditError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
+  // ── Fetch profile
   useEffect(() => {
     if (resolvedId == null) return;
 
@@ -42,7 +48,9 @@ export default function Profile() {
       usersService
         .getUserById(Number(resolvedId))
         .then((data) => setProfile(data))
-        .catch((err) => setError(err instanceof Error ? err.message : "User not found"))
+        .catch((err) =>
+          setError(err instanceof Error ? err.message : "User not found"),
+        )
         .finally(() => setLoading(false));
     };
 
@@ -60,6 +68,7 @@ export default function Profile() {
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
   if (resolvedId == null) return <Navigate to="/login" replace />;
 
+  // ── Loading / error states
   if (loading && !profile) {
     return (
       <div className="w-full max-w-2xl mx-auto flex justify-center py-8">
@@ -86,16 +95,11 @@ export default function Profile() {
   }
   if (!profile) return null;
 
+  // ── Handlers: display name
   function handleEditClick() {
     if (!profile) return;
 
-    let initialName = "";
-
-    if (profile.displayName) {
-      initialName = profile.displayName;
-    } else {
-      initialName = profile.username;
-    }
+    const initialName = profile.displayName || profile.username;
 
     setEditError(null);
     setSuccessMessage(null);
@@ -107,7 +111,7 @@ export default function Profile() {
     setIsEditing(false);
   }
 
-  function handleDisplayNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleDisplayNameChange(e: any) {
     setEditDisplayName(e.target.value);
   }
 
@@ -132,7 +136,6 @@ export default function Profile() {
         const updatedProfile: User = {
           ...profile,
           displayName: data.displayName ? data.displayName : profile.displayName,
-          // avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl, // pour plus tard
         };
 
         setProfile(updatedProfile);
@@ -140,21 +143,83 @@ export default function Profile() {
         setSuccessMessage("Profile updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
-      .catch((err) => setEditError(err instanceof Error ? err.message : "Failed to update profile"))
+      .catch((err) =>
+        setEditError(
+          err instanceof Error ? err.message : "Failed to update profile",
+        ),
+      )
       .finally(() => setSaving(false));
   }
 
+  // ── Handlers: avatar
+  function handleAvatarChange(e: any) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setAvatarError("File is too large (max 5MB).");
+      return;
+    }
+
+    setAvatarError(null);
+    handleAvatarUpload(file);
+  }
+
+  function handleAvatarUpload(file: File) {
+    setAvatarSaving(true);
+    setAvatarError(null);
+
+    usersService
+      .uploadAvatar(file)
+      .then((data) => {
+        if (!profile) {
+          return;
+        }
+
+        const updatedProfile: User = {
+          ...profile,
+          avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl,
+        };
+
+        setProfile(updatedProfile);
+        setSuccessMessage("Avatar updated");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      })
+      .catch((err) =>
+        setAvatarError(
+          err instanceof Error ? err.message : "Failed to upload avatar",
+        ),
+      )
+      .finally(() => setAvatarSaving(false));
+  }
+
+  // ── Derived values
   const isMine = user && user.id != null && user.id === profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
-  const avatarSrc = profile.avatarUrl ? profile.avatarUrl : "/logo.png";
+
+  // Backend URL base for static files
+  const BACKEND_ORIGIN = "https://localhost:3000";
+
+  // If we have an avatarUrl that starts with /uploads, prefix it with the backend URL.
+// Otherwise, fall back to the fallback logo.
+  const rawAvatar = profile.avatarUrl ?? null;
+  const avatarSrc =
+    rawAvatar && rawAvatar.startsWith("/uploads/")
+      ? `${BACKEND_ORIGIN}${rawAvatar}`
+      : rawAvatar || "/logo-friends.png";
+
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
   });
 
+  // ── Render
   return (
     <div className="mx-auto w-full max-w-5xl px-4">
-      <h1 className="mb-6 text-center text-4xl font-bold text-pong-accent">Profile</h1>
+      <h1 className="mb-6 text-center text-4xl font-bold text-pong-accent">
+        Profile
+      </h1>
 
       <div className="grid gap-4 md:grid-cols-[260px_1fr]">
         {/* LEFT */}
@@ -163,40 +228,85 @@ export default function Profile() {
           <Card variant="elevated">
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
-                <div className="h-full w-full overflow-hidden rounded-full bg-black/10">
+                {/* Avatar */}
+                <button
+                  type="button"
+                  className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
+                  onClick={() => {
+                    if (!isMine || avatarSaving) return;
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  disabled={!isMine || avatarSaving}
+                >
                   <img
                     src={avatarSrc}
                     alt="Avatar"
                     className="h-full w-full object-cover"
                   />
-                </div>
+
+                  {isMine && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="text-xs font-semibold text-white">
+                        {avatarSaving ? "Uploading..." : "Change avatar"}
+                      </span>
+                    </div>
+                  )}
+                </button>
+
+                {isMine && (
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                )}
+
+                {/* Online dot */}
                 <span
                   className={
-                    "absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white " +
+                    "absolute bottom-1 right-2 h-3 w-3 rounded-full border-2 border-white " +
                     (profile.isOnline ? "bg-green-500" : "bg-gray-400")
                   }
                 />
               </div>
 
+              {/* User infos */}
               <p className="text-lg font-semibold">{profile.username}</p>
               <p className="text-sm text-pong-text/60">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
-                <span className={profile.isOnline ? "text-green-500" : "text-gray-400"}>
+                <span
+                  className={
+                    profile.isOnline ? "text-green-500" : "text-gray-400"
+                  }
+                >
                   {profile.isOnline ? "Online" : "Offline"}
                 </span>
                 <span className="mx-2 text-pong-text/30">•</span>
                 Joined {joined}
               </p>
 
+              {avatarError && (
+                <p className="mt-1 text-xs text-red-400">{avatarError}</p>
+              )}
+
               {/* View mode */}
               {isMine && !isEditing && (
                 <div className="mt-4">
-                  <Button variant="primary" className="w-full" onClick={handleEditClick}>
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={handleEditClick}
+                  >
                     Edit Profile
                   </Button>
                 </div>
               )}
+
               {/* Edit mode */}
               {isMine && isEditing && (
                 <div className="mt-4 space-y-3 text-left">
@@ -212,7 +322,9 @@ export default function Profile() {
                     />
                   </div>
 
-                  {editError && <p className="text-xs text-red-400">{editError}</p>}
+                  {editError && (
+                    <p className="text-xs text-red-400">{editError}</p>
+                  )}
 
                   <div className="flex gap-2">
                     <Button
@@ -236,7 +348,9 @@ export default function Profile() {
               )}
 
               {successMessage && (
-                <p className="mt-2 text-xs text-green-400">{successMessage}</p>
+                <p className="mt-2 text-xs text-green-400">
+                  {successMessage}
+                </p>
               )}
             </div>
           </Card>
@@ -271,7 +385,10 @@ export default function Profile() {
                 <p className="text-lg font-bold text-pong-text/100">
                   {profile.wins + profile.losses + profile.draws > 0
                     ? Math.round(
-                        (profile.wins / (profile.wins + profile.losses + profile.draws)) *
+                        (profile.wins /
+                          (profile.wins +
+                            profile.losses +
+                            profile.draws)) *
                           100,
                       )
                     : 0}
@@ -284,7 +401,9 @@ export default function Profile() {
 
         {/* RIGHT */}
         <Card variant="elevated">
-          <p className="text-pong-text/60">Match history / friends coming soon.</p>
+          <p className="text-pong-text/60">
+            Match history / friends coming soon.
+          </p>
         </Card>
       </div>
     </div>
