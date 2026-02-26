@@ -32,6 +32,8 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const avatarSavingRef = useRef(false);
+  // Tracks the latest resolvedId so async handlers can detect stale navigation
+  const resolvedIdRef = useRef(resolvedId);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -143,10 +145,16 @@ export default function Profile() {
     };
   }, [user]);
 
+  // ── Keep resolvedIdRef current so async handlers can detect stale navigation
+  useEffect(() => {
+    resolvedIdRef.current = resolvedId;
+  });
+
   // ── Reset friendship action state when navigating to a different profile
   useEffect(() => {
     setRequestSent(false);
     setFriendshipActionError(null);
+    setFriendshipActionLoading(false);
   }, [resolvedId]);
 
   // Conditional redirects AFTER all hooks
@@ -285,16 +293,20 @@ export default function Profile() {
 
   async function handleSendRequest() {
     if (!profile) return;
+    const capturedId = resolvedId;
     setFriendshipActionLoading(true);
     setFriendshipActionError(null);
     try {
       await friendsService.sendRequest(profile.id);
+      if (resolvedIdRef.current !== capturedId) return;
       setRequestSent(true);
     } catch (err) {
+      if (resolvedIdRef.current !== capturedId) return;
       setFriendshipActionError(
         err instanceof Error ? err.message : "Failed to send friend request",
       );
     } finally {
+      if (resolvedIdRef.current !== capturedId) return;
       setFriendshipActionLoading(false);
     }
   }

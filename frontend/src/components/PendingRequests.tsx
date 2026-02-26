@@ -25,10 +25,7 @@ export default function PendingRequests({
     <div className={`space-y-3 ${className ?? ""}`}>
       {requests.map((req) => {
         const name = req.sender.displayName ?? req.sender.username;
-        const avatarSrc =
-          req.sender.avatarUrl?.startsWith("/uploads/")
-            ? req.sender.avatarUrl
-            : req.sender.avatarUrl || "/default-avatar.png";
+        const avatarSrc = req.sender.avatarUrl || "/default-avatar.png";
 
         return (
           <div
