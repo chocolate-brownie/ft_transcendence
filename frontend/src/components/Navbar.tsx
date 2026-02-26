@@ -49,10 +49,9 @@ export default function Navbar() {
     };
   }, [user]);
 
-  const apiOrigin = import.meta.env.VITE_API_URL || "http://localhost:3000";
   const avatarSrc =
-    user?.avatarUrl?.startsWith("/")
-      ? `${apiOrigin}${user.avatarUrl}`
+    user?.avatarUrl?.startsWith("/uploads/")
+      ? user.avatarUrl
       : user?.avatarUrl || "/default-avatar.png";
 
   const navLinks = [
