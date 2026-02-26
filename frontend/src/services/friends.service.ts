@@ -8,7 +8,7 @@ export const friendsService = {
     return apiClient.get<FriendInfo[]>("/api/friends");
   },
 
-  removeFriends(friendId: number): Promise<void> {
+  removeFriend(friendId: number): Promise<void> {
     return apiClient.del(`/api/friends/${friendId}`);
   },
 };

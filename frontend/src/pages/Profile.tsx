@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { User } from "../types";
+import type { User, FriendInfo } from "../types";
 import { usersService } from "../services/users.service";
+import { friendsService } from "../services/friends.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
+import FriendsList from "../components/FriendsList";
 
 export default function Profile() {
   const { id } = useParams();
@@ -17,10 +19,10 @@ export default function Profile() {
   const resolvedId: string | null = isMeAlias
     ? null
     : id != null
-    ? id
-    : user?.id != null
-    ? user.id.toString()
-    : null;
+      ? id
+      : user?.id != null
+        ? user.id.toString()
+        : null;
 
   // ── State
   const [profile, setProfile] = useState<User | null>(null);
@@ -35,6 +37,11 @@ export default function Profile() {
   const [editError, setEditError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Friends
+  const [friends, setFriends] = useState<FriendInfo[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState<boolean>(true);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
+
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
@@ -48,9 +55,7 @@ export default function Profile() {
       usersService
         .getUserById(Number(resolvedId))
         .then((data) => setProfile(data))
-        .catch((err) =>
-          setError(err instanceof Error ? err.message : "User not found"),
-        )
+        .catch((err) => setError(err instanceof Error ? err.message : "User not found"))
         .finally(() => setLoading(false));
     };
 
@@ -63,6 +68,34 @@ export default function Profile() {
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [resolvedId]);
+
+  // ── Fetch friends list (current user's accepted friends)
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFriends = async () => {
+      setFriendsLoading(true);
+      setFriendsError(null);
+      try {
+        const data = await friendsService.getFriends();
+        if (!cancelled) setFriends(data);
+      } catch (err) {
+        if (!cancelled) {
+          setFriendsError(
+            err instanceof Error ? err.message : "Failed to load friends",
+          );
+        }
+      } finally {
+        if (!cancelled) setFriendsLoading(false);
+      }
+    };
+
+    loadFriends();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
@@ -144,9 +177,7 @@ export default function Profile() {
         setTimeout(() => setSuccessMessage(null), 3000);
       })
       .catch((err) =>
-        setEditError(
-          err instanceof Error ? err.message : "Failed to update profile",
-        ),
+        setEditError(err instanceof Error ? err.message : "Failed to update profile"),
       )
       .finally(() => setSaving(false));
   }
@@ -187,11 +218,19 @@ export default function Profile() {
         setTimeout(() => setSuccessMessage(null), 3000);
       })
       .catch((err) =>
-        setAvatarError(
-          err instanceof Error ? err.message : "Failed to upload avatar",
-        ),
+        setAvatarError(err instanceof Error ? err.message : "Failed to upload avatar"),
       )
       .finally(() => setAvatarSaving(false));
+  }
+
+  // ── Handlers: friends
+  async function handleRemoveFriend(friendId: number) {
+    try {
+      await friendsService.removeFriend(friendId);
+      setFriends((prev) => prev.filter((f) => f.id !== friendId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove friend");
+    }
   }
 
   // ── Derived values
@@ -202,7 +241,7 @@ export default function Profile() {
   const BACKEND_ORIGIN = "https://localhost:3000";
 
   // If we have an avatarUrl that starts with /uploads, prefix it with the backend URL.
-// Otherwise, fall back to the fallback logo.
+  // Otherwise, fall back to the fallback logo.
   const rawAvatar = profile.avatarUrl ?? null;
   const avatarSrc =
     rawAvatar && rawAvatar.startsWith("/uploads/")
@@ -217,9 +256,7 @@ export default function Profile() {
   // ── Render
   return (
     <div className="mx-auto w-full max-w-5xl px-4">
-      <h1 className="mb-6 text-center text-4xl font-bold text-pong-accent">
-        Profile
-      </h1>
+      <h1 className="mb-6 text-center text-4xl font-bold text-pong-accent">Profile</h1>
 
       <div className="grid gap-4 md:grid-cols-[260px_1fr]">
         {/* LEFT */}
@@ -279,29 +316,19 @@ export default function Profile() {
               <p className="text-sm text-pong-text/60">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
-                <span
-                  className={
-                    profile.isOnline ? "text-green-500" : "text-gray-400"
-                  }
-                >
+                <span className={profile.isOnline ? "text-green-500" : "text-gray-400"}>
                   {profile.isOnline ? "Online" : "Offline"}
                 </span>
                 <span className="mx-2 text-pong-text/30">•</span>
                 Joined {joined}
               </p>
 
-              {avatarError && (
-                <p className="mt-1 text-xs text-red-400">{avatarError}</p>
-              )}
+              {avatarError && <p className="mt-1 text-xs text-red-400">{avatarError}</p>}
 
               {/* View mode */}
               {isMine && !isEditing && (
                 <div className="mt-4">
-                  <Button
-                    variant="primary"
-                    className="w-full"
-                    onClick={handleEditClick}
-                  >
+                  <Button variant="primary" className="w-full" onClick={handleEditClick}>
                     Edit Profile
                   </Button>
                 </div>
@@ -322,9 +349,7 @@ export default function Profile() {
                     />
                   </div>
 
-                  {editError && (
-                    <p className="text-xs text-red-400">{editError}</p>
-                  )}
+                  {editError && <p className="text-xs text-red-400">{editError}</p>}
 
                   <div className="flex gap-2">
                     <Button
@@ -348,9 +373,7 @@ export default function Profile() {
               )}
 
               {successMessage && (
-                <p className="mt-2 text-xs text-green-400">
-                  {successMessage}
-                </p>
+                <p className="mt-2 text-xs text-green-400">{successMessage}</p>
               )}
             </div>
           </Card>
@@ -385,10 +408,7 @@ export default function Profile() {
                 <p className="text-lg font-bold text-pong-text/100">
                   {profile.wins + profile.losses + profile.draws > 0
                     ? Math.round(
-                        (profile.wins /
-                          (profile.wins +
-                            profile.losses +
-                            profile.draws)) *
+                        (profile.wins / (profile.wins + profile.losses + profile.draws)) *
                           100,
                       )
                     : 0}
@@ -401,9 +421,20 @@ export default function Profile() {
 
         {/* RIGHT */}
         <Card variant="elevated">
-          <p className="text-pong-text/60">
-            Match history / friends coming soon.
-          </p>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-pong-text/80">Friends</p>
+            {friendsLoading && (
+              <span className="text-xs text-pong-text/50">Loading…</span>
+            )}
+          </div>
+
+          {friendsError && (
+            <p className="mb-3 text-xs text-red-400">{friendsError}</p>
+          )}
+
+          {!friendsLoading && !friendsError && (
+            <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+          )}
         </Card>
       </div>
     </div>
