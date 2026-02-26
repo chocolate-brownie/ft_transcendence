@@ -21,6 +21,7 @@ backend/certs/*.key
 .DS_Store
 *.swp
 *.swo
+NvimTree_*
 AGENTS.md
 
 # ── Logs ──────────────────────────────────────────────────────────────────
