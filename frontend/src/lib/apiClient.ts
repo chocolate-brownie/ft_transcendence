@@ -30,7 +30,7 @@ async function request<T>(
       ...headers,
     },
     ...(hasBody
-      ? { body: isFormData ? (body as FormData) : JSON.stringify(body) }
+      ? { body: isFormData ? (body) : JSON.stringify(body) }
       : {}),
   });
 
