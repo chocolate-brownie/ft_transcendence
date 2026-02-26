@@ -11,13 +11,23 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (patch: Partial<User>) => void;
 };
 
 // --- Context ---
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// --- Provider ---
+/**
+ * Provides authentication state and actions to descendant components.
+ *
+ * Restores a saved session from localStorage when mounted and exposes the current `user`,
+ * `isLoading` status, and authentication methods (`login`, `signup`, `logout`, `updateUser`)
+ * through the AuthContext to all child components.
+ *
+ * @param children - React nodes rendered inside the provider
+ * @returns The AuthContext provider element supplying authentication state and actions to descendants
+ */
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -55,6 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
+  const updateUser = (patch: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  };
+
   const logout = () => {
     // Fire-and-forget logout — must be called before clearing localStorage
     // so apiClient can still read the token
@@ -64,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

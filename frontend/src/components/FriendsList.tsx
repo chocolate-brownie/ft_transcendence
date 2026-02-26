@@ -7,6 +7,19 @@ interface FriendsListProps {
   className?: string;
 }
 
+/**
+ * Render a list of friends as cards showing avatar, name, username, online status, and a remove action.
+ *
+ * The list is sorted with online users first and then alphabetically by username. If a friend has no
+ * avatar URL, a default avatar ("/default-avatar.png") is used. Removing a friend prompts the user for
+ * confirmation before invoking the removal callback. When the list is empty, a bordered empty-state box
+ * with a message is rendered.
+ *
+ * @param friends - Array of friends to display
+ * @param onRemoveFriend - Callback invoked with a friend's `id` after the user confirms removal
+ * @param className - Optional CSS class applied to the outer container
+ * @returns The rendered friends list or an empty-state element
+ */
 export function FriendsList({ friends, onRemoveFriend, className }: FriendsListProps) {
   const sortedFriends = React.useMemo(() => {
     return [...friends].sort((a, b) => {
@@ -43,7 +56,7 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
           >
             <div className="flex items-center gap-3">
               <img
-                src={friend.avatarUrl ?? "/logo-friends.png"}
+                src={friend.avatarUrl ?? "/default-avatar.png"}
                 alt={`${friend.username} avatar`}
                 className="h-12 w-12 rounded-full object-cover border border-slate-700"
               />

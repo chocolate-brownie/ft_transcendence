@@ -10,6 +10,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Send an HTTP request with automatic JSON/FormData handling and optional bearer authentication.
+ *
+ * Reads a JWT from localStorage key "token" and, if present, adds an `Authorization: Bearer <token>` header.
+ * When `body` is provided and is a `FormData` instance it is sent as-is (no `Content-Type` header is set);
+ * otherwise the `body` is JSON-stringified and `Content-Type: application/json` is added.
+ * Additional headers passed via `headers` are merged into the request headers.
+ *
+ * @param body - Optional request payload. If a `FormData` instance, it will be sent directly; otherwise it will be JSON-stringified.
+ * @param headers - Optional additional headers to include in the request.
+ * @returns The response body parsed as JSON, typed as `T`.
+ * @throws {ApiError} When the response has a non-OK status; the error's message is the parsed response `message` if present, otherwise `Request failed: <status>`, and the error contains the HTTP status.
+ */
 async function request<T>(
   method: string,
   url: string,
@@ -30,7 +43,7 @@ async function request<T>(
       ...headers,
     },
     ...(hasBody
-      ? { body: isFormData ? (body as FormData) : JSON.stringify(body) }
+      ? { body: isFormData ? (body) : JSON.stringify(body) }
       : {}),
   });
 
