@@ -124,26 +124,21 @@ export async function getChatHistoryPaginated(
   // Validate limit (max 100, min 1)
   const validLimit = Math.max(1, Math.min(limit, 100));
 
-  // Build the query filter
-  const where = {
-    OR: [
-      { senderId: currentUserId, receiverId: otherUserId },
-      { senderId: otherUserId, receiverId: currentUserId },
-    ],
-  };
-
-  // If beforeId is provided, only get messages before this ID
-  let cursorFilter = where;
-  if (beforeId) {
-    cursorFilter = {
-      ...where,
-      id: { lt: beforeId },
-    };
-  }
-
-  // Fetch one more than needed to determine if there are more messages
   const messages = await prisma.message.findMany({
-    where: cursorFilter,
+    take: validLimit, // Nombre d'éléments à récupérer
+    ...(beforeId && { // On saute l'élément qui sert de curseur lui-même et ajoute cursor que si beforeid existe
+      skip: 1,
+      cursor: { id: beforeId },
+    }),
+    where: {
+      OR: [
+        { senderId: currentUserId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: currentUserId },
+      ],
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
     include: {
       sender: {
         select: {
@@ -152,34 +147,28 @@ export async function getChatHistoryPaginated(
         },
       },
     },
-    orderBy: { createdAt: "desc" }, // Newest first
-    take: validLimit + 1, // Fetch one extra to check if there are more
   });
 
-  // Determine if there are more messages
-  const hasMore = messages.length > validLimit;
-  const pageMessages = hasMore ? messages.slice(0, validLimit) : messages;
-
   // Mark messages as read if current user is the receiver
-  const messagesToMarkAsRead = pageMessages
+  const unreadMessages = messages
     .filter(msg => msg.receiverId === currentUserId && !msg.read)
     .map(msg => msg.id);
 
-  if (messagesToMarkAsRead.length > 0) {
+  if (unreadMessages.length > 0) {
     await prisma.message.updateMany({
-      where: { id: { in: messagesToMarkAsRead } },
+      where: { id: { in: unreadMessages } },
       data: { read: true },
     });
   }
 
   // Format response
-  const formattedMessages: MessageWithSender[] = pageMessages.map(msg => ({
+  const formattedMessages: MessageWithSender[] = messages.map(msg => ({
     id: msg.id,
     senderId: msg.senderId,
     receiverId: msg.receiverId,
     content: msg.content,
     createdAt: msg.createdAt.toISOString(),
-    read: msg.read || messagesToMarkAsRead.includes(msg.id), // Include those we just marked
+    read: msg.read || unreadMessages.includes(msg.id), // Include those we just marked
     sender: {
       username: msg.sender.username,
       avatarUrl: msg.sender.avatarUrl,
@@ -188,7 +177,7 @@ export async function getChatHistoryPaginated(
 
   return {
     messages: formattedMessages,
-    hasMore,
-    nextCursor: hasMore ? pageMessages[pageMessages.length - 1].id : null,
+    hasMore: messages.length === validLimit, // If we got the max number, there might be more
+    nextCursor: messages.length > 0 ? messages[messages.length - 1].id : null,
   };
 }

@@ -29,7 +29,7 @@ export const getUserById = async (id: number) => {
 
   let avatarUrl = user.avatarUrl;
   if (!avatarUrl || avatarUrl.includes("default.png")) {
-    avatarUrl = null;
+    avatarUrl = "default.png"; // URL vers l'avatar par défaut
   }
 
   user.avatarUrl = avatarUrl;

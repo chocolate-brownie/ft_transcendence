@@ -12,12 +12,12 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
   try {
     const currentUserId = req.user?.id;
     if (!currentUserId) {
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
     // Extract and validate userId param
-    const { userId } = req.params;
+    const userId  = req.params.userId.toString();
     const otherUserId = parseInt(userId, 10);
 
     if (isNaN(otherUserId) || otherUserId <= 0) {
@@ -27,7 +27,7 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
 
     // Prevent user from fetching their own chat history
     if (otherUserId === currentUserId) {
-      res.status(400).json({ error: "Cannot fetch chat history with yourself" });
+      res.status(400).json({ message: "Cannot fetch chat history with yourself" });
       return;
     }
 
@@ -35,17 +35,22 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
     const before = req.query.before ? parseInt(req.query.before as string, 10) : undefined;
 
+    if (req.query.before && isNaN(before!)) {
+      res.status(400).json({ error: "Format du curseur 'before' invalide" });
+      return;
+    }
+
     // Check if target user exists
     const targetUserExists = await userExists(otherUserId);
     if (!targetUserExists) {
-      res.status(404).json({ error: "User not found" });
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
     // Check if users are friends
     const isFriends = await areFriends(currentUserId, otherUserId);
     if (!isFriends) {
-      res.status(403).json({ error: "You are not friends with this user" });
+      res.status(403).json({ message: "You are not friends with this user" });
       return;
     }
 
@@ -60,6 +65,6 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
     res.status(200).json(result);
   } catch (error) {
     console.error("[getChatHistory] Error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
