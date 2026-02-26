@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { User, FriendInfo } from "../types";
+import type { User, FriendInfo, PendingRequest } from "../types";
 import { usersService } from "../services/users.service";
 import { friendsService } from "../services/friends.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import FriendsList from "../components/FriendsList";
+import PendingRequests from "../components/PendingRequests";
 
 export default function Profile() {
   const { id } = useParams();
@@ -41,6 +42,15 @@ export default function Profile() {
   const [friends, setFriends] = useState<FriendInfo[]>([]);
   const [friendsLoading, setFriendsLoading] = useState<boolean>(true);
   const [friendsError, setFriendsError] = useState<string | null>(null);
+
+  // Pending requests
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [pendingLoading, setPendingLoading] = useState<boolean>(true);
+
+  // Friendship action (for other users' profiles)
+  const [requestSent, setRequestSent] = useState(false);
+  const [friendshipActionLoading, setFriendshipActionLoading] = useState(false);
+  const [friendshipActionError, setFriendshipActionError] = useState<string | null>(null);
 
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -103,6 +113,41 @@ export default function Profile() {
       cancelled = true;
     };
   }, [user]);
+
+  // ── Fetch pending incoming friend requests
+  useEffect(() => {
+    if (!user) {
+      setPendingRequests([]);
+      setPendingLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPending = async () => {
+      setPendingLoading(true);
+      try {
+        const data = await friendsService.getPendingRequests();
+        if (!cancelled) setPendingRequests(data);
+      } catch {
+        // Non-critical — silently ignore
+      } finally {
+        if (!cancelled) setPendingLoading(false);
+      }
+    };
+
+    loadPending();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // ── Reset friendship action state when navigating to a different profile
+  useEffect(() => {
+    setRequestSent(false);
+    setFriendshipActionError(null);
+  }, [resolvedId]);
 
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
@@ -240,9 +285,59 @@ export default function Profile() {
     }
   }
 
+  async function handleSendRequest() {
+    if (!profile) return;
+    setFriendshipActionLoading(true);
+    setFriendshipActionError(null);
+    try {
+      await friendsService.sendRequest(profile.id);
+      setRequestSent(true);
+    } catch (err) {
+      setFriendshipActionError(
+        err instanceof Error ? err.message : "Failed to send friend request",
+      );
+    } finally {
+      setFriendshipActionLoading(false);
+    }
+  }
+
+  async function handleAcceptRequest(requestId: number) {
+    try {
+      await friendsService.acceptRequest(requestId);
+      const accepted = pendingRequests.find((r) => r.id === requestId);
+      if (accepted) {
+        setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+        const newFriend: FriendInfo = {
+          id: accepted.sender.id,
+          username: accepted.sender.username,
+          displayName: accepted.sender.displayName,
+          avatarUrl: accepted.sender.avatarUrl,
+          isOnline: false,
+        };
+        setFriends((prev) => [...prev, newFriend]);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to accept request");
+    }
+  }
+
+  async function handleRejectRequest(senderId: number) {
+    try {
+      await friendsService.removeFriend(senderId);
+      setPendingRequests((prev) => prev.filter((r) => r.senderId !== senderId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to decline request");
+    }
+  }
+
   // ── Derived values
   const isMine = user && user.id != null && user.id === profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
+  const isAlreadyFriend = !isMine && !!user && friends.some((f) => f.id === profile.id);
+  const incomingRequest =
+    !isMine && !!user
+      ? (pendingRequests.find((r) => r.sender.id === profile.id) ?? null)
+      : null;
 
   const rawAvatar = profile.avatarUrl ?? null;
   const avatarSrc =
@@ -374,6 +469,54 @@ export default function Profile() {
                 </div>
               )}
 
+              {/* Friendship action — only when viewing another user's profile */}
+              {!isMine && user && (
+                <div className="mt-4">
+                  {isAlreadyFriend ? (
+                    <Button
+                      variant="danger"
+                      className="w-full"
+                      onClick={() => handleRemoveFriend(profile.id)}
+                    >
+                      Remove Friend
+                    </Button>
+                  ) : incomingRequest ? (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        className="flex-1"
+                        onClick={() => handleAcceptRequest(incomingRequest.id)}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => handleRejectRequest(profile.id)}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  ) : requestSent ? (
+                    <Button variant="secondary" className="w-full" disabled>
+                      Request Sent
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      className="w-full"
+                      onClick={handleSendRequest}
+                      disabled={friendshipActionLoading}
+                    >
+                      {friendshipActionLoading ? "Sending..." : "Add Friend"}
+                    </Button>
+                  )}
+                  {friendshipActionError && (
+                    <p className="mt-1 text-xs text-red-400">{friendshipActionError}</p>
+                  )}
+                </div>
+              )}
+
               {successMessage && (
                 <p className="mt-2 text-xs text-green-400">{successMessage}</p>
               )}
@@ -422,22 +565,55 @@ export default function Profile() {
         </div>
 
         {/* RIGHT */}
-        <Card variant="elevated">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-pong-text/80">Friends</p>
-            {friendsLoading && (
-              <span className="text-xs text-pong-text/50">Loading…</span>
-            )}
-          </div>
+        <div className="space-y-4">
+          {isMine ? (
+            <>
+              {/* Friends list */}
+              <Card variant="elevated">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-pong-text/80">Friends</p>
+                  {friendsLoading && (
+                    <span className="text-xs text-pong-text/50">Loading…</span>
+                  )}
+                </div>
+                {friendsError && (
+                  <p className="mb-3 text-xs text-red-400">{friendsError}</p>
+                )}
+                {!friendsLoading && !friendsError && (
+                  <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+                )}
+              </Card>
 
-          {friendsError && (
-            <p className="mb-3 text-xs text-red-400">{friendsError}</p>
+              {/* Pending friend requests */}
+              <Card variant="elevated">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-pong-text/80">
+                    Pending Requests
+                    {pendingRequests.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-pong-accent px-2 py-0.5 text-xs font-bold text-pong-background">
+                        {pendingRequests.length}
+                      </span>
+                    )}
+                  </p>
+                  {pendingLoading && (
+                    <span className="text-xs text-pong-text/50">Loading…</span>
+                  )}
+                </div>
+                {!pendingLoading && (
+                  <PendingRequests
+                    requests={pendingRequests}
+                    onAccept={handleAcceptRequest}
+                    onReject={handleRejectRequest}
+                  />
+                )}
+              </Card>
+            </>
+          ) : (
+            <Card variant="elevated">
+              <p className="text-pong-text/60">Match history coming soon.</p>
+            </Card>
           )}
-
-          {!friendsLoading && !friendsError && (
-            <FriendsList friends={friends} onRemoveFriend={(id) => void handleRemoveFriend(id)} />
-          )}
-        </Card>
+        </div>
       </div>
     </div>
   );

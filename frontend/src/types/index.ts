@@ -45,6 +45,18 @@ export interface Friend {
   createdAt: string;
 }
 
+export interface PendingRequest {
+  id: number;
+  senderId: number;
+  sender: {
+    id: number;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  };
+  createdAt: string;
+}
+
 export interface FriendInfo {
   id: number;
   username: string;
