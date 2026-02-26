@@ -136,7 +136,7 @@ export default function Profile() {
       }
     };
 
-    loadPending();
+    void loadPending();
 
     return () => {
       cancelled = true;
@@ -472,45 +472,45 @@ export default function Profile() {
               {/* Friendship action — only when viewing another user's profile */}
               {!isMine && user && (
                 <div className="mt-4">
-                  {isAlreadyFriend ? (
-                    <Button
-                      variant="danger"
-                      className="w-full"
-                      onClick={() => handleRemoveFriend(profile.id)}
-                    >
-                      Remove Friend
-                    </Button>
-                  ) : incomingRequest ? (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="primary"
-                        className="flex-1"
-                        onClick={() => handleAcceptRequest(incomingRequest.id)}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="flex-1"
-                        onClick={() => handleRejectRequest(profile.id)}
-                      >
-                        Decline
-                      </Button>
-                    </div>
-                  ) : requestSent ? (
-                    <Button variant="secondary" className="w-full" disabled>
-                      Request Sent
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      className="w-full"
-                      onClick={handleSendRequest}
-                      disabled={friendshipActionLoading}
-                    >
-                      {friendshipActionLoading ? "Sending..." : "Add Friend"}
-                    </Button>
-                  )}
+          {isAlreadyFriend ? (
+            <Button
+              variant="danger"
+              className="w-full"
+              onClick={() => void handleRemoveFriend(profile.id)}
+            >
+              Remove Friend
+            </Button>
+          ) : incomingRequest ? (
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={() => void handleAcceptRequest(incomingRequest.id)}
+              >
+                Accept
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => void handleRejectRequest(profile.id)}
+              >
+                Decline
+              </Button>
+            </div>
+          ) : requestSent ? (
+            <Button variant="secondary" className="w-full" disabled>
+              Request Sent
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              className="w-full"
+              onClick={() => void handleSendRequest()}
+              disabled={friendshipActionLoading}
+            >
+              {friendshipActionLoading ? "Sending..." : "Add Friend"}
+            </Button>
+          )}
                   {friendshipActionError && (
                     <p className="mt-1 text-xs text-red-400">{friendshipActionError}</p>
                   )}
@@ -580,7 +580,10 @@ export default function Profile() {
                   <p className="mb-3 text-xs text-red-400">{friendsError}</p>
                 )}
                 {!friendsLoading && !friendsError && (
-                  <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+                  <FriendsList
+                    friends={friends}
+                    onRemoveFriend={(id) => void handleRemoveFriend(id)}
+                  />
                 )}
               </Card>
 
@@ -602,8 +605,8 @@ export default function Profile() {
                 {!pendingLoading && (
                   <PendingRequests
                     requests={pendingRequests}
-                    onAccept={handleAcceptRequest}
-                    onReject={handleRejectRequest}
+                    onAccept={(id) => void handleAcceptRequest(id)}
+                    onReject={(id) => void handleRejectRequest(id)}
                   />
                 )}
               </Card>
