@@ -1,0 +1,99 @@
+<div style="width: 800px; height: 600px; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+  <!-- Header Navigation -->
+  <nav style="padding: 1rem 2rem; background-color: #1e293b; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+    <div style="font-weight: 800; font-size: 1.2rem; color: #38bdf8;">FT_TRANSCENDENCE</div>
+    <div style="display: flex; gap: 1.5rem; align-items: center;">
+      <div style="text-align: right;">
+        <div style="font-size: 0.75rem; color: #94a3b8;">Logged in as</div>
+        <div style="font-size: 0.9rem; font-weight: 600;">PlayerOne</div>
+      </div>
+      <div style="width: 32px; height: 32px; background-color: #38bdf8; border-radius: 50%;"></div>
+    </div>
+  </nav>
+
+  <!-- Main Content Body -->
+  <div style="display: flex; flex: 1; padding: 2rem; gap: 2rem;">
+    
+    <!-- Left Side: Result & Stats -->
+    <div style="flex: 2; display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Result Banner -->
+      <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 2rem; border-radius: 12px; border: 1px solid #334155; text-align: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+        <h1 style="margin: 0; font-size: 3.5rem; color: #4ade80; text-transform: uppercase; letter-spacing: 4px;">Victory!</h1>
+        <p style="color: #94a3b8; margin-top: 0.5rem;">Match Duration: 04:22</p>
+      </div>
+
+      <!-- Stats Comparison -->
+      <div style="display: flex; gap: 1rem;">
+        <!-- Player 1 Stats -->
+        <div style="flex: 1; background: #1e293b; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #4ade80;">
+          <div style="font-weight: bold; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">PlayerOne (You)</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #94a3b8;">Rating</span>
+            <span style="font-weight: 600;">1,450 <span style="color: #4ade80;">(+25)</span></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #94a3b8;">Win Rate</span>
+            <span style="font-weight: 600;">64%</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #94a3b8;">Moves</span>
+            <span style="font-weight: 600;">5</span>
+          </div>
+        </div>
+
+        <!-- Player 2 Stats -->
+        <div style="flex: 1; background: #1e293b; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #f87171;">
+          <div style="font-weight: bold; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">Opponent_42</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #94a3b8;">Rating</span>
+            <span style="font-weight: 600;">1,412 <span style="color: #f87171;">(-18)</span></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #94a3b8;">Win Rate</span>
+            <span style="font-weight: 600;">51%</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #94a3b8;">Moves</span>
+            <span style="font-weight: 600;">4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 1rem; margin-top: auto;">
+        <button style="flex: 1; padding: 1rem; background-color: #38bdf8; color: #0f172a; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Rematch Request</button>
+        <button style="flex: 1; padding: 1rem; background-color: #334155; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Return to Lobby</button>
+      </div>
+    </div>
+
+    <!-- Right Side: Post-Game Chat -->
+    <div style="flex: 1; background-color: #1e293b; border-radius: 12px; display: flex; flex-direction: column; border: 1px solid #334155;">
+      <div style="padding: 1rem; border-bottom: 1px solid #334155; font-weight: 600; font-size: 0.9rem;">Post-Game Chat</div>
+      <div style="flex: 1; padding: 1rem; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="color: #94a3b8; font-style: italic; text-align: center; margin-bottom: 0.5rem;">Match ended. Chat is still active.</div>
+        <div>
+          <span style="color: #f87171; font-weight: 600;">Opponent_42:</span>
+          <span style="color: #cbd5e1;"> GG, well played!</span>
+        </div>
+        <div>
+          <span style="color: #4ade80; font-weight: 600;">You:</span>
+          <span style="color: #cbd5e1;"> Close game! Rematch?</span>
+        </div>
+        <div>
+          <span style="color: #f87171; font-weight: 600;">Opponent_42:</span>
+          <span style="color: #cbd5e1;"> Sure, let's go.</span>
+        </div>
+      </div>
+      <div style="padding: 1rem; border-top: 1px solid #334155;">
+        <input type="text" placeholder="Type a message..." style="width: 100%; padding: 0.6rem; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: white; outline: none; box-sizing: border-box;">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer Status -->
+  <div style="padding: 0.5rem 2rem; background-color: #0f172a; border-top: 1px solid #334155; font-size: 0.7rem; color: #64748b; display: flex; justify-content: space-between;">
+    <span>Server: EU-West-1</span>
+    <span>v1.0.4-stable</span>
+  </div>
+</div>

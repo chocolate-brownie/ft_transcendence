@@ -37,7 +37,6 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
     const friendRequest = await createFriendRequest(requesterId, addresseeId);
 
     res.status(201).json(friendRequest);
-
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ error: error.message });
@@ -50,7 +49,10 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
 
 //    ACCEPT FRIEND REQUEST
 
-export async function acceptFriendRequestController(req: AuthRequest, res: Response): Promise<void> {
+export async function acceptFriendRequestController(
+  req: AuthRequest,
+  res: Response,
+): Promise<void> {
   try {
     const currentUserId: number = req.user.id;
     const requestIdParam = req.params.requestId;
@@ -70,7 +72,6 @@ export async function acceptFriendRequestController(req: AuthRequest, res: Respo
     const updatedRequest = await acceptFriendRequest(requestId, currentUserId);
 
     res.status(200).json(updatedRequest);
-
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ error: error.message });
@@ -103,7 +104,6 @@ export async function deleteFriend(req: AuthRequest, res: Response): Promise<voi
     await removeFriend(friendId, currentUserId);
 
     res.status(204).send();
-
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ error: error.message });
@@ -123,7 +123,6 @@ export async function getFriendsList(req: AuthRequest, res: Response): Promise<v
     const friends = await getAcceptedFriends(currentUserId);
 
     res.status(200).json(friends);
-
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ error: error.message });
@@ -136,14 +135,16 @@ export async function getFriendsList(req: AuthRequest, res: Response): Promise<v
 
 //    GET PENDING FRIEND REQUESTS
 
-export async function getPendingRequestsController(req: AuthRequest, res: Response): Promise<void> {
+export async function getPendingRequestsController(
+  req: AuthRequest,
+  res: Response,
+): Promise<void> {
   try {
     const currentUserId: number = req.user.id;
 
     const requests = await getPendingRequests(currentUserId);
 
     res.status(200).json(requests);
-
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ error: error.message });

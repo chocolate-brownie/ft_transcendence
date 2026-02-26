@@ -6,7 +6,7 @@
 
 ---
 
-## Phase 1: Foundation & Infrastructure (Day 1)
+## Phase 1: Foundation & Infrastructure
 
 ### Docker & DevOps — [Tech Lead: mgodawat]
 
@@ -64,7 +64,7 @@
 
 ---
 
-## Phase 2: User Authentication & Management (Day 2)
+## Phase 2: User Authentication & Management
 
 ### Backend Auth API — [Backend: tzizi]
 
@@ -105,36 +105,36 @@
 - [x] On disconnect: set user `isOnline = false` in database
 - [x] Broadcast online status changes to friends
 
-### QA & Testing — [PM: teammate_4]
+### QA & Testing — [PM: mamahtal, mgodawat, tzizi]
 
-- [ ] Test signup flow: valid input, duplicate email, duplicate username, weak password
-- [ ] Test login flow: valid credentials, wrong password, non-existent email
-- [ ] Test protected route: with token, without token, expired token
-- [ ] Report bugs as GitHub Issues
+- [x] Test signup flow: valid input, duplicate email, duplicate username, weak password
+- [x] Test login flow: valid credentials, wrong password, non-existent email
+- [x] Test protected route: with token, without token, expired token
+- [x] Report bugs as GitHub Issues
 
 ---
 
-## Phase 3: Social Features + Game Board (Day 3)
+## Phase 3: Social Features + Game Board
 
-### Backend — Profiles & Friends — [Backend: teammate_2]
+### Backend — Profiles & Friends — [Backend: mamahtal]
 
-- [ ] `GET /api/users/:id` — get user profile (public info: username, avatar, stats, online status)
-- [ ] `PUT /api/users/me` — update own profile (display name, avatar)
-- [ ] `POST /api/users/me/avatar` — upload avatar image (store locally, default fallback)
-- [ ] Serve uploaded avatars as static files (`/uploads/avatars/`)
-- [ ] `POST /api/friends/request/:userId` — send friend request
-- [ ] `POST /api/friends/accept/:requestId` — accept friend request
-- [ ] `DELETE /api/friends/:friendId` — remove friend / reject request
-- [ ] `GET /api/friends` — list accepted friends with online status
-- [ ] `GET /api/friends/requests` — list pending incoming requests
+- [x] `GET /api/users/:id` — get user profile (public info: username, avatar, stats, online status)
+- [x] `PUT /api/users/me` — update own profile (display name, avatar)
+- [x] `POST /api/users/me/avatar` — upload avatar image (store locally, default fallback)
+- [x] Serve uploaded avatars as static files (`/uploads/avatars/`)
+- [x] `POST /api/friends/request/:userId` — send friend request
+- [x] `POST /api/friends/accept/:requestId` — accept friend request
+- [x] `DELETE /api/friends/:friendId` — remove friend / reject request
+- [x] `GET /api/friends` — list accepted friends with online status
+- [x] `GET /api/friends/requests` — list pending incoming requests
 
-### Frontend — Profiles & Friends — [Frontend: teammate_1]
+### Frontend — Profiles & Friends — [Frontend: zamgar]
 
-- [ ] Profile page (`pages/Profile.tsx`):
-  - [ ] Display: avatar, username, display name, online status, join date
-  - [ ] Edit mode: change display name, upload avatar
-  - [ ] Avatar upload with preview before saving
-- [ ] Friends list component:
+- [x] Profile page (`pages/Profile.tsx`):
+  - [x] Display: avatar, username, display name, online status, join date
+  - [x] Edit mode: change display name, upload avatar
+  - [x] Avatar upload with preview before saving
+- [x] Friends list component:
   - [ ] Show friends with online/offline indicator (green/gray dot)
   - [ ] "Remove friend" button
 - [ ] Friend request UI:
@@ -142,7 +142,7 @@
   - [ ] Pending requests list (accept / reject buttons)
 - [ ] User search: search input to find users by username
 
-### Backend + Frontend — Chat — [Real-Time: teammate_3]
+### Backend + Frontend — Chat — [Real-Time: zamgar, tzizi, mgodawat]
 
 - [ ] Socket.io events: `send_message` (client → server), `receive_message` (server → client)
 - [ ] `typing` indicator event
@@ -155,7 +155,7 @@
   - [ ] Typing indicator ("User is typing...")
   - [ ] Connect Socket.io client to backend for real-time messages
 
-### Frontend — Game Board Start — [Frontend: teammate_1]
+### Frontend — Game Board Start — [Frontend: zamgar]
 
 - [ ] Create Tic-Tac-Toe board component (`components/GameBoard.tsx`):
   - [ ] 3x3 CSS grid of clickable cells
@@ -164,7 +164,7 @@
   - [ ] Visual feedback: hover effect on empty cells, cursor pointer
   - [ ] Current turn indicator: "Your turn (X)" or "Waiting for opponent (O)"
 
-### QA & Testing — [PM: teammate_4]
+### QA & Testing — [PM: mgodawat]
 
 - [ ] Test profile view and edit flows
 - [ ] Test friend request flow end-to-end
@@ -180,9 +180,9 @@
 
 ---
 
-## Phase 4: Game Complete + Multiplayer (Day 4)
+## Phase 4: Game Complete + Multiplayer
 
-### Backend — Game Logic — [Backend: teammate_2]
+### Backend — Game Logic — [Backend: mamahtal, tzizi]
 
 - [ ] Game state model: `{ board: [9 cells], currentTurn: "X"|"O", status, winner }`
 - [ ] Move validation function: is it this player's turn? Is the cell empty? Is the game active?
@@ -193,7 +193,7 @@
 - [ ] `GET /api/games/:id` — get current game state
 - [ ] Save completed game to database (winner, final board, timestamps)
 
-### Frontend — Game UI Complete — [Frontend: teammate_1]
+### Frontend — Game UI Complete — [Frontend: zamgar, mgodawat]
 
 - [ ] Game states: waiting (for opponent), playing, finished (win), finished (draw)
 - [ ] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!"

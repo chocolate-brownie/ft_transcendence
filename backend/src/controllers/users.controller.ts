@@ -3,17 +3,17 @@
 
 // backend/src/controllers/users.controller.ts
 
-import { Request, Response } from 'express';
-import { getUserById } from '../services/users.service';
-import { AuthRequest } from '../middleware/auth';
-import { updateUserById } from '../services/users.service';
+import { Request, Response } from "express";
+import multer from "multer";
+import { AuthRequest } from "../middleware/auth";
+import { getUserById, updateUserById, updateUserAvatar } from "../services/users.service";
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const id = Number(req.params.id);
 
   // Validation stricte
   if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: 'Invalid user ID format' });
+    res.status(400).json({ error: "Invalid user ID format" });
     return;
   }
 
@@ -21,14 +21,14 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     const user = await getUserById(id);
 
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
+      res.status(404).json({ error: "User not found" });
       return;
     }
 
     res.status(200).json(user);
   } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -36,17 +36,17 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 export const updateMyProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const { displayName } = req.body;
 
     // Validation métier : displayName 1-50 caractères
     if (
-      typeof displayName !== 'string' ||
+      typeof displayName !== "string" ||
       displayName.length < 1 ||
       displayName.length > 50
     ) {
-      return res.status(400).json({ error: 'displayName must be 1-50 characters' });
+      return res.status(400).json({ error: "displayName must be 1-50 characters" });
     }
 
     // Appel au service pour mettre à jour
@@ -54,13 +54,68 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(updatedUser);
   } catch (error: any) {
-    console.error('Error updating user profile:', error);
+    console.error("Error updating user profile:", error);
 
     // Prisma error si user non trouvé
-    if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'User not found' });
+    if (error.code === "P2025") {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: "Internal server error" });
   }
+};
+
+//        Upload Avatar
+
+export const uploadMyAvatar = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    // Multer already ran as middleware before this handler.
+    // If we reach here, the file passed validation.
+    // req.file is set by multer's .single('avatar')
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Build the public URL path:  /uploads/avatars/42-1709049600000.jpg
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    // Update database + delete old file
+    const updatedUser = await updateUserAvatar(userId, avatarUrl);
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ─── Multer error handler ──────────────────────────────────────────────────
+// Multer throws specific errors that we need to catch and translate
+// into proper HTTP responses. This middleware wraps the multer upload.
+export const handleMulterError = (
+  err: any,
+  req: AuthRequest,
+  res: Response,
+  next: Function,
+) => {
+  if (err instanceof multer.MulterError) {
+    // Multer-specific errors
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({ error: "File too large. Maximum size is 5MB" });
+    }
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  }
+
+  if (err?.message === "INVALID_FILE_TYPE") {
+    return res.status(400).json({
+      error: "Invalid file type. Only .jpg, .jpeg, .png, .gif are allowed",
+    });
+  }
+
+  // Unknown error — pass to global error handler
+  next(err);
 };
