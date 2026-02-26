@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/Button";
 
@@ -13,7 +12,6 @@ type HealthStatus = {
 export default function Home() {
   const [health, setHealth] = useState<HealthStatus>(null);
   const [error, setError] = useState<string | null>(null);
-  const [socketStatus, setSocketStatus] = useState<"ok" | "error" | "loading">("loading");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -21,15 +19,6 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => setHealth(data))
       .catch((err) => setError(err.message));
-  }, []);
-
-  useEffect(() => {
-    const socket = io({ path: "/socket.io" });
-    socket.on("connect", () => setSocketStatus("ok"));
-    socket.on("connect_error", () => setSocketStatus("error"));
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const statusItems: { label: string; status: "ok" | "error" | "loading" }[] = [
@@ -42,7 +31,6 @@ export default function Home() {
       label: "Database",
       status: health?.database === "connected" ? "ok" : error ? "error" : "loading",
     },
-    { label: "WebSocket", status: socketStatus },
   ];
 
   const dotColor = {
