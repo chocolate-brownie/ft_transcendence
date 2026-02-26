@@ -343,7 +343,7 @@ export default function Profile() {
   const avatarSrc =
     rawAvatar && rawAvatar.startsWith("/uploads/")
       ? rawAvatar
-      : rawAvatar || "/logo-friends.png";
+      : rawAvatar || "/default-avatar.png";
 
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",

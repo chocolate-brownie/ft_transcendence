@@ -28,7 +28,7 @@ export default function PendingRequests({
         const avatarSrc =
           req.sender.avatarUrl?.startsWith("/uploads/")
             ? req.sender.avatarUrl
-            : req.sender.avatarUrl || "/logo-friends.png";
+            : req.sender.avatarUrl || "/default-avatar.png";
 
         return (
           <div
