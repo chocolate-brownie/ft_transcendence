@@ -179,6 +179,7 @@ io.on("connection", (socket) => {
     notifyFriends(userId, "user_offline").catch(console.error);
   });
 
+// #region Chat message handling
   // Handle send_message event
   socket.on("send_message", async (payload: SendMessagePayload) => {
     try {
@@ -220,6 +221,7 @@ io.on("connection", (socket) => {
       socket.emit("message_error", { message: "Internal server error" });
     }
   });
+// #endregion
 
 });
 
