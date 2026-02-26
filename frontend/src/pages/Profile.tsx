@@ -71,6 +71,11 @@ export default function Profile() {
 
   // ── Fetch friends list (current user's accepted friends)
   useEffect(() => {
+    if (!user) {
+      setFriendsLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     const loadFriends = async () => {
@@ -95,7 +100,7 @@ export default function Profile() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
@@ -237,15 +242,10 @@ export default function Profile() {
   const isMine = user && user.id != null && user.id === profile.id;
   const displayName = profile.displayName ? profile.displayName : profile.username;
 
-  // Backend URL base for static files
-  const BACKEND_ORIGIN = "https://localhost:3000";
-
-  // If we have an avatarUrl that starts with /uploads, prefix it with the backend URL.
-  // Otherwise, fall back to the fallback logo.
   const rawAvatar = profile.avatarUrl ?? null;
   const avatarSrc =
     rawAvatar && rawAvatar.startsWith("/uploads/")
-      ? `${BACKEND_ORIGIN}${rawAvatar}`
+      ? rawAvatar
       : rawAvatar || "/logo-friends.png";
 
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
