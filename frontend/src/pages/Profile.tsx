@@ -31,6 +31,7 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarSavingRef = useRef(false);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -72,8 +73,9 @@ export default function Profile() {
     doFetch();
 
     // Re-fetch when the tab regains focus so isOnline stays fresh
+    // Skip during avatar upload — file picker triggers visibilitychange
     const onVisible = () => {
-      if (document.visibilityState === "visible") doFetch();
+      if (document.visibilityState === "visible" && !avatarSavingRef.current) doFetch();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -250,6 +252,7 @@ export default function Profile() {
   }
 
   function handleAvatarUpload(file: File) {
+    avatarSavingRef.current = true;
     setAvatarSaving(true);
     setAvatarError(null);
 
@@ -272,7 +275,10 @@ export default function Profile() {
       .catch((err) =>
         setAvatarError(err instanceof Error ? err.message : "Failed to upload avatar"),
       )
-      .finally(() => setAvatarSaving(false));
+      .finally(() => {
+        avatarSavingRef.current = false;
+        setAvatarSaving(false);
+      });
   }
 
   // ── Handlers: friends

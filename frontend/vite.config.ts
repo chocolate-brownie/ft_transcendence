@@ -20,6 +20,11 @@ export default defineConfig({
         secure: false,
         ws: true, // Enable WebSocket proxying
       },
+      "/uploads": {
+        target: "https://backend:3000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
