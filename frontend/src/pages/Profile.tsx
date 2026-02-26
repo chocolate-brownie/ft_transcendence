@@ -11,7 +11,7 @@ import PendingRequests from "../components/PendingRequests";
 
 export default function Profile() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   // Compute target user ID before any hooks.
   // isMeAlias → will redirect to /profile (no id param).
@@ -257,16 +257,10 @@ export default function Profile() {
     usersService
       .uploadAvatar(file)
       .then((data) => {
-        if (!profile) {
-          return;
-        }
-
-        const updatedProfile: User = {
-          ...profile,
-          avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl,
-        };
-
-        setProfile(updatedProfile);
+        setProfile((prev) =>
+          prev ? { ...prev, avatarUrl: data.avatarUrl ?? prev.avatarUrl } : prev,
+        );
+        updateUser({ avatarUrl: data.avatarUrl ?? "" });
         setSuccessMessage("Avatar updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
@@ -336,6 +330,9 @@ export default function Profile() {
 
   // ── Derived values
   const isMine = user && user.id != null && user.id === profile.id;
+  // If viewing own profile the user is clearly online — don't let a stale
+  // API response or a brief socket hiccup flip the indicator to "Offline".
+  const isOnline = isMine ? true : profile.isOnline;
   const displayName = profile.displayName ? profile.displayName : profile.username;
   const isAlreadyFriend = !isMine && !!user && friends.some((f) => f.id === profile.id);
   const incomingRequest =
@@ -372,7 +369,18 @@ export default function Profile() {
                   className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
                   onClick={() => {
                     if (!isMine || avatarSaving) return;
+                    // Set flag BEFORE file picker opens — visibilitychange
+                    // fires before onChange, so we must guard early.
+                    avatarSavingRef.current = true;
                     if (fileInputRef.current) {
+                      // Reset guard if the user dismisses without selecting a file.
+                      // The 'cancel' event fires on the input but isn't in React's
+                      // type definitions, so we wire it up natively.
+                      fileInputRef.current.addEventListener(
+                        "cancel",
+                        () => { avatarSavingRef.current = false; },
+                        { once: true },
+                      );
                       fileInputRef.current.click();
                     }
                   }}
@@ -407,7 +415,7 @@ export default function Profile() {
                 <span
                   className={
                     "absolute bottom-1 right-2 h-3 w-3 rounded-full border-2 border-white " +
-                    (profile.isOnline ? "bg-green-500" : "bg-gray-400")
+                    (isOnline ? "bg-green-500" : "bg-gray-400")
                   }
                 />
               </div>
@@ -417,8 +425,8 @@ export default function Profile() {
               <p className="text-sm text-pong-text/60">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
-                <span className={profile.isOnline ? "text-green-500" : "text-gray-400"}>
-                  {profile.isOnline ? "Online" : "Offline"}
+                <span className={isOnline ? "text-green-500" : "text-gray-400"}>
+                  {isOnline ? "Online" : "Offline"}
                 </span>
                 <span className="mx-2 text-pong-text/30">•</span>
                 Joined {joined}
