@@ -124,9 +124,10 @@ export async function getChatHistoryPaginated(
   // Validate limit (max 100, min 1)
   const validLimit = Math.max(1, Math.min(limit, 100));
 
+  // Fetch one extra to determine whether more pages exist
   const messages = await prisma.message.findMany({
-    take: validLimit, // Nombre d'éléments à récupérer
-    ...(beforeId && { // On saute l'élément qui sert de curseur lui-même et ajoute cursor que si beforeid existe
+    take: validLimit + 1,
+    ...(beforeId && {
       skip: 1,
       cursor: { id: beforeId },
     }),
@@ -148,6 +149,9 @@ export async function getChatHistoryPaginated(
       },
     },
   });
+
+  const hasMore = messages.length > validLimit;
+  if (hasMore) messages.pop();
 
   // Mark messages as read if current user is the receiver
   const unreadMessages = messages
@@ -177,7 +181,7 @@ export async function getChatHistoryPaginated(
 
   return {
     messages: formattedMessages,
-    hasMore: messages.length === validLimit, // If we got the max number, there might be more
-    nextCursor: messages.length > 0 ? messages[messages.length - 1].id : null,
+    hasMore,
+    nextCursor: formattedMessages.length > 0 ? formattedMessages[formattedMessages.length - 1].id : null,
   };
 }
