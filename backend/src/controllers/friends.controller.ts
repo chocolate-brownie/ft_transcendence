@@ -28,9 +28,8 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
     }
 
     //Extract ID
-    const addresseeId = parseInt(userIdParam, 10);
-
-    if (isNaN(addresseeId)) {
+    const addresseeId = Number(userIdParam);
+    if (Number.isNaN(addresseeId)) {
       res.status(400).json({ error: "Invalid user ID" });
       return;
     }
@@ -64,9 +63,8 @@ export async function acceptFriendRequestController(
       return;
     }
 
-    const requestId = parseInt(requestIdParam as string, 10);
-
-    if (isNaN(requestId)) {
+    const requestId = Number(requestIdParam);
+    if (Number.isNaN(requestId)) {
       res.status(400).json({ error: "Invalid request ID" });
       return;
     }
@@ -96,9 +94,8 @@ export async function deleteFriend(req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    const friendId = parseInt(friendIdParam as string, 10);
-
-    if (isNaN(friendId)) {
+    const friendId = Number(friendIdParam);
+    if (Number.isNaN(friendId)) {
       res.status(400).json({ error: "Invalid friend ID" });
       return;
     }
@@ -129,8 +126,8 @@ export async function rejectFriendRequestController(
       return;
     }
 
-    const senderId = parseInt(senderIdParam as string, 10);
-    if (isNaN(senderId)) {
+    const senderId = Number(senderIdParam);
+    if (Number.isNaN(senderId)) {
       res.status(400).json({ error: "Invalid sender ID" });
       return;
     }

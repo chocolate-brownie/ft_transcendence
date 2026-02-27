@@ -2,6 +2,7 @@
 // Send request, accept, reject, remove, list friends
 
 import prisma from "../lib/prisma";
+import { AppError } from "../lib/app-error";
 
 /* Get Friendship Status */
 export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "friends";
@@ -34,7 +35,7 @@ export async function getFriendshipStatus(
 export async function createFriendRequest(requesterId: number, addresseeId: number) {
   //Self-FriendRequest Check
   if (requesterId === addresseeId) {
-    throw { status: 400, message: "You cannot send a friend request to yourself" };
+    throw new AppError(400, "You cannot send a friend request to yourself");
   }
 
   //Check User
@@ -43,7 +44,7 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
   });
 
   if (!addressee) {
-    throw { status: 404, message: "User not found" };
+    throw new AppError(404, "User not found");
   }
 
   //Check if FriendRequest available (A→B ou B→A, pending/accepted)
@@ -59,12 +60,9 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
 
   if (existing) {
     if (existing.status === "ACCEPTED") {
-      throw { status: 409, message: "You are already friends with this user" };
+      throw new AppError(409, "You are already friends with this user");
     }
-    throw {
-      status: 409,
-      message: "A friend request already exists between you and this user",
-    };
+    throw new AppError(409, "A friend request already exists between you and this user");
   }
 
   //Create FriendRequest
@@ -97,20 +95,17 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
   });
 
   if (!friendRequest) {
-    throw { status: 404, message: "Friend request not found" };
+    throw new AppError(404, "Friend request not found");
   }
 
   //Check destinataire
   if (friendRequest.addresseeId !== currentUserId) {
-    throw { status: 403, message: "You can only accept requests sent to you" };
+    throw new AppError(403, "You can only accept requests sent to you");
   }
 
   //Check "PENDING" Etat
   if (friendRequest.status !== "PENDING") {
-    throw {
-      status: 400,
-      message: `Friend request is already ${friendRequest.status.toLowerCase()}`,
-    };
+    throw new AppError(400, `Friend request is already ${friendRequest.status.toLowerCase()}`);
   }
 
   //Switch "PENDING" to "ACCEPTED"
@@ -137,7 +132,7 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
 export async function removeFriend(friendUserId: number, currentUserId: number) {
   // Self-check
   if (friendUserId === currentUserId) {
-    throw { status: 400, message: "Invalid friend ID" };
+    throw new AppError(400, "Invalid friend ID");
   }
 
   // Seek the relationship between two users
@@ -151,7 +146,7 @@ export async function removeFriend(friendUserId: number, currentUserId: number) 
   });
 
   if (!friendship) {
-    throw { status: 404, message: "Friendship or friend request not found" };
+    throw new AppError(404, "Friendship or friend request not found");
   }
 
   // Hard delete
@@ -162,7 +157,7 @@ export async function removeFriend(friendUserId: number, currentUserId: number) 
 
 export async function rejectFriendRequest(senderId: number, currentUserId: number) {
   if (senderId === currentUserId) {
-    throw { status: 400, message: "Invalid sender ID" };
+    throw new AppError(400, "Invalid sender ID");
   }
 
   const request = await prisma.friend.findFirst({
@@ -174,7 +169,7 @@ export async function rejectFriendRequest(senderId: number, currentUserId: numbe
   });
 
   if (!request) {
-    throw { status: 404, message: "Pending friend request not found" };
+    throw new AppError(404, "Pending friend request not found");
   }
 
   await prisma.friend.delete({
