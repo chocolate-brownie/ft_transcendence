@@ -129,3 +129,30 @@ export const checkWinnerWithLine = (board: Board, boardSize: number = 3): WinRes
   }
   return null;
 };
+
+//        CHECK DRAW
+
+export const checkDraw = (board: Board): boolean => {
+  return board.every(cell => cell !== null);
+};
+
+//        CHECK GAME OVER
+
+export type GameOverResult =
+  | { gameOver: true;  winner: Player; isDraw: false; line: readonly [number, number, number] }
+  | { gameOver: true;  winner: null;   isDraw: true;  line: null }
+  | { gameOver: false; winner: null;   isDraw: false; line: null };
+
+export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResult => {
+  const winResult = checkWinnerWithLine(board, boardSize);
+
+  if (winResult) {
+    return { gameOver: true, winner: winResult.winner, isDraw: false, line: winResult.line };
+  }
+
+  if (checkDraw(board)) {
+    return { gameOver: true, winner: null, isDraw: true, line: null };
+  }
+
+  return { gameOver: false, winner: null, isDraw: false, line: null };
+};
