@@ -3,6 +3,8 @@ import type { Board } from "../types/game";
 import GameBoard from "../components/GameBoard";
 
 //TEMP FOR DEV (maybe make it a backend issue to send winning line info? or just calculate it on the frontend?)
+// TODO: when backend game API is wired to this page,
+// use the server-provided winningLine instead of calculating it here.
 // Every possible winning outcome
 const WIN_LINES: number[][] = [
   [0, 1, 2], // horizontal
