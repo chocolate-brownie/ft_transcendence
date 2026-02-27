@@ -1,7 +1,11 @@
 // Friends API calls — send request, accept, reject, list friends
 
-import type { FriendInfo, PendingRequest } from "../types";
+import type { FriendInfo, PendingRequest, FriendshipStatus } from "../types";
 import { apiClient } from "../lib/apiClient";
+
+interface FriendshipStatusResponse {
+  status: FriendshipStatus;
+}
 
 export const friendsService = {
   getFriends(): Promise<FriendInfo[]> {
@@ -22,5 +26,12 @@ export const friendsService = {
 
   acceptRequest(requestId: number): Promise<void> {
     return apiClient.post<void>(`/api/friends/accept/${requestId}`, {});
+  },
+
+  async getFriendshipStatus(userId: number): Promise<FriendshipStatus> {
+    const data = await apiClient.get<FriendshipStatusResponse>(
+      `/api/friends/status/${userId}`,
+    );
+    return data.status;
   },
 };

@@ -37,34 +37,34 @@ export default function PendingRequests({
     <div className={`space-y-3 ${className ?? ""}`}>
       {requests.map((req) => {
         const name = req.sender.displayName ?? req.sender.username;
-        const avatarSrc = req.sender.avatarUrl || "/default-avatar.png";
+        const avatarSrc = "/default-avatar.png";
 
         return (
           <div
             key={req.id}
-            className="flex items-center gap-3 rounded-lg border border-slate-700/60 bg-slate-900/60 p-3"
+            className="flex items-center gap-3 rounded-lg border border-black/10 bg-white/20 p-3"
           >
             <img
               src={avatarSrc}
               alt={`${req.sender.username} avatar`}
-              className="h-10 w-10 flex-shrink-0 rounded-full border border-slate-700 object-cover"
+              className="h-10 w-10 flex-shrink-0 rounded-full border border-black/10 object-cover"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-50">{name}</p>
-              <p className="truncate text-xs text-slate-400">
+              <p className="truncate text-sm font-semibold text-pong-text">{name}</p>
+              <p className="truncate text-xs text-pong-text/60">
                 @{req.sender.username} · {timeAgo(req.createdAt)}
               </p>
             </div>
             <div className="flex flex-shrink-0 gap-2">
               <button
                 onClick={() => onAccept(req.id)}
-                className="rounded-md border border-emerald-400/50 px-3 py-1 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 hover:text-emerald-200"
+                className="rounded-md border border-green-500/40 px-3 py-1 text-xs font-semibold text-green-600 transition hover:bg-green-500/10"
               >
                 Accept
               </button>
               <button
                 onClick={() => onReject(req.senderId)}
-                className="rounded-md border border-red-400/50 px-3 py-1 text-xs font-semibold text-red-400 transition hover:bg-red-500/10 hover:text-red-300"
+                className="rounded-md border border-red-500/40 px-3 py-1 text-xs font-semibold text-red-500 transition hover:bg-red-500/10"
               >
                 Decline
               </button>

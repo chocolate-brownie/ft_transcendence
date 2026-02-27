@@ -8,6 +8,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import FriendsList from "../components/FriendsList";
 import PendingRequests from "../components/PendingRequests";
+import FriendRequestButton from "../components/Friends/FriendRequestButton";
 
 export default function Profile() {
   const { id } = useParams();
@@ -32,8 +33,6 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const avatarSavingRef = useRef(false);
-  // Tracks the latest resolvedId so async handlers can detect stale navigation
-  const resolvedIdRef = useRef(resolvedId);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -49,11 +48,6 @@ export default function Profile() {
   // Pending requests
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [pendingLoading, setPendingLoading] = useState<boolean>(true);
-
-  // Friendship action (for other users' profiles)
-  const [requestSent, setRequestSent] = useState(false);
-  const [friendshipActionLoading, setFriendshipActionLoading] = useState(false);
-  const [friendshipActionError, setFriendshipActionError] = useState<string | null>(null);
 
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -146,18 +140,6 @@ export default function Profile() {
       cancelled = true;
     };
   }, [user]);
-
-  // ── Keep resolvedIdRef current so async handlers can detect stale navigation
-  useEffect(() => {
-    resolvedIdRef.current = resolvedId;
-  });
-
-  // ── Reset friendship action state when navigating to a different profile
-  useEffect(() => {
-    setRequestSent(false);
-    setFriendshipActionError(null);
-    setFriendshipActionLoading(false);
-  }, [resolvedId]);
 
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
@@ -293,26 +275,6 @@ export default function Profile() {
     }
   }
 
-  async function handleSendRequest() {
-    if (!profile) return;
-    const capturedId = resolvedId;
-    setFriendshipActionLoading(true);
-    setFriendshipActionError(null);
-    try {
-      await friendsService.sendRequest(profile.id);
-      if (resolvedIdRef.current !== capturedId) return;
-      setRequestSent(true);
-    } catch (err) {
-      if (resolvedIdRef.current !== capturedId) return;
-      setFriendshipActionError(
-        err instanceof Error ? err.message : "Failed to send friend request",
-      );
-    } finally {
-      if (resolvedIdRef.current !== capturedId) return;
-      setFriendshipActionLoading(false);
-    }
-  }
-
   async function handleAcceptRequest(requestId: number) {
     try {
       await friendsService.acceptRequest(requestId);
@@ -324,7 +286,7 @@ export default function Profile() {
           username: accepted.sender.username,
           displayName: accepted.sender.displayName,
           avatarUrl: accepted.sender.avatarUrl,
-          isOnline: false,
+          isOnline: accepted.sender.isOnline,
         };
         setFriends((prev) => [...prev, newFriend]);
       }
@@ -348,17 +310,16 @@ export default function Profile() {
   // API response or a brief socket hiccup flip the indicator to "Offline".
   const isOnline = isMine ? true : profile.isOnline;
   const displayName = profile.displayName ? profile.displayName : profile.username;
-  const isAlreadyFriend = !isMine && !!user && friends.some((f) => f.id === profile.id);
-  const incomingRequest =
+  const incomingRequestId =
     !isMine && !!user
-      ? (pendingRequests.find((r) => r.sender.id === profile.id) ?? null)
+      ? (pendingRequests.find((r) => r.sender.id === profile.id)?.id ?? null)
       : null;
 
   const rawAvatar = profile.avatarUrl ?? null;
   const avatarSrc =
-    rawAvatar && rawAvatar.startsWith("/uploads/")
+    rawAvatar && rawAvatar.startsWith("/uploads/") && !rawAvatar.includes("default")
       ? rawAvatar
-      : rawAvatar || "/default-avatar.png";
+      : "/default-avatar.png";
 
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
@@ -497,50 +458,13 @@ export default function Profile() {
 
               {/* Friendship action — only when viewing another user's profile */}
               {!isMine && user && (
-                <div className="mt-4">
-          {isAlreadyFriend ? (
-            <Button
-              variant="lime"
-              className="w-full cursor-default"
-              disabled
-            >
-              Friends ✓
-            </Button>
-          ) : incomingRequest ? (
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                className="flex-1"
-                onClick={() => void handleAcceptRequest(incomingRequest.id)}
-              >
-                Accept
-              </Button>
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => void handleRejectRequest(profile.id)}
-              >
-                Decline
-              </Button>
-            </div>
-          ) : requestSent ? (
-            <Button variant="secondary" className="w-full" disabled>
-              Request Sent
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={() => void handleSendRequest()}
-              disabled={friendshipActionLoading}
-            >
-              {friendshipActionLoading ? "Sending..." : "Add Friend"}
-            </Button>
-          )}
-                  {friendshipActionError && (
-                    <p className="mt-1 text-xs text-red-400">{friendshipActionError}</p>
-                  )}
-                </div>
+                <FriendRequestButton
+                  targetUserId={profile.id}
+                  isMine={isMine}
+                  incomingRequestId={incomingRequestId}
+                  onAccept={handleAcceptRequest}
+                  onDecline={handleRejectRequest}
+                />
               )}
 
               {successMessage && (

@@ -243,6 +243,7 @@ export async function getPendingRequests(currentUserId: number) {
           username: true,
           displayName: true,
           avatarUrl: true,
+          isOnline: true,
         },
       },
     },

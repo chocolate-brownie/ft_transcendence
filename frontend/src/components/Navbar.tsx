@@ -50,9 +50,10 @@ export default function Navbar() {
   }, [user]);
 
   const avatarSrc =
-    user?.avatarUrl?.startsWith("/uploads/")
+    user?.avatarUrl?.startsWith("/uploads/") &&
+    !user.avatarUrl.includes("default")
       ? user.avatarUrl
-      : user?.avatarUrl || "/default-avatar.png";
+      : "/default-avatar.png";
 
   const navLinks = [
     { label: "Play", to: "/game" },
