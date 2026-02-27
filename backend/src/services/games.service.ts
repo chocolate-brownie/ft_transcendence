@@ -1,7 +1,12 @@
 // Games service — business logic for game operations
 // Create game, validate moves, win detection, draw detection
 
-import type { GameState, GameStatus, Player } from '../types/game';
+import type { 
+  GameState,
+  GameStatus,
+  Player,
+  Board,
+  } from '../types/game';
 
 // ───────────────── CONST ERROR ─────────────────
 
@@ -54,14 +59,15 @@ const statusErrorMap: Record<NonPlayableStatus, string> = {
 
 // ───────────────── Main Functions ─────────────────
 
-//  VALIDATE MOVE
+//        VALIDATE MOVE
+
 export const validateMove = (
   gameState: GameState,
   cellIndex: number,
   userId: number,
 ): MoveValidationResult => {
 
-  //game still in progress ?
+  //Game still in progress ?
   if (gameState.status !== 'IN_PROGRESS') {
     const error = statusErrorMap[gameState.status] ?? MOVE_ERRORS.NOT_ACTIVE;
     return { valid: false, error };
@@ -89,4 +95,37 @@ export const validateMove = (
   }
 
   return { valid: true };
+};
+
+//        CHECK WIN
+
+const WINNING_LINES = [
+  [0, 1, 2], // Up
+  [3, 4, 5], // Mid
+  [6, 7, 8], // Bot
+  [0, 3, 6], // Left
+  [1, 4, 7], // Mid
+  [2, 5, 8], // Right
+  [0, 4, 8], // Diagonale up
+  [2, 4, 6], // Diagonale down
+] as const;
+
+type WinResult = {
+  winner: 'X' | 'O';
+  line: readonly [number, number, number];
+} | null;
+
+export const checkWinnerWithLine = (board: Board, boardSize: number = 3): WinResult => {
+  if (boardSize !== 3) throw new Error('Only 3x3 boards supported');
+  for (const line of WINNING_LINES) {
+    const [a, b, c] = line;
+    if (
+      board[a] !== null &&
+      board[a] === board[b] &&
+      board[a] === board[c]
+    ) {
+      return { winner: board[a], line };
+    }
+  }
+  return null;
 };
