@@ -27,14 +27,14 @@ export const getUserById = async (id: number) => {
     return null;
   }
 
-  let avatarUrl = user.avatarUrl;
-  if (!avatarUrl || avatarUrl.includes("default.png")) {
-    avatarUrl = "default.png"; // URL vers l'avatar par défaut
-  }
+  const cleanedAvatar =
+    !user.avatarUrl || user.avatarUrl.includes("default.png") ? null : user.avatarUrl;
 
-  user.avatarUrl = avatarUrl;
-
-  return user;
+  // Return a new object to keep a nullable avatarUrl type without mutating the Prisma result
+  return {
+    ...user,
+    avatarUrl: cleanedAvatar,
+  };
 };
 
 //      MAJ User profile

@@ -9,7 +9,8 @@ export async function getFriendshipStatus(
   currentUserId: number,
   targetUserId: number,
 ): Promise<FriendshipStatus> {
-  if (currentUserId == targetUserId) return "friends"; // frontend hides own button anyway
+  // Self check: nothing to do
+  if (currentUserId === targetUserId) return "none";
 
   const friendship = await prisma.friend.findFirst({
     where: {
@@ -17,6 +18,7 @@ export async function getFriendshipStatus(
         { requesterId: currentUserId, addresseeId: targetUserId },
         { requesterId: targetUserId, addresseeId: currentUserId },
       ],
+      status: { in: ["PENDING", "ACCEPTED"] },
     },
   });
 
@@ -25,7 +27,7 @@ export async function getFriendshipStatus(
   if (friendship.status == "PENDING") {
     return friendship.requesterId === currentUserId ? "pending_sent" : "pending_received";
   }
-  return "none"; // For BLOCKED or other future status, treat as none
+  return "none";
 }
 
 //     SEND FRIEND REQUEST
