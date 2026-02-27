@@ -43,7 +43,7 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
           const avatarSrc = friend.avatarUrl?.startsWith("/uploads/")
             && !friend.avatarUrl.includes("default")
             ? friend.avatarUrl
-            : friend.avatarUrl || "/default-avatar.png";
+            : "/default-avatar.png";
 
           return (
             <div

@@ -23,8 +23,8 @@ export async function getFriendshipStatus(
   });
 
   if (!friendship) return "none";
-  if (friendship.status == "ACCEPTED") return "friends";
-  if (friendship.status == "PENDING") {
+  if (friendship.status === "ACCEPTED") return "friends";
+  if (friendship.status === "PENDING") {
     return friendship.requesterId === currentUserId ? "pending_sent" : "pending_received";
   }
   return "none";
