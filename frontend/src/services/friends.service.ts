@@ -16,6 +16,10 @@ export const friendsService = {
     return apiClient.del(`/api/friends/${friendId}`);
   },
 
+  rejectRequest(senderId: number): Promise<void> {
+    return apiClient.del(`/api/friends/reject/${senderId}`);
+  },
+
   sendRequest(userId: number): Promise<void> {
     return apiClient.post<void>(`/api/friends/request/${userId}`, {});
   },

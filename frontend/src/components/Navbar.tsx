@@ -35,8 +35,9 @@ export default function Navbar() {
   useEffect(() => {
     if (user) return;
     let cancelled = false;
+    const controller = new AbortController();
     setHealth("loading");
-    fetch("/api/health")
+    fetch("/api/health", { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then(() => {
         if (!cancelled) setHealth("ok");
@@ -46,6 +47,7 @@ export default function Navbar() {
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [user]);
 

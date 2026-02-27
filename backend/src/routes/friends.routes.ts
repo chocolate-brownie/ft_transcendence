@@ -6,6 +6,7 @@ import {
   getFriendshipStatusController,
   sendFriendRequest,
   acceptFriendRequestController,
+  rejectFriendRequestController,
   deleteFriend,
 } from "../controllers/friends.controller";
 
@@ -25,6 +26,9 @@ router.post("/request/:userId", auth, sendFriendRequest);
 
 // POST   /api/friends/accept/:requestId
 router.post("/accept/:requestId", auth, acceptFriendRequestController);
+
+// DELETE /api/friends/reject/:senderId
+router.delete("/reject/:senderId", auth, rejectFriendRequestController);
 
 // DELETE /api/friends/:friendId
 router.delete("/:friendId", auth, deleteFriend);

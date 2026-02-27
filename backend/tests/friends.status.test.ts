@@ -96,7 +96,6 @@ describe("GET /api/friends/status/:userId", () => {
 
   it("returns none (200) when requesting status with self", async () => {
     currentUserId = 5;
-    mockFindFirst.mockResolvedValueOnce(null);
 
     const res = await request(app)
       .get("/api/friends/status/5")
@@ -104,6 +103,6 @@ describe("GET /api/friends/status/:userId", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "none" });
+    expect(mockFindFirst).not.toHaveBeenCalled();
   });
 });
-

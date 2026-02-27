@@ -11,6 +11,7 @@ import { uploadAvatar } from "../middleware/upload";
 const router = Router();
 
 // GET  /api/users/:id
+// Auth is required so profile avatar visibility can depend on viewer friendship.
 router.get("/:id", auth, getUser);
 
 // PUT  /api/users/me
