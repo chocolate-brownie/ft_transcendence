@@ -1,6 +1,8 @@
 // Games service — business logic for game operations
 // Create game, validate moves, win detection, draw detection
 
+import prisma from '../lib/prisma';
+import { initializeBoard } from '../types/game';
 import type { 
   GameState,
   GameStatus,
@@ -155,4 +157,47 @@ export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResu
   }
 
   return { gameOver: false, winner: null, isDraw: false, line: null };
+};
+
+// ───────────────── CONST ERROR (Create) ─────────────────
+
+export const CREATE_ERRORS = {
+  SELF_PLAY:        'Cannot play against yourself',
+  PLAYER_NOT_FOUND: 'Player not found',
+  NOT_FRIENDS:      'Can only play with friends',
+} as const;
+
+// ───────────────── DB Operations ─────────────────
+
+//        CREATE GAME
+
+export const createGameInDb = async (
+  player1Id: number,
+  player2Id?: number,
+) => {
+  const hasOpponent = player2Id != null;
+
+  const game = await prisma.game.create({
+    data: {
+      player1Id,
+      player2Id:     player2Id ?? null,
+      boardState:    initializeBoard(),
+      boardSize:     3,
+      currentTurn:   'X',
+      status:        hasOpponent ? 'IN_PROGRESS' : 'WAITING',
+      player1Symbol: 'X',
+      player2Symbol: 'O',
+      startedAt:     hasOpponent ? new Date() : null,
+    },
+    include: {
+      player1: {
+        select: { id: true, username: true, avatarUrl: true },
+      },
+      player2: {
+        select: { id: true, username: true, avatarUrl: true },
+      },
+    },
+  });
+
+  return game;
 };
