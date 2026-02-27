@@ -16,6 +16,14 @@ const __dirname = path.dirname(__filename);
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import prisma from "./lib/prisma";
+import {
+  validateMessageContent,
+  userExists,
+  areFriends,
+  saveMessage,
+  getMessageWithSender,
+  SendMessagePayload,
+} from "./services/chat.service";
 
 // Route imports
 import authRoutes from "./routes/auth.routes";
@@ -170,6 +178,51 @@ io.on("connection", (socket) => {
     // [x] Broadcast online status to friends
     notifyFriends(userId, "user_offline").catch(console.error);
   });
+
+// #region Chat message handling
+  // Handle send_message event
+  socket.on("send_message", async (payload: SendMessagePayload) => {
+    try {
+      const senderId = socket.data.user.id;
+
+      if (!payload.receiverId || typeof payload.receiverId !== "number") {
+        return socket.emit("message_error", { message: "Invalid receiverId" });
+      }
+      if (!payload.content || typeof payload.content !== "string") {
+        return socket.emit("message_error", { message: "Invalid content" });
+      }
+
+      if (!validateMessageContent(payload.content)) {
+        return socket.emit("message_error", { message: "Content must be 1-2000 characters" });
+      }
+
+      const receiverExists = await userExists(payload.receiverId);
+      if (!receiverExists) {
+        return socket.emit("message_error", { message: "Receiver does not exist" });
+      }
+
+      const friends = await areFriends(senderId, payload.receiverId);
+      if (!friends) {
+        return socket.emit("message_error", { message: "You can only send messages to friends" });
+      }
+
+      const message = await saveMessage(senderId, payload.receiverId, payload.content);
+
+      const messageWithSender = await getMessageWithSender(message.id);
+      if (!messageWithSender) {
+        return socket.emit("message_error", { message: "Failed to retrieve message" });
+      }
+
+      io.to(`user:${payload.receiverId}`).emit("receive_message", messageWithSender);
+
+      socket.emit("receive_message", messageWithSender);
+    } catch (error) {
+      console.error("Error handling send_message:", error);
+      socket.emit("message_error", { message: "Internal server error" });
+    }
+  });
+// #endregion
+
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────

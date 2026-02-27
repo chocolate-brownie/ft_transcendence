@@ -115,7 +115,8 @@ model Message {
   id          Int      @id @default(autoincrement())
   senderId    Int      @map("sender_id")
   receiverId  Int      @map("receiver_id")
-  content     String
+  content     String   @db.VarChar(2000)
+  read        Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
 
   sender      User @relation("MessageSender", fields: [senderId], references: [id])
