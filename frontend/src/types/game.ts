@@ -7,4 +7,5 @@ export interface GameBoardProps {
   onCellClick: (index: number) => void;
   disabled?: boolean;
   className?: string;
+  winningLine?: number[] | null;
 }
