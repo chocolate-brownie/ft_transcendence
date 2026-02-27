@@ -160,6 +160,28 @@ export async function removeFriend(friendUserId: number, currentUserId: number) 
   });
 }
 
+export async function rejectFriendRequest(senderId: number, currentUserId: number) {
+  if (senderId === currentUserId) {
+    throw { status: 400, message: "Invalid sender ID" };
+  }
+
+  const request = await prisma.friend.findFirst({
+    where: {
+      requesterId: senderId,
+      addresseeId: currentUserId,
+      status: "PENDING",
+    },
+  });
+
+  if (!request) {
+    throw { status: 404, message: "Pending friend request not found" };
+  }
+
+  await prisma.friend.delete({
+    where: { id: request.id },
+  });
+}
+
 //          GET ACCEPTED FRIENDS LIST
 
 // Type for Friend return

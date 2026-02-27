@@ -7,6 +7,7 @@ import {
   createFriendRequest,
   acceptFriendRequest,
   removeFriend,
+  rejectFriendRequest,
   getAcceptedFriends,
   getPendingRequests,
   getFriendshipStatus,
@@ -111,6 +112,37 @@ export async function deleteFriend(req: AuthRequest, res: Response): Promise<voi
       return;
     }
     console.error("deleteFriend error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function rejectFriendRequestController(
+  req: AuthRequest,
+  res: Response,
+): Promise<void> {
+  try {
+    const currentUserId: number = req.user.id;
+    const senderIdParam = req.params.senderId;
+
+    if (!senderIdParam) {
+      res.status(400).json({ error: "Invalid sender ID" });
+      return;
+    }
+
+    const senderId = parseInt(senderIdParam as string, 10);
+    if (isNaN(senderId)) {
+      res.status(400).json({ error: "Invalid sender ID" });
+      return;
+    }
+
+    await rejectFriendRequest(senderId, currentUserId);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    console.error("rejectFriendRequest error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
