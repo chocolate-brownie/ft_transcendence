@@ -3,6 +3,33 @@
 
 import prisma from "../lib/prisma";
 
+/* Get Friendship Status */
+export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "friends";
+export async function getFriendshipStatus(
+  currentUserId: number,
+  targetUserId: number,
+): Promise<FriendshipStatus> {
+  // Self check: nothing to do
+  if (currentUserId === targetUserId) return "none";
+
+  const friendship = await prisma.friend.findFirst({
+    where: {
+      OR: [
+        { requesterId: currentUserId, addresseeId: targetUserId },
+        { requesterId: targetUserId, addresseeId: currentUserId },
+      ],
+      status: { in: ["PENDING", "ACCEPTED"] },
+    },
+  });
+
+  if (!friendship) return "none";
+  if (friendship.status == "ACCEPTED") return "friends";
+  if (friendship.status == "PENDING") {
+    return friendship.requesterId === currentUserId ? "pending_sent" : "pending_received";
+  }
+  return "none";
+}
+
 //     SEND FRIEND REQUEST
 export async function createFriendRequest(requesterId: number, addresseeId: number) {
   //Self-FriendRequest Check
@@ -216,6 +243,7 @@ export async function getPendingRequests(currentUserId: number) {
           username: true,
           displayName: true,
           avatarUrl: true,
+          isOnline: true,
         },
       },
     },

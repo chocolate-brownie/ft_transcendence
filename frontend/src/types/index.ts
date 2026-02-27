@@ -1,6 +1,8 @@
 // Shared TypeScript types for the frontend
 // These should match the backend Prisma models
 
+export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "friends";
+
 export interface User {
   id: number;
   email: string;
@@ -42,6 +44,19 @@ export interface Friend {
   requesterId: number;
   addresseeId: number;
   status: "PENDING" | "ACCEPTED" | "BLOCKED";
+  createdAt: string;
+}
+
+export interface PendingRequest {
+  id: number;
+  senderId: number;
+  sender: {
+    id: number;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isOnline: boolean;
+  };
   createdAt: string;
 }
 

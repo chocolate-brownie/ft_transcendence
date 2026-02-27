@@ -11,7 +11,7 @@ import { uploadAvatar } from "../middleware/upload";
 const router = Router();
 
 // GET  /api/users/:id
-router.get("/:id", getUser);
+router.get("/:id", auth, getUser);
 
 // PUT  /api/users/me
 router.put("/me", auth, updateMyProfile);
