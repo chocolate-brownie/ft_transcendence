@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Board } from "../types/game";
-import GameBoard from "../components/GameBoard";
+import GameBoard from "../components/Game/GameBoard";
+import TurnIndicator from "../components/Game/TurnIndicator";
 
 //TEMP FOR DEV (maybe make it a backend issue to send winning line info? or just calculate it on the frontend?)
 // TODO: when backend game API is wired to this page,
@@ -51,10 +52,18 @@ export default function Game() {
 }
 
   const winningLine = findWinningLine(board);
+  const currentPlayer: "X" | "O" = isXTurn ? "X" : "O";
+  const playerSymbol: "X" | "O" = "X";
+  const isYourTurn = currentPlayer === playerSymbol;
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h1 className="text-2xl font-bold text-pong-text">Game</h1>
+      <TurnIndicator
+        currentPlayer={currentPlayer}
+        playerSymbol={playerSymbol}
+        isYourTurn={isYourTurn}
+      />
       <GameBoard board={board} onCellClick={handleCellClick} winningLine={winningLine} />
     </div>
   );

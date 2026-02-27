@@ -50,6 +50,27 @@
   animation: winner-pop 500ms ease-out;
 }
 
+/* Pop in X / O */
+@keyframes cell-pop {
+  0% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.95);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cell-piece {
+  display: inline-block;
+  animation: cell-pop 160ms ease-out;
+}
+
 /* Global base styles */
 body {
   margin: 0;
