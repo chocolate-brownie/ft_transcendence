@@ -97,7 +97,7 @@ export default function Profile() {
       }
     };
 
-    loadFriends();
+    void loadFriends();
 
     return () => {
       cancelled = true;
@@ -435,7 +435,7 @@ export default function Profile() {
           )}
 
           {!friendsLoading && !friendsError && (
-            <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+            <FriendsList friends={friends} onRemoveFriend={(id) => void handleRemoveFriend(id)} />
           )}
         </Card>
       </div>
