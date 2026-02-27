@@ -297,7 +297,7 @@ export default function Profile() {
 
   async function handleRejectRequest(senderId: number) {
     try {
-      await friendsService.removeFriend(senderId);
+      await friendsService.rejectRequest(senderId);
       setPendingRequests((prev) => prev.filter((r) => r.senderId !== senderId));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to decline request");

@@ -37,6 +37,7 @@ export default function PendingRequests({
     <div className={`space-y-3 ${className ?? ""}`}>
       {requests.map((req) => {
         const name = req.sender.displayName ?? req.sender.username;
+        // Pending requests should not reveal custom avatars before friendship is accepted.
         const avatarSrc = "/default-avatar.png";
 
         return (
