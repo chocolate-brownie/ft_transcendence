@@ -6,7 +6,6 @@ import {
   makeMoveInDb,
   validateCreateGame,
   getGameByIdFromDb,
-  FETCH_ERRORS,
 } from "../services/games.service";
 
 // ── createGame ────────────────────────────────────────
@@ -89,31 +88,20 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
 
 export const getGameById = async (req: AuthRequest, res: Response) => {
   try {
-    const gameId = parseInt(req.params.id as string);
+    const gameId = parseInt(req.params.id as string, 10);
     const userId = req.user.id;
 
-    // Validate gameId
     if (isNaN(gameId)) {
       return res.status(400).json({ error: 'Invalid game ID' });
     }
 
-    // Fetch game (service handles auth check)
     const game = await getGameByIdFromDb(gameId, userId);
-
     return res.status(200).json(game);
   } catch (error: any) {
-    console.error('Error fetching game:', error);
-
-    if (error.message === FETCH_ERRORS.NOT_FOUND) {
+    if (error.message === 'Game not found') {
       return res.status(404).json({ error: 'Game not found' });
     }
-
-    if (error.message === FETCH_ERRORS.ACCESS_DENIED) {
-      return res.status(403).json({
-        error: 'You are not a player in this game',
-      });
-    }
-
     return res.status(500).json({ error: 'Failed to fetch game' });
   }
 };
+
