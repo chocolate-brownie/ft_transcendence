@@ -30,16 +30,28 @@ async function request<T>(
       ...headers,
     },
     ...(hasBody
-      ? { body: isFormData ? (body as FormData) : JSON.stringify(body) }
+      ? { body: isFormData ? body : JSON.stringify(body) }
       : {}),
   });
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new ApiError(
-      (data as { message?: string }).message ?? `Request failed: ${res.status}`,
+      (data as { message?: string; error?: string }).message ??
+        (data as { message?: string; error?: string }).error ??
+        `Request failed: ${res.status}`,
       res.status,
     );
+  }
+
+  // 204/205 have no response body.
+  if (res.status === 204 || res.status === 205) {
+    return undefined as T;
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined as T;
   }
 
   return res.json() as Promise<T>;

@@ -18,7 +18,8 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const user = await getUserById(id);
+    const viewerId = (req as AuthRequest).user?.id;
+    const user = await getUserById(id, viewerId);
 
     if (!user) {
       res.status(404).json({ error: "User not found" });

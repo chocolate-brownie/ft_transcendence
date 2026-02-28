@@ -1,14 +1,17 @@
 // Games service — business logic for game operations
 // Create game, validate moves, win detection, draw detection
 
-import type { 
+import prisma from '../lib/prisma';
+import { initializeBoard } from '../types/game';
+import type {
   GameState,
   GameStatus,
   Player,
   Board,
-  } from '../types/game';
+  CellValue,
+} from '../types/game';
 
-// ───────────────── CONST ERROR ─────────────────
+// ───────────────── CONST ERROR (Move) ─────────────────
 
 export const MOVE_ERRORS = {
   NOT_ACTIVE:           'Game is not active',
@@ -22,6 +25,14 @@ export const MOVE_ERRORS = {
   NOT_YOUR_TURN:        'Not your turn',
 } as const;
 
+// ───────────────── CONST ERROR (Create) ─────────────────
+
+export const CREATE_ERRORS = {
+  SELF_PLAY:        'Cannot play against yourself',
+  PLAYER_NOT_FOUND: 'Player not found',
+  NOT_FRIENDS:      'Can only play with friends',
+} as const;
+
 // ───────────────── Types ─────────────────
 
 export interface MoveValidationResult {
@@ -29,9 +40,13 @@ export interface MoveValidationResult {
   error?: string;
 }
 
+export interface CreateValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
 // ───────────────── Interns Helpers ─────────────────
 
-//We need to return null, not a throw
 const safeGetPlayerSymbol = (
   game: GameState,
   userId: number,
@@ -41,7 +56,6 @@ const safeGetPlayerSymbol = (
   return null;
 };
 
-//Check cell index
 const isCellIndexValid = (cellIndex: number, boardSize: number): boolean =>
   Number.isInteger(cellIndex) &&
   cellIndex >= 0 &&
@@ -57,6 +71,11 @@ const statusErrorMap: Record<NonPlayableStatus, string> = {
   ABANDONED: MOVE_ERRORS.GAME_ABANDONED,
 };
 
+// Response for players
+const playerSelect = {
+  select: { id: true, username: true, avatarUrl: true },
+} as const;
+
 // ───────────────── Main Functions ─────────────────
 
 //        VALIDATE MOVE
@@ -67,29 +86,24 @@ export const validateMove = (
   userId: number,
 ): MoveValidationResult => {
 
-  //Game still in progress ?
   if (gameState.status !== 'IN_PROGRESS') {
     const error = statusErrorMap[gameState.status] ?? MOVE_ERRORS.NOT_ACTIVE;
     return { valid: false, error };
   }
 
-  //Cell index valid ?
   if (!isCellIndexValid(cellIndex, gameState.boardSize)) {
     return { valid: false, error: MOVE_ERRORS.INVALID_CELL };
   }
 
-  //Cell value === null ?
   if (gameState.boardState[cellIndex] !== null) {
     return { valid: false, error: MOVE_ERRORS.CELL_OCCUPIED };
   }
 
-  //Player is in the game ?
   const symbol = safeGetPlayerSymbol(gameState, userId);
   if (symbol === null) {
     return { valid: false, error: MOVE_ERRORS.NOT_IN_GAME };
   }
 
-  //Player turn ?
   if (symbol !== gameState.currentTurn) {
     return { valid: false, error: MOVE_ERRORS.NOT_YOUR_TURN };
   }
@@ -100,14 +114,14 @@ export const validateMove = (
 //        CHECK WIN
 
 const WINNING_LINES = [
-  [0, 1, 2], // Up
-  [3, 4, 5], // Mid
-  [6, 7, 8], // Bot
-  [0, 3, 6], // Left
-  [1, 4, 7], // Mid
-  [2, 5, 8], // Right
-  [0, 4, 8], // Diagonale up
-  [2, 4, 6], // Diagonale down
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
 ] as const;
 
 type WinResult = {
@@ -128,4 +142,159 @@ export const checkWinnerWithLine = (board: Board, boardSize: number = 3): WinRes
     }
   }
   return null;
+};
+
+//        CHECK DRAW
+
+export const checkDraw = (board: Board): boolean => {
+  return board.every(cell => cell !== null);
+};
+
+//        CHECK GAME OVER
+
+export type GameOverResult =
+  | { gameOver: true;  winner: Player; isDraw: false; line: readonly [number, number, number] }
+  | { gameOver: true;  winner: null;   isDraw: true;  line: null }
+  | { gameOver: false; winner: null;   isDraw: false; line: null };
+
+export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResult => {
+  const winResult = checkWinnerWithLine(board, boardSize);
+
+  if (winResult) {
+    return { gameOver: true, winner: winResult.winner, isDraw: false, line: winResult.line };
+  }
+
+  if (checkDraw(board)) {
+    return { gameOver: true, winner: null, isDraw: true, line: null };
+  }
+
+  return { gameOver: false, winner: null, isDraw: false, line: null };
+};
+
+// ───────────────── DB Operations ─────────────────
+
+//        VALIDATE CREATE GAME (DB checks)
+
+export const validateCreateGame = async (
+  player1Id: number,
+  player2Id: number,
+): Promise<CreateValidationResult> => {
+
+  //has player 2 ?
+  const player2 = await prisma.user.findUnique({
+    where: { id: player2Id },
+  });
+  if (!player2) {
+    return { valid: false, error: CREATE_ERRORS.PLAYER_NOT_FOUND };
+  }
+
+  //has relationship ?
+  const friendship = await prisma.friend.findFirst({
+    where: {
+      status: 'ACCEPTED',
+      OR: [
+        { requesterId: player1Id, addresseeId: player2Id },
+        { requesterId: player2Id, addresseeId: player1Id },
+      ],
+    },
+  });
+  if (!friendship) {
+    return { valid: false, error: CREATE_ERRORS.NOT_FRIENDS };
+  }
+
+  return { valid: true };
+};
+
+//        CREATE GAME
+
+export const createGameInDb = async (
+  player1Id: number,
+  player2Id?: number,
+) => {
+  const hasOpponent = player2Id != null;
+
+  const game = await prisma.game.create({
+    data: {
+      player1Id,
+      player2Id:     player2Id ?? null,
+      boardState:    initializeBoard(),
+      boardSize:     3,
+      currentTurn:   'X',
+      status:        hasOpponent ? 'IN_PROGRESS' : 'WAITING',
+      player1Symbol: 'X',
+      player2Symbol: 'O',
+      startedAt:     hasOpponent ? new Date() : null,
+    },
+    include: {
+      player1: playerSelect,
+      player2: playerSelect,
+    },
+  });
+
+  return game;
+};
+
+//        MAKE MOVE
+
+export const makeMoveInDb = async (
+  gameId: number,
+  cellIndex: number,
+  userId: number,
+) => {
+  return prisma.$transaction(async (tx) => {
+
+    // 1. Fetch game
+    const game = await tx.game.findUnique({
+      where: { id: gameId },
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+      },
+    });
+
+    if (!game) throw new Error('Game not found');
+
+    // 2. Validate the move
+    const gameState = game as unknown as GameState;
+    const validation = validateMove(gameState, cellIndex, userId);
+    if (!validation.valid) {
+      throw new Error(`Invalid move: ${validation.error}`);
+    }
+
+    // 3. Apply the move (new array, no mutation)
+    const playerSymbol = safeGetPlayerSymbol(gameState, userId)!;
+    const newBoard = [...(game.boardState as CellValue[])] as Board;
+    newBoard[cellIndex] = playerSymbol;
+
+    // 4. Check game over
+    const result = checkGameOver(newBoard, game.boardSize);
+
+    const updateData: Record<string, unknown> = {
+      boardState: newBoard,
+    };
+
+    if (result.gameOver && result.winner) {
+      updateData.status     = 'FINISHED';
+      updateData.winnerId   = result.winner === game.player1Symbol
+        ? game.player1Id
+        : game.player2Id;
+      updateData.finishedAt = new Date();
+    } else if (result.gameOver && result.isDraw) {
+      updateData.status     = 'DRAW';
+      updateData.winnerId   = null;
+      updateData.finishedAt = new Date();
+    } else {
+      updateData.currentTurn = game.currentTurn === 'X' ? 'O' : 'X';
+    }
+
+    // 5. Save to database
+    return tx.game.update({
+      where: { id: gameId },
+      data:  updateData,
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+      },
+    });
+  });
 };

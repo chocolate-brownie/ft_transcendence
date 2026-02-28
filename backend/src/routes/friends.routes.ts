@@ -3,8 +3,10 @@ import { auth } from "../middleware/auth";
 import {
   getFriendsList,
   getPendingRequestsController,
+  getFriendshipStatusController,
   sendFriendRequest,
   acceptFriendRequestController,
+  rejectFriendRequestController,
   deleteFriend,
 } from "../controllers/friends.controller";
 
@@ -16,11 +18,17 @@ router.get("/", auth, getFriendsList);
 // GET    /api/friends/requests
 router.get("/requests", auth, getPendingRequestsController);
 
+// GET /api/friends/status/:userId
+router.get("/status/:userId", auth, getFriendshipStatusController);
+
 // POST   /api/friends/request/:userId
 router.post("/request/:userId", auth, sendFriendRequest);
 
 // POST   /api/friends/accept/:requestId
 router.post("/accept/:requestId", auth, acceptFriendRequestController);
+
+// DELETE /api/friends/reject/:senderId
+router.delete("/reject/:senderId", auth, rejectFriendRequestController);
 
 // DELETE /api/friends/:friendId
 router.delete("/:friendId", auth, deleteFriend);

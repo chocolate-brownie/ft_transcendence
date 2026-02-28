@@ -1,16 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { User, FriendInfo } from "../types";
+import type { User, FriendInfo, PendingRequest } from "../types";
 import { usersService } from "../services/users.service";
 import { friendsService } from "../services/friends.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import FriendsList from "../components/FriendsList";
+import PendingRequests from "../components/PendingRequests";
+import FriendRequestButton from "../components/Friends/FriendRequestButton";
 
 export default function Profile() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   // Compute target user ID before any hooks.
   // isMeAlias → will redirect to /profile (no id param).
@@ -30,6 +32,7 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarSavingRef = useRef(false);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -41,6 +44,10 @@ export default function Profile() {
   const [friends, setFriends] = useState<FriendInfo[]>([]);
   const [friendsLoading, setFriendsLoading] = useState<boolean>(true);
   const [friendsError, setFriendsError] = useState<string | null>(null);
+
+  // Pending requests
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [pendingLoading, setPendingLoading] = useState<boolean>(true);
 
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -62,8 +69,9 @@ export default function Profile() {
     doFetch();
 
     // Re-fetch when the tab regains focus so isOnline stays fresh
+    // Skip during avatar upload — file picker triggers visibilitychange
     const onVisible = () => {
-      if (document.visibilityState === "visible") doFetch();
+      if (document.visibilityState === "visible" && !avatarSavingRef.current) doFetch();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -97,7 +105,36 @@ export default function Profile() {
       }
     };
 
-    loadFriends();
+    void loadFriends();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // ── Fetch pending incoming friend requests
+  useEffect(() => {
+    if (!user) {
+      setPendingRequests([]);
+      setPendingLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPending = async () => {
+      setPendingLoading(true);
+      try {
+        const data = await friendsService.getPendingRequests();
+        if (!cancelled) setPendingRequests(data);
+      } catch {
+        // Non-critical — silently ignore
+      } finally {
+        if (!cancelled) setPendingLoading(false);
+      }
+    };
+
+    void loadPending();
 
     return () => {
       cancelled = true;
@@ -205,29 +242,27 @@ export default function Profile() {
   }
 
   function handleAvatarUpload(file: File) {
+    avatarSavingRef.current = true;
     setAvatarSaving(true);
     setAvatarError(null);
 
     usersService
       .uploadAvatar(file)
       .then((data) => {
-        if (!profile) {
-          return;
-        }
-
-        const updatedProfile: User = {
-          ...profile,
-          avatarUrl: data.avatarUrl ? data.avatarUrl : profile.avatarUrl,
-        };
-
-        setProfile(updatedProfile);
+        setProfile((prev) =>
+          prev ? { ...prev, avatarUrl: data.avatarUrl ?? prev.avatarUrl } : prev,
+        );
+        updateUser({ avatarUrl: data.avatarUrl ?? "" });
         setSuccessMessage("Avatar updated");
         setTimeout(() => setSuccessMessage(null), 3000);
       })
       .catch((err) =>
         setAvatarError(err instanceof Error ? err.message : "Failed to upload avatar"),
       )
-      .finally(() => setAvatarSaving(false));
+      .finally(() => {
+        avatarSavingRef.current = false;
+        setAvatarSaving(false);
+      });
   }
 
   // ── Handlers: friends
@@ -240,15 +275,51 @@ export default function Profile() {
     }
   }
 
+  async function handleAcceptRequest(requestId: number) {
+    try {
+      await friendsService.acceptRequest(requestId);
+      const accepted = pendingRequests.find((r) => r.id === requestId);
+      if (accepted) {
+        setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+        const newFriend: FriendInfo = {
+          id: accepted.sender.id,
+          username: accepted.sender.username,
+          displayName: accepted.sender.displayName,
+          avatarUrl: accepted.sender.avatarUrl,
+          isOnline: accepted.sender.isOnline,
+        };
+        setFriends((prev) => [...prev, newFriend]);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to accept request");
+    }
+  }
+
+  async function handleRejectRequest(senderId: number) {
+    try {
+      await friendsService.rejectRequest(senderId);
+      setPendingRequests((prev) => prev.filter((r) => r.senderId !== senderId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to decline request");
+    }
+  }
+
   // ── Derived values
   const isMine = user && user.id != null && user.id === profile.id;
+  // If viewing own profile the user is clearly online — don't let a stale
+  // API response or a brief socket hiccup flip the indicator to "Offline".
+  const isOnline = isMine ? true : profile.isOnline;
   const displayName = profile.displayName ? profile.displayName : profile.username;
+  const incomingRequestId =
+    !isMine && !!user
+      ? (pendingRequests.find((r) => r.sender.id === profile.id)?.id ?? null)
+      : null;
 
   const rawAvatar = profile.avatarUrl ?? null;
   const avatarSrc =
-    rawAvatar && rawAvatar.startsWith("/uploads/")
+    rawAvatar && rawAvatar.startsWith("/uploads/") && !rawAvatar.includes("default")
       ? rawAvatar
-      : rawAvatar || "/logo-friends.png";
+      : "/default-avatar.png";
 
   const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
@@ -273,7 +344,18 @@ export default function Profile() {
                   className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
                   onClick={() => {
                     if (!isMine || avatarSaving) return;
+                    // Set flag BEFORE file picker opens — visibilitychange
+                    // fires before onChange, so we must guard early.
+                    avatarSavingRef.current = true;
                     if (fileInputRef.current) {
+                      // Reset guard if the user dismisses without selecting a file.
+                      // The 'cancel' event fires on the input but isn't in React's
+                      // type definitions, so we wire it up natively.
+                      fileInputRef.current.addEventListener(
+                        "cancel",
+                        () => { avatarSavingRef.current = false; },
+                        { once: true },
+                      );
                       fileInputRef.current.click();
                     }
                   }}
@@ -308,7 +390,7 @@ export default function Profile() {
                 <span
                   className={
                     "absolute bottom-1 right-2 h-3 w-3 rounded-full border-2 border-white " +
-                    (profile.isOnline ? "bg-green-500" : "bg-gray-400")
+                    (isOnline ? "bg-green-500" : "bg-gray-400")
                   }
                 />
               </div>
@@ -318,8 +400,8 @@ export default function Profile() {
               <p className="text-sm text-pong-text/60">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
-                <span className={profile.isOnline ? "text-green-500" : "text-gray-400"}>
-                  {profile.isOnline ? "Online" : "Offline"}
+                <span className={isOnline ? "text-green-500" : "text-gray-400"}>
+                  {isOnline ? "Online" : "Offline"}
                 </span>
                 <span className="mx-2 text-pong-text/30">•</span>
                 Joined {joined}
@@ -374,6 +456,17 @@ export default function Profile() {
                 </div>
               )}
 
+              {/* Friendship action — only when viewing another user's profile */}
+              {!isMine && user && (
+                <FriendRequestButton
+                  targetUserId={profile.id}
+                  isMine={isMine}
+                  incomingRequestId={incomingRequestId}
+                  onAccept={handleAcceptRequest}
+                  onDecline={handleRejectRequest}
+                />
+              )}
+
               {successMessage && (
                 <p className="mt-2 text-xs text-green-400">{successMessage}</p>
               )}
@@ -422,22 +515,58 @@ export default function Profile() {
         </div>
 
         {/* RIGHT */}
-        <Card variant="elevated">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-pong-text/80">Friends</p>
-            {friendsLoading && (
-              <span className="text-xs text-pong-text/50">Loading…</span>
-            )}
-          </div>
+        <div className="space-y-4">
+          {isMine ? (
+            <>
+              {/* Friends list */}
+              <Card variant="elevated">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-pong-text/80">Friends</p>
+                  {friendsLoading && (
+                    <span className="text-xs text-pong-text/50">Loading…</span>
+                  )}
+                </div>
+                {friendsError && (
+                  <p className="mb-3 text-xs text-red-400">{friendsError}</p>
+                )}
+                {!friendsLoading && !friendsError && (
+                  <FriendsList
+                    friends={friends}
+                    onRemoveFriend={(id) => void handleRemoveFriend(id)}
+                  />
+                )}
+              </Card>
 
-          {friendsError && (
-            <p className="mb-3 text-xs text-red-400">{friendsError}</p>
+              {/* Pending friend requests */}
+              <Card variant="elevated">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-pong-text/80">
+                    Pending Requests
+                    {pendingRequests.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-pong-accent px-2 py-0.5 text-xs font-bold text-pong-background">
+                        {pendingRequests.length}
+                      </span>
+                    )}
+                  </p>
+                  {pendingLoading && (
+                    <span className="text-xs text-pong-text/50">Loading…</span>
+                  )}
+                </div>
+                {!pendingLoading && (
+                  <PendingRequests
+                    requests={pendingRequests}
+                    onAccept={(id) => void handleAcceptRequest(id)}
+                    onReject={(id) => void handleRejectRequest(id)}
+                  />
+                )}
+              </Card>
+            </>
+          ) : (
+            <Card variant="elevated">
+              <p className="text-pong-text/60">Match history coming soon.</p>
+            </Card>
           )}
-
-          {!friendsLoading && !friendsError && (
-            <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
-          )}
-        </Card>
+        </div>
       </div>
     </div>
   );

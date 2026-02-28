@@ -135,11 +135,11 @@
   - [x] Edit mode: change display name, upload avatar
   - [x] Avatar upload with preview before saving
 - [x] Friends list component:
-  - [ ] Show friends with online/offline indicator (green/gray dot)
-  - [ ] "Remove friend" button
-- [ ] Friend request UI:
-  - [ ] "Add Friend" button on other users' profiles
-  - [ ] Pending requests list (accept / reject buttons)
+  - [x] Show friends with online/offline indicator (green/gray dot) — mgodawat
+  - [x] "Remove friend" button — mgodawat
+- [x] Friend request UI: — mgodawat
+  - [x] "Add Friend" button on other users' profiles — mgodawat
+  - [x] Pending requests list (accept / reject buttons) — mgodawat
 - [ ] User search: search input to find users by username
 
 ### Backend + Frontend — Chat — [Real-Time: zamgar, tzizi, mgodawat]
@@ -167,7 +167,7 @@
 ### QA & Testing — [PM: mgodawat]
 
 - [ ] Test profile view and edit flows
-- [ ] Test friend request flow end-to-end
+- [x] Test friend request flow end-to-end — mgodawat
 - [ ] Test chat between two users (two browser windows)
 - [ ] Finalize Privacy Policy and Terms of Service React pages
 - [ ] Link Privacy Policy and ToS from footer component

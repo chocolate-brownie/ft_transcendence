@@ -72,8 +72,9 @@ export async function getMeController(req: AuthRequest, res: Response) {
   const userId = req.user.id;
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.update({
       where: { id: userId },
+      data: { isOnline: true },
       select: {
         id: true,
         email: true,
