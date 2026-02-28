@@ -1,31 +1,14 @@
-import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useChat } from "../../context/ChatContext";
 import { ConversationList } from "./ConversationList";
 import { MessageThread } from "./MessageThread";
 import { MessageInput } from "./MessageInput";
 
-interface ActiveConversation {
-  userId: number;
-  username: string;
-}
-
 export function ChatWidget() {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [active, setActive] = useState<ActiveConversation | null>(null);
+  const { isOpen, active, openWidget, closeWidget, setActive } = useChat();
 
-  // Don't render for unauthenticated users
   if (!user) return null;
-
-  const handleSelect = (userId: number, username: string) => {
-    setActive({ userId, username });
-  };
-
-  const handleBack = () => setActive(null);
-  const handleToggle = () => {
-    setIsOpen((prev) => !prev);
-    if (isOpen) setActive(null);
-  };
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
@@ -41,10 +24,9 @@ export function ChatWidget() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-black/10 bg-white/5 flex-shrink-0">
           {active ? (
             <button
-              onClick={handleBack}
+              onClick={() => setActive(null)}
               className="flex items-center gap-1.5 text-pong-text/60 hover:text-pong-text transition text-sm"
             >
-              {/* Back arrow */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
@@ -54,11 +36,10 @@ export function ChatWidget() {
             <span className="text-sm font-semibold text-pong-text">Messages</span>
           )}
           <button
-            onClick={handleToggle}
+            onClick={closeWidget}
             className="text-pong-text/40 hover:text-pong-text transition"
             aria-label="Close chat"
           >
-            {/* X icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -76,7 +57,7 @@ export function ChatWidget() {
             <div className="flex-1 overflow-y-auto">
               <ConversationList
                 activeUserId={null}
-                onSelectConversation={handleSelect}
+                onSelectConversation={(userId, username) => setActive({ userId, username })}
               />
             </div>
           )}
@@ -85,17 +66,15 @@ export function ChatWidget() {
 
       {/* Floating toggle button */}
       <button
-        onClick={handleToggle}
+        onClick={isOpen ? closeWidget : openWidget}
         className="h-14 w-14 rounded-full bg-pong-accent shadow-lg flex items-center justify-center text-white transition hover:scale-105 active:scale-95"
         aria-label="Toggle chat"
       >
         {isOpen ? (
-          // Down chevron when open
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         ) : (
-          // Chat bubble when closed
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16c0 1.1-.9 2-2 2H7l-4 4V6a2 2 0 012-2h14a2 2 0 012 2v10z" />
           </svg>
