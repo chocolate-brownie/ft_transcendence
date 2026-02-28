@@ -11,12 +11,12 @@ export function ChatWidget() {
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 pointer-events-none">
       {/* Popup panel */}
       <div
-        className={`flex flex-col w-80 h-[480px] rounded-2xl overflow-hidden border border-black/10 bg-pong-background shadow-2xl transition-all duration-200 origin-bottom-right ${
+        className={`flex flex-col w-80 h-[480px] rounded-2xl overflow-hidden border border-black/10 bg-pong-background shadow-2xl transition-all duration-200 origin-bottom-right pointer-events-auto ${
           isOpen
-            ? "opacity-100 scale-100 pointer-events-auto"
+            ? "opacity-100 scale-100"
             : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
@@ -67,7 +67,7 @@ export function ChatWidget() {
       {/* Floating toggle button */}
       <button
         onClick={isOpen ? closeWidget : openWidget}
-        className="h-14 w-14 rounded-full bg-pong-accent shadow-lg flex items-center justify-center text-white transition hover:scale-105 active:scale-95"
+        className="h-14 w-14 rounded-full bg-pong-accent shadow-lg flex items-center justify-center text-white transition hover:scale-105 active:scale-95 pointer-events-auto"
         aria-label="Toggle chat"
       >
         {isOpen ? (
