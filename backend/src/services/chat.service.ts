@@ -49,6 +49,22 @@ export interface ChatHistoryResponse {
   nextCursor: number | null;
 }
 
+export interface ConversationSummary {
+  user: {
+    id: number;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isOnline: boolean;
+  };
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    senderId: number;
+  };
+  unreadCount: number;
+}
+
 // #endregion
 
 // #region Checks
@@ -197,4 +213,65 @@ export async function getChatHistoryPaginated(
         ? formattedMessages[formattedMessages.length - 1].id
         : null,
   };
+}
+
+export async function getConversations(currentUserId: number): Promise<ConversationSummary[]> {
+  // Fetch all messages involving current user, newest first
+  // Include both sides of the conversation for partner info
+  const recentMessages = await prisma.message.findMany({
+    where: {
+      OR: [{ senderId: currentUserId }, { receiverId: currentUserId }],
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      sender: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+      receiver: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+    },
+  });
+
+  // Group by conversation partner — first occurrence is the most recent message
+  const partnerLastMessage = new Map<number, typeof recentMessages[0]>();
+  for (const msg of recentMessages) {
+    const partnerId = msg.senderId === currentUserId ? msg.receiverId : msg.senderId;
+    if (!partnerLastMessage.has(partnerId)) {
+      partnerLastMessage.set(partnerId, msg);
+    }
+  }
+
+  const partnerIds = Array.from(partnerLastMessage.keys());
+  if (partnerIds.length === 0) return [];
+
+  // Bulk fetch unread counts per sender (2 queries total regardless of conversation count)
+  const unreadGroups = await prisma.message.groupBy({
+    by: ["senderId"],
+    where: {
+      receiverId: currentUserId,
+      senderId: { in: partnerIds },
+      read: false,
+    },
+    _count: { id: true },
+  });
+
+  const unreadMap = new Map(unreadGroups.map((u) => [u.senderId, u._count.id]));
+
+  return partnerIds.map((partnerId) => {
+    const lastMsg = partnerLastMessage.get(partnerId)!;
+    const otherUser = lastMsg.senderId === currentUserId ? lastMsg.receiver : lastMsg.sender;
+
+    return {
+      user: {
+        id: otherUser.id,
+        username: otherUser.username,
+        displayName: otherUser.displayName,
+        avatarUrl: otherUser.avatarUrl,
+        isOnline: otherUser.isOnline,
+      },
+      lastMessage: {
+        content: lastMsg.content,
+        createdAt: lastMsg.createdAt.toISOString(),
+        senderId: lastMsg.senderId,
+      },
+      unreadCount: unreadMap.get(partnerId) ?? 0,
+    };
+  });
 }

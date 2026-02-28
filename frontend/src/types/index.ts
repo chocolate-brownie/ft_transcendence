@@ -58,6 +58,22 @@ export interface ChatHistoryResponse {
   nextCursor: number | null;
 }
 
+export interface ConversationSummary {
+  user: {
+    id: number;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isOnline: boolean;
+  };
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    senderId: number;
+  };
+  unreadCount: number;
+}
+
 export interface Friend {
   id: number;
   requesterId: number;
