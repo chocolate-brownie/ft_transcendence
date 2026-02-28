@@ -90,7 +90,7 @@ export default function Game() {
         </Button>
       </div>
       {/* Scoreboard / Player vs Player */}
-      <div className="inline-block rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
+      <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
         <div className="flex items-center gap-8 text-pong-text/80">
           {/* Player 1 */}
           <div className="flex flex-col items-center px-3">
