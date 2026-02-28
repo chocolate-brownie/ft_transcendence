@@ -11,6 +11,7 @@ import GameLobby from "./pages/GameLobby";
 import Game from "./pages/Game";
 import Tournaments from "./pages/Tournaments";
 import Leaderboard from "./pages/Leaderboard";
+import Chat from "./pages/Chat";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -69,6 +70,7 @@ function App() {
             <Route path="/profile/:id" element={<Profile />} />
             <Route path="/game" element={<GameLobby />} />
             <Route path="/game/:id" element={<Game />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
         </Route>
       </Routes>
