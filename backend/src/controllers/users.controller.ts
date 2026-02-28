@@ -6,7 +6,7 @@
 import { Request, Response } from "express";
 import multer from "multer";
 import { AuthRequest } from "../middleware/auth";
-import { getUserById, updateUserById, updateUserAvatar } from "../services/users.service";
+import { getUserById, updateUserById, updateUserAvatar, searchUsers } from "../services/users.service";
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const id = Number(req.params.id);
@@ -120,3 +120,35 @@ export const handleMulterError = (
   // Unknown error — pass to global error handler
   next(err);
 };
+
+export const searchUsersController = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const currentUserId = req.user?.id;
+    if (!currentUserId || typeof currentUserId !== "number") {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const rawQuery = req.query.q;
+    let q = "";
+    if (typeof rawQuery === "string") {
+      q = rawQuery.trim();
+    }
+
+    if (q.length === 0) {
+      res.status(200).json([]);
+      return;
+    }
+
+     if (q.length > 50) {
+      res.status(400).json({ error: "Query too long" });
+      return;
+    }
+
+    const users = await searchUsers(currentUserId, q);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("[searchUsersController] Error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
