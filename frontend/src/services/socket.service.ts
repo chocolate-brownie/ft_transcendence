@@ -11,7 +11,7 @@ export function connectSocket(token: string): Socket {
 
   const authToken = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
 
-  socket = io("https://localhost:3000", {
+  socket = io(import.meta.env.VITE_SOCKET_URL || "https://localhost:3000", {
     auth: { token: authToken },
     reconnection: true,
   });
