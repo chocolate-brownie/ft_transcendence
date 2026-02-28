@@ -104,8 +104,7 @@ export default function Home() {
             { label: "Real-Time", icon: "/realtime.svg", to: "/game" },
             { label: "Minimax AI", icon: "/aibot.svg", to: null },
             { label: "Tournaments", icon: "/tournement.svg", to: "/tournaments" },
-            { label: "Social Chat", icon: "/chat.svg", to: null },
-          ].map(({ label, icon, to }) =>
+                      ].map(({ label, icon, to }) =>
             to ? (
               <Link
                 key={label}
