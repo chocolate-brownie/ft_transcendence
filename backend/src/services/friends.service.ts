@@ -4,13 +4,16 @@
 import prisma from "../lib/prisma";
 import { AppError } from "../lib/app-error";
 
-/* Get Friendship Status */
+// ──────────────────────────────────────────────
+//                FRIENDSHIP STATUS
+// ──────────────────────────────────────────────
+
 export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "friends";
+
 export async function getFriendshipStatus(
   currentUserId: number,
   targetUserId: number,
 ): Promise<FriendshipStatus> {
-  // Self check: nothing to do
   if (currentUserId === targetUserId) return "none";
 
   const friendship = await prisma.friend.findFirst({
@@ -31,14 +34,23 @@ export async function getFriendshipStatus(
   return "none";
 }
 
-//     SEND FRIEND REQUEST
+// ──────────────────────────────────────────────
+//             SEND FRIEND REQUEST
+// ──────────────────────────────────────────────
+// Uses pg_advisory_xact_lock to prevent race conditions
+// on simultaneous mutual friend requests (A→B and B→A).
+//
+// If the other user already sent a PENDING request,
+// auto-accepts instead of returning 409.
+// ──────────────────────────────────────────────
+
 export async function createFriendRequest(requesterId: number, addresseeId: number) {
-  //Self-FriendRequest Check
+  // Self-request check
   if (requesterId === addresseeId) {
     throw new AppError(400, "You cannot send a friend request to yourself");
   }
 
-  //Check User
+  // Check target user exists (no lock needed for this)
   const addressee = await prisma.user.findUnique({
     where: { id: addresseeId },
   });
@@ -47,49 +59,69 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
     throw new AppError(404, "User not found");
   }
 
-  //Check if FriendRequest available (A→B ou B→A, pending/accepted)
-  const existing = await prisma.friend.findFirst({
-    where: {
-      OR: [
-        { requesterId: requesterId, addresseeId: addresseeId },
-        { requesterId: addresseeId, addresseeId: requesterId },
-      ],
-      status: { in: ["PENDING", "ACCEPTED"] },
-    },
-  });
+  // Normalize IDs so (1,2) and (2,1) acquire the same lock
+  const smallId = Math.min(requesterId, addresseeId);
+  const bigId = Math.max(requesterId, addresseeId);
 
-  if (existing) {
-    if (existing.status === "ACCEPTED") {
-      throw new AppError(409, "You are already friends with this user");
+  return await prisma.$transaction(async (tx) => {
+    // Advisory lock on the user pair — released on commit/rollback
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${smallId}::integer, ${bigId}::integer)`;
+
+    // Check existing relationship (now protected by the lock)
+    const existing = await tx.friend.findFirst({
+      where: {
+        OR: [
+          { requesterId: requesterId, addresseeId: addresseeId },
+          { requesterId: addresseeId, addresseeId: requesterId },
+        ],
+        status: { in: ["PENDING", "ACCEPTED"] },
+      },
+    });
+
+    if (existing) {
+      if (existing.status === "ACCEPTED") {
+        throw new AppError(409, "You are already friends with this user");
+      }
+
+      // The other user already sent us a request → auto-accept
+      if (existing.requesterId === addresseeId && existing.status === "PENDING") {
+        const accepted = await tx.friend.update({
+          where: { id: existing.id },
+          data: { status: "ACCEPTED" },
+          include: {
+            requester: { select: { id: true, username: true } },
+            addressee: { select: { id: true, username: true } },
+          },
+        });
+        return accepted;
+      }
+
+      // We already sent a request to this user
+      throw new AppError(409, "A friend request already exists between you and this user");
     }
-    throw new AppError(409, "A friend request already exists between you and this user");
-  }
 
-  //Create FriendRequest
-  const friendRequest = await prisma.friend.create({
-    data: {
-      requester: { connect: { id: requesterId } },
-      addressee: { connect: { id: addresseeId } },
-      status: "PENDING",
-    },
-    include: {
-      requester: {
-        select: { id: true, username: true },
+    // No existing relationship → create the friend request
+    const friendRequest = await tx.friend.create({
+      data: {
+        requester: { connect: { id: requesterId } },
+        addressee: { connect: { id: addresseeId } },
+        status: "PENDING",
       },
-      addressee: {
-        select: { id: true, username: true },
+      include: {
+        requester: { select: { id: true, username: true } },
+        addressee: { select: { id: true, username: true } },
       },
-    },
+    });
+
+    return friendRequest;
   });
-
-  return friendRequest;
 }
 
-//          ACCEPT FRIEND REQUEST
+// ──────────────────────────────────────────────
+//            ACCEPT FRIEND REQUEST
+// ──────────────────────────────────────────────
 
-//Accept Friend Request
 export async function acceptFriendRequest(requestId: number, currentUserId: number) {
-  //Check Friend Request available
   const friendRequest = await prisma.friend.findUnique({
     where: { id: requestId },
   });
@@ -98,44 +130,35 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
     throw new AppError(404, "Friend request not found");
   }
 
-  //Check destinataire
   if (friendRequest.addresseeId !== currentUserId) {
     throw new AppError(403, "You can only accept requests sent to you");
   }
 
-  //Check "PENDING" Etat
   if (friendRequest.status !== "PENDING") {
     throw new AppError(400, `Friend request is already ${friendRequest.status.toLowerCase()}`);
   }
 
-  //Switch "PENDING" to "ACCEPTED"
   const updatedRequest = await prisma.friend.update({
     where: { id: requestId },
-    data: {
-      status: "ACCEPTED",
-    },
+    data: { status: "ACCEPTED" },
     include: {
-      requester: {
-        select: { id: true, username: true },
-      },
-      addressee: {
-        select: { id: true, username: true },
-      },
+      requester: { select: { id: true, username: true } },
+      addressee: { select: { id: true, username: true } },
     },
   });
 
   return updatedRequest;
 }
 
-//          DELETE FRIEND / REJECT REQUEST
+// ──────────────────────────────────────────────
+//               REMOVE FRIEND
+// ──────────────────────────────────────────────
 
 export async function removeFriend(friendUserId: number, currentUserId: number) {
-  // Self-check
   if (friendUserId === currentUserId) {
     throw new AppError(400, "Invalid friend ID");
   }
 
-  // Seek the relationship between two users
   const friendship = await prisma.friend.findFirst({
     where: {
       OR: [
@@ -149,11 +172,14 @@ export async function removeFriend(friendUserId: number, currentUserId: number) 
     throw new AppError(404, "Friendship or friend request not found");
   }
 
-  // Hard delete
   await prisma.friend.delete({
     where: { id: friendship.id },
   });
 }
+
+// ──────────────────────────────────────────────
+//           REJECT FRIEND REQUEST
+// ──────────────────────────────────────────────
 
 export async function rejectFriendRequest(senderId: number, currentUserId: number) {
   if (senderId === currentUserId) {
@@ -177,9 +203,10 @@ export async function rejectFriendRequest(senderId: number, currentUserId: numbe
   });
 }
 
-//          GET ACCEPTED FRIENDS LIST
+// ──────────────────────────────────────────────
+//           GET ACCEPTED FRIENDS LIST
+// ──────────────────────────────────────────────
 
-// Type for Friend return
 interface FriendInfo {
   id: number;
   username: string;
@@ -189,13 +216,11 @@ interface FriendInfo {
 }
 
 export async function getAcceptedFriends(currentUserId: number) {
-  // Seek ACCEPTED status
   const friendships = await prisma.friend.findMany({
     where: {
       status: "ACCEPTED",
       OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
     },
-    // Include related user details for each friendship
     include: {
       requester: {
         select: {
@@ -218,33 +243,28 @@ export async function getAcceptedFriends(currentUserId: number) {
     },
   });
 
-  // Map friendships to get the other user in each friendship
   const friends: FriendInfo[] = friendships.map(
     (friendship: (typeof friendships)[number]) => {
-      if (friendship.requesterId === currentUserId) {
-        return friendship.addressee;
-      } else {
-        return friendship.requester;
-      }
+      return friendship.requesterId === currentUserId
+        ? friendship.addressee
+        : friendship.requester;
     },
   );
 
-  // Sort : online priority
+  // Online first, then alphabetical
   friends.sort((a: FriendInfo, b: FriendInfo) => {
-    if (a.isOnline !== b.isOnline) {
-      return a.isOnline ? -1 : 1;
-    }
-    // Sort : string compare
+    if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
     return a.username.localeCompare(b.username);
   });
 
   return friends;
 }
 
-//          GET PENDING FRIEND REQUESTS (incoming)
+// ──────────────────────────────────────────────
+//         GET PENDING FRIEND REQUESTS
+// ──────────────────────────────────────────────
 
 export async function getPendingRequests(currentUserId: number) {
-  // Seek PENDING status
   const requests = await prisma.friend.findMany({
     where: {
       addresseeId: currentUserId,
@@ -264,13 +284,9 @@ export async function getPendingRequests(currentUserId: number) {
         },
       },
     },
-    // Recently first
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
   });
 
-  // Build request
   return requests.map((req: (typeof requests)[number]) => ({
     id: req.id,
     senderId: req.requesterId,

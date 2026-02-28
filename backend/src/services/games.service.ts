@@ -298,3 +298,47 @@ export const makeMoveInDb = async (
     });
   });
 };
+
+// ───────────────── GET GAME BY ID ─────────────────
+
+export const FETCH_ERRORS = {
+  NOT_FOUND:     'Game not found',
+  ACCESS_DENIED: 'Access denied',
+} as const;
+
+export const getGameByIdFromDb = async (
+  gameId: number,
+  userId: number,
+) => {
+  // 1. Fetch game with player info
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      player1: playerSelect,
+      player2: playerSelect,
+    },
+  });
+
+  // 2. Check existence
+  if (!game) {
+    throw new Error(FETCH_ERRORS.NOT_FOUND);
+  }
+
+  // 3. Authorization: only players can view
+  const isPlayer =
+    game.player1Id === userId ||
+    game.player2Id === userId;
+
+  if (!isPlayer) {
+    throw new Error(FETCH_ERRORS.ACCESS_DENIED);
+  }
+
+  // 4. Compute moveCount from board
+  const board = game.boardState as CellValue[];
+  const moveCount = board.filter(cell => cell !== null).length;
+
+  return {
+    ...game,    // Copy all game attributs
+    moveCount,  // Add Move counter
+  };
+};
