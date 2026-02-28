@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ConversationList } from "../components/Chat/ConversationList";
 import { MessageThread } from "../components/Chat/MessageThread";
 import { MessageInput } from "../components/Chat/MessageInput";
@@ -9,7 +10,19 @@ interface ActiveConversation {
 }
 
 export default function Chat() {
-  const [active, setActive] = useState<ActiveConversation | null>(null);
+  const [searchParams] = useSearchParams();
+  const [active, setActive] = useState<ActiveConversation | null>(() => {
+    const userId = Number(searchParams.get("userId"));
+    const username = searchParams.get("username");
+    return userId && username ? { userId, username } : null;
+  });
+
+  // Keep active in sync if URL params change (e.g. navigating from a profile page)
+  useEffect(() => {
+    const userId = Number(searchParams.get("userId"));
+    const username = searchParams.get("username");
+    if (userId && username) setActive({ userId, username });
+  }, [searchParams]);
 
   const handleSelect = (userId: number, username: string) => {
     setActive({ userId, username });
