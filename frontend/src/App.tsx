@@ -12,6 +12,7 @@ import Game from "./pages/Game";
 import Tournaments from "./pages/Tournaments";
 import Leaderboard from "./pages/Leaderboard";
 import Chat from "./pages/Chat";
+import { ChatWidget } from "./components/Chat/ChatWidget";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -24,6 +25,7 @@ function HomeLayout() {
         <Outlet />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
@@ -44,6 +46,7 @@ function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
