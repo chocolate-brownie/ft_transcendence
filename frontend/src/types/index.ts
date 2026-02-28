@@ -39,6 +39,25 @@ export interface Message {
   createdAt: string;
 }
 
+export interface MessageWithSender {
+  id: number;
+  senderId: number;
+  receiverId: number;
+  content: string;
+  createdAt: string;
+  read: boolean;
+  sender: {
+    username: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface ChatHistoryResponse {
+  messages: MessageWithSender[];
+  hasMore: boolean;
+  nextCursor: number | null;
+}
+
 export interface Friend {
   id: number;
   requesterId: number;

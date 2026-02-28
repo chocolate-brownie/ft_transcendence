@@ -3,7 +3,11 @@
 
 import prisma from "../lib/prisma";
 
-// #region Interfaces
+export interface ToggleTypingStatus {
+  receiverId: number;
+  isTyping: boolean;
+}
+
 export interface SendMessagePayload {
   receiverId: number;
   content: string;
@@ -72,7 +76,11 @@ export async function areFriends(senderId: number, receiverId: number): Promise<
 
 // #endregion
 
-export async function saveMessage(senderId: number, receiverId: number, content: string): Promise<MessageData> {
+export async function saveMessage(
+  senderId: number,
+  receiverId: number,
+  content: string,
+): Promise<MessageData> {
   const message = await prisma.message.create({
     data: {
       senderId,
@@ -90,7 +98,9 @@ export async function saveMessage(senderId: number, receiverId: number, content:
   };
 }
 
-export async function getMessageWithSender(messageId: number): Promise<ReceiveMessagePayload | null> {
+export async function getMessageWithSender(
+  messageId: number,
+): Promise<ReceiveMessagePayload | null> {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
     include: {
@@ -138,7 +148,7 @@ export async function getChatHistoryPaginated(
       ],
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
     include: {
       sender: {
@@ -155,8 +165,8 @@ export async function getChatHistoryPaginated(
 
   // Mark messages as read if current user is the receiver
   const unreadMessages = messages
-    .filter(msg => msg.receiverId === currentUserId && !msg.read)
-    .map(msg => msg.id);
+    .filter((msg) => msg.receiverId === currentUserId && !msg.read)
+    .map((msg) => msg.id);
 
   if (unreadMessages.length > 0) {
     await prisma.message.updateMany({
@@ -166,7 +176,7 @@ export async function getChatHistoryPaginated(
   }
 
   // Format response
-  const formattedMessages: MessageWithSender[] = messages.map(msg => ({
+  const formattedMessages: MessageWithSender[] = messages.map((msg) => ({
     id: msg.id,
     senderId: msg.senderId,
     receiverId: msg.receiverId,
@@ -182,6 +192,9 @@ export async function getChatHistoryPaginated(
   return {
     messages: formattedMessages,
     hasMore,
-    nextCursor: formattedMessages.length > 0 ? formattedMessages[formattedMessages.length - 1].id : null,
+    nextCursor:
+      formattedMessages.length > 0
+        ? formattedMessages[formattedMessages.length - 1].id
+        : null,
   };
 }

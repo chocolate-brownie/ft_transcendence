@@ -23,6 +23,7 @@ import {
   saveMessage,
   getMessageWithSender,
   SendMessagePayload,
+  ToggleTypingStatus,
 } from "./services/chat.service";
 
 // Route imports
@@ -179,7 +180,7 @@ io.on("connection", (socket) => {
     notifyFriends(userId, "user_offline").catch(console.error);
   });
 
-// #region Chat message handling
+  // #region Chat message handling
   // Handle send_message event
   socket.on("send_message", async (payload: SendMessagePayload) => {
     try {
@@ -193,7 +194,9 @@ io.on("connection", (socket) => {
       }
 
       if (!validateMessageContent(payload.content)) {
-        return socket.emit("message_error", { message: "Content must be 1-2000 characters" });
+        return socket.emit("message_error", {
+          message: "Content must be 1-2000 characters",
+        });
       }
 
       const receiverExists = await userExists(payload.receiverId);
@@ -203,7 +206,9 @@ io.on("connection", (socket) => {
 
       const friends = await areFriends(senderId, payload.receiverId);
       if (!friends) {
-        return socket.emit("message_error", { message: "You can only send messages to friends" });
+        return socket.emit("message_error", {
+          message: "You can only send messages to friends",
+        });
       }
 
       const message = await saveMessage(senderId, payload.receiverId, payload.content);
@@ -221,8 +226,43 @@ io.on("connection", (socket) => {
       socket.emit("message_error", { message: "Internal server error" });
     }
   });
-// #endregion
 
+  // - [x] `typing` indicator event
+  socket.on("typing", async (payload: ToggleTypingStatus) => {
+    try {
+      const senderId = socket.data.user.id;
+      const senderUsername = socket.data.user.username;
+
+      if (!payload.receiverId || typeof payload.receiverId !== "number") {
+        return socket.emit("message_error", { message: "Invalid receiverId" });
+      }
+
+      if (typeof payload.isTyping !== "boolean") {
+        return socket.emit("message_error", { message: "Invalid isTyping value" });
+      }
+
+      const receiverExists = await userExists(payload.receiverId);
+      if (!receiverExists) {
+        return socket.emit("message_error", { message: "Receiver does not exist" });
+      }
+
+      const friends = await areFriends(senderId, payload.receiverId);
+      if (!friends) {
+        return socket.emit("message_error", {
+          message: "You can only send messages to friends",
+        });
+      }
+
+      io.to(`user:${payload.receiverId}`).emit("user_typing", {
+        userId: senderId,
+        username: senderUsername,
+        isTyping: payload.isTyping,
+      });
+    } catch (error) {
+      console.error("Error handling send_typing:", error);
+      socket.emit("message_error", { message: "Internal server error" });
+    }
+  });
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
