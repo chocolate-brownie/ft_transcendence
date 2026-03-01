@@ -30,4 +30,4 @@ npm-debug.log*
 
 # ── Uploaded files (keep folder structure, ignore actual uploads) ─────────
 backend/uploads/avatars/*
-!uploads/avatars/.gitkeep
+!backend/uploads/avatars/.gitkeep
