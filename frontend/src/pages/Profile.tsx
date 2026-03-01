@@ -210,8 +210,8 @@ export default function Profile() {
 
   function handleSave() {
     const trimmed = editDisplayName.trim();
-    if (trimmed.length < 1 || trimmed.length > 50) {
-      setEditError("Display name must be between 1 and 50 characters.");
+    if (trimmed.length < 3 || trimmed.length > 50) {
+      setEditError("Display name must be between 3 and 50 characters.");
       return;
     }
 

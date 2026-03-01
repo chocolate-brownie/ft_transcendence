@@ -41,17 +41,14 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
 
     const { displayName } = req.body;
 
-    // Validation métier : displayName 1-50 caractères
-    if (
-      typeof displayName !== "string" ||
-      displayName.length < 1 ||
-      displayName.length > 50
-    ) {
-      return res.status(400).json({ error: "displayName must be 1-50 characters" });
+    // Validation métier : displayName 3-50 caractères
+    const trimmedName = typeof displayName === "string" ? displayName.trim() : "";
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+      return res.status(400).json({ error: "displayName must be 3-50 characters" });
     }
 
     // Appel au service pour mettre à jour
-    const updatedUser = await updateUserById(userId, { displayName });
+    const updatedUser = await updateUserById(userId, { displayName: trimmedName });
 
     return res.status(200).json(updatedUser);
   } catch (error: any) {
