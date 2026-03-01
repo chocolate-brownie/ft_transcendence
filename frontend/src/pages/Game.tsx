@@ -43,7 +43,6 @@ function findWinningLine(board: Board) {
 export default function Game() {
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
-  const [showChat, setShowChat] = useState(false); // Later
 
   function handleCellClick(index: number) {
     if (board[index] !== null) return;

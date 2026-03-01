@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import { apiClient } from "../../lib/apiClient";
@@ -16,6 +16,12 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mirror conversations state in a ref so socket handlers can read the current
+  // value without being added to effect dependency arrays (which would cause
+  // the listener to re-register on every message).
+  const conversationsRef = useRef(conversations);
+  conversationsRef.current = conversations;
+
   // Initial fetch
   useEffect(() => {
     apiClient
@@ -31,19 +37,22 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
 
     const handleReceiveMessage = (msg: MessageWithSender) => {
       const partnerId = msg.senderId === user.id ? msg.receiverId : msg.senderId;
-      let isNewOutbound = false;
 
+      // New outbound conversation: msg.sender is the current user, not the partner.
+      // We have no receiver profile in the socket payload — refetch to get the
+      // correct partner row instead of building a malformed one.
+      // Read from the ref (not closure state) so this check is always fresh.
+      if (msg.senderId === user.id && !conversationsRef.current.find((c) => c.user.id === partnerId)) {
+        apiClient
+          .get<ConversationSummary[]>("/api/messages/conversations")
+          .then(setConversations)
+          .catch(console.error);
+        return;
+      }
+
+      // Pure updater — no side effects, no mutable outer variables
       setConversations((prev) => {
         const existing = prev.find((c) => c.user.id === partnerId);
-
-        // New outbound conversation: msg.sender is the current user, not the partner.
-        // We have no receiver profile data in the socket payload, so skip building a
-        // malformed row — flag for a refetch below to populate it correctly.
-        if (!existing && msg.senderId === user.id) {
-          isNewOutbound = true;
-          return prev;
-        }
-
         // msg.sender is the remote partner for all inbound messages
         const partnerInfo = msg.sender;
 
@@ -81,14 +90,6 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
         // Move to top, remove old entry if existed
         return [updatedConv, ...prev.filter((c) => c.user.id !== partnerId)];
       });
-
-      // Refetch to get the correct partner profile for first outbound messages
-      if (isNewOutbound) {
-        apiClient
-          .get<ConversationSummary[]>("/api/messages/conversations")
-          .then(setConversations)
-          .catch(console.error);
-      }
     };
 
     socket.on("receive_message", handleReceiveMessage);
