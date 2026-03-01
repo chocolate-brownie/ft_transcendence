@@ -12,6 +12,7 @@ build/
 # ── SSL certificates ─────────────────────────────────────────────────────
 backend/certs/*.pem
 backend/certs/*.key
+!backend/certs/.gitkeep
 
 # ── IDE / OS ──────────────────────────────────────────────────────────────
 .vscode/

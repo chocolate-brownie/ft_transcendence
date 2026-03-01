@@ -63,6 +63,54 @@ make down
 make fclean
 ```
 
+### Trusted HTTPS Setup (mkcert)
+
+The backend runs on HTTPS (`https://localhost:3000`). By default it generates a **self-signed certificate** inside the container, which browsers do not trust. This causes Socket.io (WebSockets) to fail silently on first load — you would normally have to visit `https://localhost:3000/api/health` and accept the security warning each time.
+
+Running the steps below once on your machine generates a **locally-trusted certificate** that your browser accepts automatically, so sockets work from the first page load.
+
+> **This is optional but strongly recommended.** If you skip it the app still works — you just need to accept the cert warning manually each session.
+
+**1. Install mkcert**
+
+```bash
+# Linux (Fedora/RHEL)
+sudo dnf install mkcert
+
+# Linux (Debian/Ubuntu)
+sudo apt install mkcert
+
+# macOS
+brew install mkcert
+```
+
+**2. Install the local CA into your browser and system trust store (one-time)**
+
+```bash
+mkcert -install
+```
+
+**3. Generate trusted certificates for localhost**
+
+```bash
+mkcert \
+  -key-file backend/certs/key.pem \
+  -cert-file backend/certs/cert.pem \
+  localhost 127.0.0.1
+```
+
+**4. Start (or restart) the containers**
+
+```bash
+make
+```
+
+The backend container detects the pre-existing cert files and skips its internal self-signed generation — your trusted certs are used instead.
+
+> **Note:** `backend/certs/*.pem` is gitignored. Each team member generates their own certs locally using their own mkcert CA.
+
+---
+
 ### Development Setup (for contributors)
 
 If you are joining the team and want to develop locally outside Docker:
