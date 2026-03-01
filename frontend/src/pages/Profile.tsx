@@ -157,6 +157,23 @@ export default function Profile() {
     };
   }, [socket, user]);
 
+  // Real-time: add new friend when one of our sent requests is accepted
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleFriendRequestAccepted = (newFriend: FriendInfo) => {
+      setFriends((prev) => {
+        if (prev.some((f) => f.id === newFriend.id)) return prev;
+        return [...prev, newFriend];
+      });
+    };
+
+    socket.on("friend_request_accepted", handleFriendRequestAccepted);
+    return () => {
+      socket.off("friend_request_accepted", handleFriendRequestAccepted);
+    };
+  }, [socket, user]);
+
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
   if (resolvedId == null) return <Navigate to="/login" replace />;
@@ -324,7 +341,7 @@ export default function Profile() {
   }
 
   // ── Derived values
-  const isMine = user && user.id != null && user.id === profile.id;
+  const isMine = !!(user && user.id != null && user.id === profile.id);
   // If viewing own profile the user is clearly online — don't let a stale
   // API response or a brief socket hiccup flip the indicator to "Offline".
   const isOnline = isMine ? true : profile.isOnline;
@@ -446,6 +463,8 @@ export default function Profile() {
                       Display name
                     </p>
                     <input
+                      id="display-name"
+                      name="display-name"
                       type="text"
                       className="w-full rounded-md border border-black/10 bg-black/10 px-3 py-2 text-sm outline-none focus:border-pong-accent"
                       value={editDisplayName}

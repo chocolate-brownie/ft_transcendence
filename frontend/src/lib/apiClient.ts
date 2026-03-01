@@ -67,6 +67,9 @@ export const apiClient = {
   put<T>(url: string, body: unknown, headers?: HeadersInit): Promise<T> {
     return request<T>("PUT", url, body, headers);
   },
+  patch<T>(url: string, body?: unknown, headers?: HeadersInit): Promise<T> {
+    return request<T>("PATCH", url, body, headers);
+  },
   del<T>(url: string, headers?: HeadersInit): Promise<T> {
     return request<T>("DELETE", url, undefined, headers);
   },

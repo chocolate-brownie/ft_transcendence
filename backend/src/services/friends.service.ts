@@ -89,8 +89,8 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
           where: { id: existing.id },
           data: { status: "ACCEPTED" },
           include: {
-            requester: { select: { id: true, username: true } },
-            addressee: { select: { id: true, username: true } },
+            requester: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+            addressee: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
           },
         });
         return accepted;
@@ -148,7 +148,7 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
     data: { status: "ACCEPTED" },
     include: {
       requester: { select: { id: true, username: true } },
-      addressee: { select: { id: true, username: true } },
+      addressee: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
     },
   });
 

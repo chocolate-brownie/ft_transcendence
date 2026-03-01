@@ -6,7 +6,7 @@ import { MessageInput } from "./MessageInput";
 
 export function ChatWidget() {
   const { user } = useAuth();
-  const { isOpen, active, totalUnread, openWidget, closeWidget, setActive } = useChat();
+  const { isOpen, active, totalUnread, openWidget, openChat, closeWidget, setActive } = useChat();
 
   if (!user) return null;
 
@@ -52,7 +52,7 @@ export function ChatWidget() {
               <div className="flex-1 overflow-y-auto">
                 <ConversationList
                   activeUserId={null}
-                  onSelectConversation={(userId, username) => setActive({ userId, username })}
+                  onSelectConversation={(userId, username) => openChat(userId, username)}
                 />
               </div>
             )}

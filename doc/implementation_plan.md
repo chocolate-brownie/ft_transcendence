@@ -10,13 +10,11 @@ This plan outlines the strategy to build a multiplayer Tic-Tac-Toe platform, adh
 
 With 5 team members, roles are fully specialized as recommended by the subject.
 
-| Role                                          | Assigned To  | Responsibilities                                                      |
-| :-------------------------------------------- | :----------- | :-------------------------------------------------------------------- |
-| **Tech Lead / Architect**                     | mgodawat     | Docker, repo structure, tech stack decisions, HTTPS, code reviews     |
-| **Frontend Developer / UI Designer**          | [teammate_1] | React pages, TailwindCSS, game board UI, responsive design            |
-| **Backend Developer**                         | [teammate_2] | Express API, auth, Prisma, AI opponent, tournament logic              |
-| **Fullstack / Real-Time Specialist**          | [teammate_3] | Socket.io gateway, multiplayer sync, chat, real-time features         |
-| **Product Owner (PO) / Project Manager (PM)** | [teammate_4] | Requirements, task tracking, QA, Privacy Policy, ToS, evaluation prep |
+| Role                                                                | Assigned To          | Responsibilities                                                      |
+| :------------------------------------------------------------------ | :------------------- | :-------------------------------------------------------------------- |
+| **Project Manager + Fullstack Developer**                           | mgodawat             | Docker, repo structure, tech stack decisions, HTTPS, Socket.io, chat, code reviews, GitHub Issues, evaluation prep |
+| **Frontend Developer / UI Designer**                                | zamgar (Phases 1–3), jayzatov (Phase 4+) | React pages, TailwindCSS, game board UI, responsive design |
+| **Backend Developer**                                               | mamahtal, tzizi      | Express API, auth, Prisma, AI opponent, tournament logic              |
 
 ---
 
@@ -72,24 +70,24 @@ This lets the team focus on delivering polished auth, chat, profiles, and tourna
 
 ### Core Modules (14 Points — MUST complete)
 
-| #   | Module                                       | Pts | Days | Owner(s)               | Dependencies |
-| :-- | :------------------------------------------- | :-- | :--- | :--------------------- | :----------- |
-| 1   | Web frameworks (React + Express)             | 2   | 1    | All                    | None         |
-| 2   | Prisma ORM                                   | 1   | 1    | teammate_2             | None         |
-| 3   | Real-time WebSockets                         | 2   | 3–5  | teammate_3             | #1           |
-| 4   | User interaction (chat + profiles + friends) | 2   | 3–4  | teammate_1, teammate_3 | #1, #5       |
-| 5   | Standard user management                     | 2   | 2–3  | mgodawat, teammate_2   | #1, #2       |
-| 6   | Web-based Tic-Tac-Toe game                   | 2   | 4–6  | teammate_1, teammate_3 | #1           |
-| 7   | Remote players                               | 2   | 5–6  | teammate_3             | #3, #6       |
-| 8   | Tournament system                            | 1   | 7–8  | teammate_2, teammate_4 | #6           |
+| #   | Module                                       | Pts | Days | Owner(s)                   | Dependencies |
+| :-- | :------------------------------------------- | :-- | :--- | :------------------------- | :----------- |
+| 1   | Web frameworks (React + Express)             | 2   | 1    | All                        | None         |
+| 2   | Prisma ORM                                   | 1   | 1    | mamahtal, tzizi            | None         |
+| 3   | Real-time WebSockets                         | 2   | 3–5  | mgodawat                   | #1           |
+| 4   | User interaction (chat + profiles + friends) | 2   | 3–4  | zamgar, mgodawat           | #1, #5       |
+| 5   | Standard user management                     | 2   | 2–3  | mgodawat, mamahtal, tzizi  | #1, #2       |
+| 6   | Web-based Tic-Tac-Toe game                   | 2   | 4–6  | zamgar, jayzatov, mgodawat | #1           |
+| 7   | Remote players                               | 2   | 5–6  | mgodawat                   | #3, #6       |
+| 8   | Tournament system                            | 1   | 7–8  | mamahtal, tzizi, mgodawat  | #6           |
 
 ### Bonus Modules (4 Points — implement after core is stable)
 
-| #   | Module                          | Pts | Days | Owner(s)               | Dependencies |
-| :-- | :------------------------------ | :-- | :--- | :--------------------- | :----------- |
-| 9   | AI Opponent                     | 2   | 8–9  | teammate_2             | #6           |
-| 10  | Game customization              | 1   | 8–9  | teammate_1             | #6           |
-| 11  | Game statistics & match history | 1   | 9–10 | teammate_1, teammate_2 | #5, #6       |
+| #   | Module                          | Pts | Days | Owner(s)                          | Dependencies |
+| :-- | :------------------------------ | :-- | :--- | :-------------------------------- | :----------- |
+| 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi                   | #6           |
+| 10  | Game customization              | 1   | 8–9  | zamgar, jayzatov                  | #6           |
+| 11  | Game statistics & match history | 1   | 9–10 | zamgar, jayzatov, mamahtal, tzizi | #5, #6       |
 
 ### Drop Strategy
 
@@ -114,7 +112,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Set up Git branching strategy (feature branches → main)
 - Configure ESLint + Prettier for consistent code style
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Install dependencies locally (`cd frontend && npm install`)
 - Understand React project structure (main.tsx → App.tsx → pages/ → components/ → services/ → types/)
@@ -122,22 +120,19 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - ~~Set up React Router with placeholder pages~~ ✅ Done (all routes configured in App.tsx)
 - Create reusable UI components: Button, Input, Card (TailwindCSS)
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Install dependencies locally (`cd backend && npm install`)
 - Understand Express project structure (index.ts → routes/ → controllers/ → services/ → middleware/)
 - Review Prisma schema, run `npx prisma generate` locally
 - ~~Create route file structure~~ ✅ Done (routes/, controllers/, services/, middleware/, lib/)
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Set up local dev environment
 - Study Socket.io docs — understand `emit()`, `on()`, rooms, namespaces
 - Test existing Socket.io connection (already in index.ts)
 - Plan WebSocket event structure for chat and game
-
-**teammate_4 (PO/PM):**
-
 - Create GitHub Issues for all Phase 2 tasks
 - Set up GitHub Project board (To Do / In Progress / Done)
 - Write Privacy Policy page content (draft)
@@ -157,7 +152,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Implement HTTPS self-signed certificate configuration
 - Help debug any Docker/environment issues
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Build Login page (email + password form, validation, error display)
 - Build Signup page (email + username + password + confirm, validation)
@@ -165,7 +160,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Create auth context (React Context to store current user + JWT)
 - Create protected route wrapper (redirect to `/login` if not authenticated)
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Implement `POST /api/auth/signup` — validate, hash password, create user, return JWT
 - Implement `POST /api/auth/login` — verify credentials, return JWT
@@ -175,14 +170,11 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Implement `PUT /api/users/me` — update profile (display name, avatar)
 - Input validation on all endpoints
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Add JWT authentication to Socket.io connections
 - Implement online status tracking (set online on connect, offline on disconnect)
 - Start planning chat message event structure
-
-**teammate_4 (PO/PM):**
-
 - Test signup and login flows, report bugs
 - Finalize Privacy Policy page content
 - Finalize Terms of Service page content
@@ -202,7 +194,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Help with any integration issues between frontend and backend
 - Avatar upload endpoint (file storage + default fallback)
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Friends list component (online/offline indicators)
 - Friend request UI (send, accept, reject)
@@ -210,21 +202,18 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Start Tic-Tac-Toe game board component (3x3 grid of clickable cells)
 - Game board renders X, O, or empty for each cell
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Friends API: `POST /api/friends/request/:userId`, `POST /api/friends/accept/:id`, `DELETE /api/friends/:id`, `GET /api/friends`
 - Start game logic: win detection function (check 8 winning lines)
 - Game API: `POST /api/games` (create), `GET /api/games/:id` (get state)
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Chat system: Socket.io events for `send_message`, `receive_message`
 - Chat UI: sidebar/overlay with message list, input, send button
 - Store messages in database (Messages table)
 - Chat history: load previous messages from API on open
-
-**teammate_4 (PO/PM):**
-
 - Test friends and chat features
 - Create Privacy Policy and ToS React pages with content
 - Link them from footer
@@ -244,7 +233,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Help debug WebSocket synchronization issues
 - Ensure game state is server-authoritative (prevent cheating)
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Complete game board: click to place mark, show whose turn it is
 - Game states: waiting, playing, finished (win/draw)
@@ -252,22 +241,19 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Game over screen with winner display and "Play Again" button
 - Pre-game lobby: choose local vs online vs AI
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Server-side game state management (authoritative — server validates every move)
 - Game move validation: correct turn, cell not taken, game not over
 - Save completed games to database
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Matchmaking: `find_game` event → wait for opponent → create room → start game
 - Game WebSocket events: `make_move` (client → server), `game_update` (server → clients), `game_over`
 - Handle disconnection: pause game, timeout, forfeit
 - Handle reconnection: rejoin room, restore game state
 - Test: two browser windows can play a full remote game
-
-**teammate_4 (PO/PM):**
-
 - Test multiplayer from two different browsers
 - Verify game rules work correctly (all win conditions, draw detection)
 - Update task tracker
@@ -286,25 +272,22 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Help debug WebSocket synchronization issues
 - Ensure game state is server-authoritative (prevent cheating)
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Complete game board polish: turn indicators, win animation, game over screen
 - Pre-game lobby: choose local vs online vs AI
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Finalize server-side game state validation
 - Save completed games to database
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Matchmaking via WebSocket
 - Handle disconnection: pause game, timeout, forfeit
 - Handle reconnection: rejoin room, restore game state
 - Test: two browser windows can play a full remote game
-
-**teammate_4 (PO/PM):**
-
 - Test multiplayer from two different browsers
 - Verify game rules work correctly (all win conditions, draw detection)
 
@@ -330,24 +313,21 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **Goal:** Tournament creation, registration, bracket play, and winner declaration.
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - Tournament API: create, join, list, bracket generation, progression
 - Auto-generate bracket when registration full
 - After each match: advance winner to next round
 
-**teammate_1 (Frontend):**
+**zamgar (Frontend):**
 
 - Tournament list page (available, in progress, completed)
 - Tournament detail page with visual bracket
 - Registration button
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - Tournament WebSocket events: notify when it's your turn in the bracket
-
-**teammate_4 (PO/PM):**
-
 - Test tournament flow end-to-end
 
 **Modules progressed:** #8 (Tournament system)
@@ -358,25 +338,22 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **Goal:** AI opponent, game customization, and statistics.
 
-**teammate_2 (Backend):**
+**mamahtal, tzizi (Backend):**
 
 - AI opponent: Minimax algorithm with alpha-beta pruning
 - AI difficulty: Easy (random moves 50% of time), Medium (random 20%), Hard (pure minimax)
 - Statistics API: `GET /api/users/:id/stats`, `GET /api/users/:id/matches`, `GET /api/leaderboard`
 
-**teammate_1 (Frontend):**
+**zamgar, jayzatov (Frontend):**
 
 - Game customization UI: theme selector (classic/neon/retro), symbol selector (X/O, custom emoji), board size option (3x3, 4x4, 5x5)
 - Statistics section on profile page (wins, losses, win rate)
 - Match history page (date, opponent, result)
 - Leaderboard page (top players by wins)
 
-**teammate_3 (Fullstack/Real-Time):**
+**mgodawat (Project Manager + Fullstack):**
 
 - AI game mode: client sends `play_ai` → server creates game → AI responds to each move via WebSocket
-
-**teammate_4 (PO/PM):**
-
 - Test AI plays competently but not perfectly
 - Test customization options apply correctly
 
@@ -409,11 +386,11 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **Testing rotation (so everyone tests everything):**
 
-| Day | teammate_1 tests | teammate_2 tests | teammate_3 tests | teammate_4 tests | mgodawat tests    |
-| :-- | :--------------- | :--------------- | :--------------- | :--------------- | :---------------- |
-| 11  | Chat + friends   | Game multiplayer | Auth + profiles  | Tournament       | All API endpoints |
-| 12  | Tournament       | Auth + profiles  | Game custom.     | Chat + friends   | WebSocket edges   |
-| 13  | AI opponent      | Chat + friends   | Tournament       | Multiplayer      | Full user flows   |
+| Day | zamgar tests   | mamahtal, tzizi tests | mgodawat tests                       | jayzatov tests |
+| :-- | :------------- | :-------------------- | :----------------------------------- | :------------- |
+| 11  | Chat + friends | Game multiplayer      | Auth + profiles + All API endpoints  | Tournament     |
+| 12  | Tournament     | Auth + profiles       | Game custom. + WebSocket edges       | Chat + friends |
+| 13  | AI opponent    | Chat + friends        | Tournament + Full user flows         | Multiplayer    |
 
 **Focus areas:**
 
@@ -432,19 +409,19 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **Nothing new built — this day is purely for verification.**
 
-- Privacy Policy page: accessible from footer, relevant content (teammate_4)
-- Terms of Service page: accessible from footer, relevant content (teammate_4)
+- Privacy Policy page: accessible from footer, relevant content (mgodawat)
+- Terms of Service page: accessible from footer, relevant content (mgodawat)
 - HTTPS working on all endpoints (mgodawat)
 - Zero console errors or warnings in Chrome (all)
 - All forms validate on frontend AND backend (all)
 - `.env` gitignored, `.env.example` committed (mgodawat)
-- Responsive design works on different screen sizes (teammate_1)
+- Responsive design works on different screen sizes (zamgar, jayzatov)
 - Multi-user test: open 2+ browsers, both work simultaneously (all)
 - Clean Docker test: `make fclean && make` from scratch (mgodawat)
 - Full user flow test: signup → login → edit profile → add friend → chat → play game (all)
-- Multiplayer test: two browsers, remote game, verify sync (teammate_3)
-- AI test: play vs bot, verify it wins sometimes but not always (teammate_2)
-- Tournament test: create → join → play through bracket → winner declared (teammate_4)
+- Multiplayer test: two browsers, remote game, verify sync (mgodawat)
+- AI test: play vs bot, verify it wins sometimes but not always (mamahtal, tzizi)
+- Tournament test: create → join → play through bracket → winner declared (mgodawat)
 
 ---
 

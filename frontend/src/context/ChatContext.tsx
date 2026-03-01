@@ -63,8 +63,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [socket, user]);
 
   const openWidget = () => {
+    // Intentionally preserve totalUnread here: opening the shell does not mean
+    // the user has actually viewed a specific conversation.
     setIsOpen(true);
-    setTotalUnread(0);
   };
 
   const openChat = (userId: number, username: string) => {

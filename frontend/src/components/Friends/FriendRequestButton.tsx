@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FriendshipStatus } from "../../types";
 import { friendsService } from "../../services/friends.service";
+import { useSocket } from "../../context/SocketContext";
 import Button from "../Button";
 
 interface FriendRequestButtonProps {
@@ -18,6 +19,7 @@ export default function FriendRequestButton({
   onAccept,
   onDecline,
 }: FriendRequestButtonProps) {
+  const { socket } = useSocket();
   const [status, setStatus] = useState<FriendshipStatus>("none");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +47,20 @@ export default function FriendRequestButton({
       cancelled = true;
     };
   }, [targetUserId, isMine]);
+
+  // Real-time: flip to "friends" when the viewed user accepts our pending request
+  useEffect(() => {
+    if (!socket || isMine) return;
+
+    const handleAccepted = (payload: { id: number }) => {
+      if (payload.id === targetUserId) setStatus("friends");
+    };
+
+    socket.on("friend_request_accepted", handleAccepted);
+    return () => {
+      socket.off("friend_request_accepted", handleAccepted);
+    };
+  }, [socket, targetUserId, isMine]);
 
   async function handleSendRequest() {
     setLoading(true);

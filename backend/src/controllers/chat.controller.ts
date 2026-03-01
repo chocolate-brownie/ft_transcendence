@@ -7,6 +7,7 @@ import {
   areFriends,
   getChatHistoryPaginated,
   getConversations,
+  markConversationAsRead,
 } from "../services/chat.service";
 
 export async function getChatHistory(req: AuthRequest, res: Response): Promise<void> {
@@ -66,6 +67,39 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
     res.status(200).json(result);
   } catch (error) {
     console.error("[getChatHistory] Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function markAsRead(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId = req.user?.id;
+    if (!currentUserId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const otherUserId = parseInt(req.params.userId as string, 10);
+    if (isNaN(otherUserId) || otherUserId <= 0) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    if (otherUserId === currentUserId) {
+      res.status(400).json({ message: "Cannot mark your own conversation as read" });
+      return;
+    }
+
+    const isFriends = await areFriends(currentUserId, otherUserId);
+    if (!isFriends) {
+      res.status(403).json({ message: "You are not friends with this user" });
+      return;
+    }
+
+    await markConversationAsRead(currentUserId, otherUserId);
+    res.status(204).send();
+  } catch (error) {
+    console.error("[markAsRead] Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
