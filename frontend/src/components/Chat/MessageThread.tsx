@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import { apiClient } from "../../lib/apiClient";
@@ -26,6 +26,9 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Tracks whether the next messages update is a prepend (load older) vs append (new message)
+  const isPrependRef = useRef(false);
+  const prevScrollHeightRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,14 +52,28 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
       .finally(() => setIsLoading(false));
   }, [otherUserId]);
 
-  // Scroll to bottom on initial load and when new messages arrive
+  // After a prepend, restore scroll position so the user stays at the same message
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current !== null && scrollContainerRef.current) {
+      const newScrollHeight = scrollContainerRef.current.scrollHeight;
+      scrollContainerRef.current.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+      prevScrollHeightRef.current = null;
+    }
+  }, [messages]);
+
+  // Scroll to bottom only on initial load and new (appended) messages — not after prepend
   useEffect(() => {
-    if (!isLoading) scrollToBottom();
+    if (!isLoading && !isPrependRef.current) scrollToBottom();
+    isPrependRef.current = false;
   }, [messages, isLoading]);
 
   // Load older messages when scrolling to top
   const loadMore = useCallback(() => {
     if (!hasMore || isLoadingMore || !nextCursor) return;
+
+    // Snapshot scroll height before prepending so we can restore position after render
+    isPrependRef.current = true;
+    prevScrollHeightRef.current = scrollContainerRef.current?.scrollHeight ?? null;
 
     setIsLoadingMore(true);
     apiClient
@@ -66,7 +83,12 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        // Reset flags so a subsequent scroll doesn't accidentally suppress auto-scroll
+        isPrependRef.current = false;
+        prevScrollHeightRef.current = null;
+      })
       .finally(() => setIsLoadingMore(false));
   }, [hasMore, isLoadingMore, nextCursor, otherUserId]);
 

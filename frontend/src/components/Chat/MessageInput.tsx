@@ -12,6 +12,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
 
   const isTypingRef = useRef(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const MAX_LENGTH = 2000;
@@ -24,11 +25,18 @@ export function MessageInput({ receiverId }: MessageInputProps) {
       return;
     }
 
-    // Stop typing indicator before sending
+    // Cancel any pending start-typing debounce and stop typing indicator
+    if (typingStartTimeoutRef.current) {
+      clearTimeout(typingStartTimeoutRef.current);
+      typingStartTimeoutRef.current = null;
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
     if (isTypingRef.current) {
       socket.emit("typing", { receiverId, isTyping: false });
       isTypingRef.current = false;
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     }
 
     socket.emit("send_message", { receiverId, content: trimmed });
@@ -57,17 +65,27 @@ export function MessageInput({ receiverId }: MessageInputProps) {
 
     if (!socket) return;
 
-    // Emit typing: true on first keystroke
-    if (!isTypingRef.current) {
-      socket.emit("typing", { receiverId, isTyping: true });
-      isTypingRef.current = true;
+    // Schedule typing: true after 300ms debounce (only if not already typing)
+    if (!isTypingRef.current && !typingStartTimeoutRef.current) {
+      typingStartTimeoutRef.current = setTimeout(() => {
+        socket.emit("typing", { receiverId, isTyping: true });
+        isTypingRef.current = true;
+        typingStartTimeoutRef.current = null;
+      }, 300);
     }
 
     // Reset the 3-second inactivity timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing", { receiverId, isTyping: false });
-      isTypingRef.current = false;
+      // Cancel pending start-typing if it hasn't fired yet
+      if (typingStartTimeoutRef.current) {
+        clearTimeout(typingStartTimeoutRef.current);
+        typingStartTimeoutRef.current = null;
+      }
+      if (isTypingRef.current) {
+        socket.emit("typing", { receiverId, isTyping: false });
+        isTypingRef.current = false;
+      }
     }, 3000);
   };
 

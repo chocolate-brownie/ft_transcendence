@@ -30,11 +30,22 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
     if (!socket || !user) return;
 
     const handleReceiveMessage = (msg: MessageWithSender) => {
-      setConversations((prev) => {
-        const partnerId = msg.senderId === user.id ? msg.receiverId : msg.senderId;
-        const partnerInfo = msg.senderId === user.id ? msg.sender : msg.sender;
+      const partnerId = msg.senderId === user.id ? msg.receiverId : msg.senderId;
+      let isNewOutbound = false;
 
+      setConversations((prev) => {
         const existing = prev.find((c) => c.user.id === partnerId);
+
+        // New outbound conversation: msg.sender is the current user, not the partner.
+        // We have no receiver profile data in the socket payload, so skip building a
+        // malformed row — flag for a refetch below to populate it correctly.
+        if (!existing && msg.senderId === user.id) {
+          isNewOutbound = true;
+          return prev;
+        }
+
+        // msg.sender is the remote partner for all inbound messages
+        const partnerInfo = msg.sender;
 
         const updatedConv: ConversationSummary = existing
           ? {
@@ -51,6 +62,7 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
                   : existing.unreadCount,
             }
           : {
+              // New inbound conversation — sender data is the partner
               user: {
                 id: partnerId,
                 username: partnerInfo.username,
@@ -63,12 +75,20 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
                 createdAt: msg.createdAt,
                 senderId: msg.senderId,
               },
-              unreadCount: msg.senderId !== user.id ? 1 : 0,
+              unreadCount: 1,
             };
 
         // Move to top, remove old entry if existed
         return [updatedConv, ...prev.filter((c) => c.user.id !== partnerId)];
       });
+
+      // Refetch to get the correct partner profile for first outbound messages
+      if (isNewOutbound) {
+        apiClient
+          .get<ConversationSummary[]>("/api/messages/conversations")
+          .then(setConversations)
+          .catch(console.error);
+      }
     };
 
     socket.on("receive_message", handleReceiveMessage);
