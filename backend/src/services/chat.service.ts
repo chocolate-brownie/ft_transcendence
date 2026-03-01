@@ -116,7 +116,7 @@ export async function saveMessage(
 
 export async function getMessageWithSender(
   messageId: number,
-): Promise<ReceiveMessagePayload | null> {
+): Promise<MessageWithSender | null> {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
     include: {
@@ -134,10 +134,14 @@ export async function getMessageWithSender(
   return {
     id: message.id,
     senderId: message.senderId,
-    senderUsername: message.sender.username,
-    senderAvatar: message.sender.avatarUrl,
+    receiverId: message.receiverId,
     content: message.content,
-    timestamp: message.createdAt.toISOString(),
+    createdAt: message.createdAt.toISOString(),
+    read: message.read,
+    sender: {
+      username: message.sender.username,
+      avatarUrl: message.sender.avatarUrl,
+    },
   };
 }
 

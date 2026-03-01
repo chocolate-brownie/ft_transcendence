@@ -14,10 +14,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
 
+  // Depend on the user's id (stable primitive) rather than the user object reference
+  // to avoid spurious disconnect/reconnect cycles on re-renders.
+  const userId = user?.id ?? null;
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (user && token) {
+    if (userId !== null && token) {
       const s = connectSocket(token);
       setSocket(s);
     } else {
@@ -29,7 +33,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       disconnectSocket();
       setSocket(null);
     };
-  }, [user]);
+  }, [userId]);
 
   return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 }

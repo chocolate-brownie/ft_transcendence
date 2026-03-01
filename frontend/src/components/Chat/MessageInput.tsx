@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 
 interface MessageInputProps {
@@ -16,6 +16,18 @@ export function MessageInput({ receiverId }: MessageInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const MAX_LENGTH = 2000;
+
+  // Surface backend rejections (validation failures, not-friends, etc.) to the user
+  useEffect(() => {
+    if (!socket) return;
+    const handleMessageError = (err: { message: string }) => {
+      setError(err.message);
+    };
+    socket.on("message_error", handleMessageError);
+    return () => {
+      socket.off("message_error", handleMessageError);
+    };
+  }, [socket]);
 
   const handleSend = () => {
     const trimmed = message.trim();
