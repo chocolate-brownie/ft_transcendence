@@ -209,7 +209,7 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-3"
       >
         {/* Load more indicator */}
         {isLoadingMore && (

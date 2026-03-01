@@ -37,7 +37,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         />
       )}
 
-      <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col gap-1 max-w-[70%] min-w-0 ${isOwn ? "items-end" : "items-start"}`}>
         <div
           className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
             isOwn
