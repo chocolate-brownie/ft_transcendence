@@ -209,9 +209,9 @@ export default function Profile() {
   }
 
   function handleSave() {
-    const trimmed = editDisplayName.trim();
-    if (trimmed.length < 1 || trimmed.length > 50) {
-      setEditError("Display name must be between 1 and 50 characters.");
+    const trimmed = editDisplayName.trim().replace(/<[^>]*>/g, "");
+    if (trimmed.length < 3 || trimmed.length > 50) {
+      setEditError("Display name must be between 3 and 50 characters.");
       return;
     }
 
@@ -247,13 +247,15 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
+    setAvatarError(null);
+
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       setAvatarError("File is too large (max 5MB).");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setAvatarError(null);
     handleAvatarUpload(file);
   }
 
@@ -278,6 +280,7 @@ export default function Profile() {
       .finally(() => {
         avatarSavingRef.current = false;
         setAvatarSaving(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       });
   }
 
@@ -337,7 +340,7 @@ export default function Profile() {
       ? rawAvatar
       : "/default-avatar.png";
 
-  const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
+  const joined = new Date(profile.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
   });
@@ -413,8 +416,8 @@ export default function Profile() {
               </div>
 
               {/* User infos */}
-              <p className="text-lg font-semibold">{profile.username}</p>
-              <p className="text-sm text-pong-text/60">{displayName}</p>
+              <p className="text-lg font-semibold break-all">{profile.username}</p>
+              <p className="text-sm text-pong-text/60 break-all">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
                 <span className={isOnline ? "text-green-500" : "text-gray-400"}>

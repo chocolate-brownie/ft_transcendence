@@ -10,7 +10,7 @@ type UpdateUserData = {
 };
 
 //      Get User profile
-export const getUserById = async (id: number, viewerId?: number) => {
+export const getUserById = async (id: number) => {
   const user = await prisma.user.findUnique({
     where: { id },
     select: {
@@ -27,33 +27,17 @@ export const getUserById = async (id: number, viewerId?: number) => {
     return null;
   }
 
+  // Any authenticated viewer can see any user's avatar.
+  // Return the real avatarUrl for custom avatars; null for default so the
+  // frontend falls back to /default-avatar.png consistently.
   const hasCustomAvatar =
     !!user.avatarUrl &&
     user.avatarUrl.startsWith("/uploads/") &&
     !user.avatarUrl.includes("default.png");
 
-  let canViewAvatar = false;
-  if (viewerId && viewerId === id) {
-    canViewAvatar = true;
-  } else if (viewerId) {
-    const friendship = await prisma.friend.findFirst({
-      where: {
-        OR: [
-          { requesterId: viewerId, addresseeId: id },
-          { requesterId: id, addresseeId: viewerId },
-        ],
-        status: "ACCEPTED",
-      },
-    });
-    canViewAvatar = !!friendship;
-  }
-
-  const cleanedAvatar = hasCustomAvatar && canViewAvatar ? user.avatarUrl : null;
-
-  // Return a new object to keep a nullable avatarUrl type without mutating the Prisma result
   return {
     ...user,
-    avatarUrl: cleanedAvatar,
+    avatarUrl: hasCustomAvatar ? user.avatarUrl : null,
   };
 };
 
