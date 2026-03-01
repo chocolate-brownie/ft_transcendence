@@ -1,7 +1,7 @@
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="w-full py-10 md:py-12">
+      <div className="max-w-4xl mx-auto px-6 self-start w-full">
         <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
           <div
             className="max-w-none text-black [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mt-8 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_p]:leading-relaxed [&_p]:mb-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mb-2 [&_strong]:font-semibold [&_a]:text-blue-600 [&_a]:no-underline hover:[&_a]:underline"
@@ -15,6 +15,7 @@ export default function TermsOfService() {
 
 <h2>1. Accounts</h2>
 <p>When you create an account with us, you must provide information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service.</p>
+<p>Each user may maintain only one account. Sharing account credentials or allowing another person to use your account is prohibited.</p>
 <p>You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password, whether your password is with our Service or a third-party service.</p>
 <p>You agree not to disclose your password to any third party. You must notify us immediately upon becoming aware of any breach of security or unauthorized use of your account.</p>
 <p>You may not use as a username the name of another person or entity or that is not lawfully available for use, a name or trademark that is subject to any rights of another person or entity other than you without appropriate authorization, or a name that is otherwise offensive, vulgar, or obscene.</p>
@@ -37,6 +38,7 @@ export default function TermsOfService() {
 <li>Not intentionally disconnect or abandon games in progress to avoid losses.</li>
 <li>Not manipulate matchmaking or rankings through any means, including but not limited to creating multiple accounts.</li>
 <li>Accept the outcome of games as determined by the Service.</li>
+<li>Tournament and ranked match outcomes recorded by the Service are final, except where we correct a clear technical error.</li>
 </ul>
 
 <h2>4. Prohibited Conduct</h2>
@@ -75,6 +77,7 @@ export default function TermsOfService() {
 
 <h2>9. Disclaimer</h2>
 <p>Your use of the Service is at your sole risk. The Service is provided on an "AS IS" and "AS AVAILABLE" basis. The Service is provided without warranties of any kind, whether express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, non-infringement, or course of performance.</p>
+<p>The Service is provided as an educational project and is not intended for mission-critical or commercial production use.</p>
 <p>The ft_transcendence team does not warrant that the Service will function uninterrupted, secure, or available at any particular time or location, or that any errors or defects will be corrected.</p>
 
 <h2>10. Governing Law</h2>
