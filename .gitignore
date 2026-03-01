@@ -30,5 +30,5 @@ AGENTS.md
 npm-debug.log*
 
 # ── Uploaded files (keep folder structure, ignore actual uploads) ─────────
-uploads/avatars/*
-!uploads/avatars/.gitkeep
+backend/uploads/avatars/*
+!backend/uploads/avatars/.gitkeep
