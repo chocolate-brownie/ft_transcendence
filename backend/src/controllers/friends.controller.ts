@@ -89,6 +89,18 @@ export async function acceptFriendRequestController(
 
     const updatedRequest = await acceptFriendRequest(requestId, currentUserId);
 
+    // Notify the original requester that their request was accepted
+    const io = req.app.get("io") as SocketIOServer | undefined;
+    if (io) {
+      io.to(`user:${updatedRequest.requesterId}`).emit("friend_request_accepted", {
+        id: updatedRequest.addressee.id,
+        username: updatedRequest.addressee.username,
+        displayName: updatedRequest.addressee.displayName ?? null,
+        avatarUrl: updatedRequest.addressee.avatarUrl ?? null,
+        isOnline: updatedRequest.addressee.isOnline,
+      });
+    }
+
     res.status(200).json(updatedRequest);
   } catch (error: any) {
     if (error.status) {
