@@ -43,7 +43,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       .get<ConversationSummary[]>("/api/messages/conversations")
       .then((convos) => setTotalUnread(convos.reduce((sum, c) => sum + c.unreadCount, 0)))
       .catch(() => {});
-  }, [user?.id]);
+  }, [user]);
 
   // Real-time: increment badge only when a message arrives while the widget is closed
   useEffect(() => {
@@ -60,7 +60,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => {
       socket.off("receive_message", handle);
     };
-  }, [socket, user?.id]);
+  }, [socket, user]);
 
   const openWidget = () => {
     setIsOpen(true);

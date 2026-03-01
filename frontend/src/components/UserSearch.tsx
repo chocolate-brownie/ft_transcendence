@@ -57,7 +57,7 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
     setIsOpen(false);
     setQuery("");
     setResults([]);
-    navigate(`/profile/${user.id}`);
+    void navigate(`/profile/${user.id}`);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
