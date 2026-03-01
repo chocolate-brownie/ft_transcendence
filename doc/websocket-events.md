@@ -9,10 +9,10 @@
 
 | Event | Direction | Payload | Purpose |
 |-------|-----------|---------|---------|
-| `send_message` | Client → Server | `{ to: string, text: string }` | Send a chat message to a user |
-| `receive_message` | Server → Client | `{ from: string, text: string, timestamp: string }` | Deliver a chat message to recipient |
-| `typing` | Client → Server | `{ to: string }` | Notify server that user is typing |
-| `user_typing` | Server → Client | `{ from: string }` | Show typing indicator to recipient |
+| `send_message` | Client → Server | `{ receiverId: number, content: string }` | Send a chat message to a user |
+| `receive_message` | Server → Client | `{ id, content, senderId, receiverId, createdAt, sender: { id, username, avatarUrl } }` | Deliver a chat message to both sender and recipient |
+| `typing` | Client → Server | `{ receiverId: number, isTyping: boolean }` | Notify server that user is typing or stopped typing |
+| `user_typing` | Server → Client | `{ userId: number, username: string, isTyping: boolean }` | Show typing indicator to recipient |
 
 ## Game Events
 
@@ -27,6 +27,12 @@
 | `opponent_disconnected` | Server → Client | `{ gameId: string }` | Opponent lost connection, waiting 30s |
 | `opponent_reconnected` | Server → Client | `{ gameId: string }` | Opponent reconnected |
 | `game_forfeit` | Server → Client | `{ gameId: string, winner: string }` | Opponent didn't reconnect in time |
+
+## Social Events
+
+| Event | Direction | Payload | Purpose |
+|-------|-----------|---------|---------|
+| `friend_request` | Server → Client | `{ id: number, requester: { id, username, displayName, avatarUrl, isOnline } }` | Notify addressee of incoming friend request in real-time |
 
 ## Status Events
 
