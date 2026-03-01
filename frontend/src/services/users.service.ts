@@ -23,7 +23,7 @@ export const usersService = {
 
   searchUsers(query: string): Promise<User[]> {
     return apiClient.get<User[]>(
-      `/api/users/search?q=${encodeURIComponent(query)}` // a tester URIComonent
+      `/api/users/search?q=${encodeURIComponent(query)}`
     );
-  }
+  },
 };

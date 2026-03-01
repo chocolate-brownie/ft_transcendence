@@ -2,9 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
-// TEMP
 import UserSearch from "./UserSearch";
-// TEMP
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -100,12 +98,7 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {/* TEMP: user search next to nav links */}
-          {/* <div className="ml-2"> */}
-            <UserSearch className="w-64" />
-          {/* </div> */}
-          {/* TEMP */}
-
+          <UserSearch className="ml-2 w-64" />
 
           {/* Avatar dropdown */}
           <div className="relative ml-2" ref={menuRef}>
