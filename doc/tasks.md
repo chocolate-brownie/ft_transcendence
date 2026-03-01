@@ -196,7 +196,7 @@
 - [ ] `GET /api/games/:id` — get current game state
 - [x] Save completed game to database (winner, final board, timestamps)
 
-### Frontend — Game UI Complete — [Frontend: zamgar, mgodawat]
+### Frontend — Game UI Complete — [Frontend: zamgar, jayzatov]
 
 - [ ] Game states: waiting (for opponent), playing, finished (win), finished (draw)
 - [ ] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!"
@@ -208,7 +208,7 @@
   - [ ] "Play vs AI" (with difficulty selector)
 - [ ] Local game mode: alternate turns on same screen
 
-### Backend + Frontend — Multiplayer — [Real-Time: teammate_3]
+### Backend + Frontend — Multiplayer — [Real-Time: mgodawat]
 
 - [ ] Matchmaking: `find_game` event → add to queue → match two players → create room
 - [ ] Cancel matchmaking: `cancel_search` event
@@ -222,7 +222,7 @@
 - [ ] Reconnection: player rejoins room, receives current game state
 - [ ] Matchmaking UI: "Searching for opponent..." with cancel button
 
-### QA & Testing — [PM: teammate_4]
+### QA & Testing — [PM: mgodawat]
 
 - [ ] Test local game: all win conditions (rows, columns, diagonals), draw
 - [ ] Test multiplayer: two browsers, full game to completion
@@ -239,7 +239,7 @@
 
 ## Phase 5: Bonus Modules (Day 5)
 
-### Tournament System (Module #8 — 1pt) — [Backend: teammate_2 + PM: teammate_4]
+### Tournament System (Module #8 — 1pt) — [Backend: mamahtal, tzizi + PM: mgodawat]
 
 - [ ] Prisma: Tournaments + TournamentParticipants tables (already in schema)
 - [ ] `POST /api/tournaments` — create tournament (name, max players: 4 or 8)
@@ -254,7 +254,7 @@
 - [ ] Frontend — Registration button
 - [ ] Socket.io — Notify player when it's their turn in tournament
 
-### AI Opponent (Module #9 — 2pts) — [Backend: teammate_2]
+### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi]
 
 - [ ] Implement Minimax algorithm:
   - [ ] Evaluate board: +10 if AI wins, -10 if player wins, 0 for draw
@@ -269,7 +269,7 @@
 - [ ] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard)
 - [ ] Verify: AI wins sometimes on Easy, often on Medium, always draws or wins on Hard
 
-### Game Customization (Module #10 — 1pt) — [Frontend: teammate_1]
+### Game Customization (Module #10 — 1pt) — [Frontend: zamgar, jayzatov]
 
 - [ ] Pre-game settings panel:
   - [ ] Theme selector: Classic (black/white), Neon (dark bg + glowing lines), Retro (pixel art style)
@@ -280,7 +280,7 @@
 - [ ] Default options clearly available (subject requirement)
 - [ ] If AI module is implemented, AI must work with custom settings
 
-### Game Statistics & Match History (Module #11 — 1pt) — [Frontend: teammate_1 + Backend: teammate_2]
+### Game Statistics & Match History (Module #11 — 1pt) — [Frontend: zamgar, jayzatov + Backend: mamahtal, tzizi]
 
 - [ ] `GET /api/users/:id/stats` — wins, losses, draws, win rate, total games
 - [ ] `GET /api/users/:id/matches` — paginated match history (most recent first)
@@ -321,14 +321,14 @@
 
 ### Subject Mandatory Requirements — [All]
 
-- [ ] Privacy Policy page — written, relevant content, linked from footer (teammate_4)
-- [ ] Terms of Service page — written, relevant content, linked from footer (teammate_4)
+- [ ] Privacy Policy page — written, relevant content, linked from footer (mgodawat)
+- [ ] Terms of Service page — written, relevant content, linked from footer (mgodawat)
 - [ ] HTTPS setup — self-signed certificate for all backend communication (mgodawat)
 - [ ] Zero console errors or warnings in Chrome (all — open DevTools and check)
 - [ ] All forms validate on frontend AND backend (all)
 - [ ] `.env` is in `.gitignore`, `.env.example` is committed (mgodawat)
-- [ ] Responsive design works at different screen sizes (teammate_1)
-- [ ] Multi-user support: 2+ browsers simultaneously, no conflicts (teammate_3)
+- [ ] Responsive design works at different screen sizes (zamgar, jayzatov)
+- [ ] Multi-user support: 2+ browsers simultaneously, no conflicts (mgodawat)
 
 ### Final Testing — [All]
 
@@ -370,10 +370,10 @@ Module #2 (ORM) ────────────┤
 
 ## Quick Reference: Who Does What
 
-| Team Member | Primary Focus                 | Key Deliverables                                       |
-| :---------- | :---------------------------- | :----------------------------------------------------- |
-| mgodawat    | Infrastructure + Architecture | Docker, HTTPS, code reviews, tech decisions            |
-| teammate_1  | Frontend UI                   | React pages, game board, TailwindCSS, customization UI |
-| tzizi       | Backend Logic                 | Express API, auth, Prisma, AI opponent, tournament     |
-| teammate_3  | Real-Time Features            | Socket.io, multiplayer sync, chat, online status       |
-| teammate_4  | Project Management + QA       | GitHub Issues, testing, Privacy Policy, ToS, README    |
+| Team Member | Primary Focus                   | Key Deliverables                                                   |
+| :---------- | :------------------------------ | :----------------------------------------------------------------- |
+| mgodawat    | Project Manager + Fullstack Dev | Docker, HTTPS, Socket.io, chat system, GitHub Issues, code reviews |
+| mamahtal    | Backend Logic                   | Express API, auth, Prisma, friends API, message persistence        |
+| tzizi       | Backend Logic                   | Express API, auth, Prisma, AI opponent, tournament                 |
+| zamgar      | Frontend UI (Phases 1–3)        | React pages, profile UI, friends list, chat UI components          |
+| jayzatov    | Frontend UI (Phase 4+)          | Game UI, customization, statistics                                 |
