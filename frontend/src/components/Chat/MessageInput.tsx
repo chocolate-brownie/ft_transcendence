@@ -45,6 +45,12 @@ export function MessageInput({ receiverId }: MessageInputProps) {
       return;
     }
 
+    // Guard: don't clear input or emit if the socket is currently disconnected
+    if (!socket.connected) {
+      setError("Connection lost. Please try again when reconnected.");
+      return;
+    }
+
     // Cancel any pending start-typing debounce and stop typing indicator
     if (typingStartTimeoutRef.current) {
       clearTimeout(typingStartTimeoutRef.current);

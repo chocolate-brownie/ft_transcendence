@@ -64,7 +64,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openWidget = () => {
     setIsOpen(true);
-    setTotalUnread(0);
   };
 
   const openChat = (userId: number, username: string) => {
