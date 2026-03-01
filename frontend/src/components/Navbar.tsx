@@ -2,6 +2,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
+import UserSearch from "./UserSearch";
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -95,6 +97,8 @@ export default function Navbar() {
               )}
             </Link>
           ))}
+
+          <UserSearch className="ml-2 w-64" />
 
           {/* Avatar dropdown */}
           <div className="relative ml-2" ref={menuRef}>

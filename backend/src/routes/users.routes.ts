@@ -4,11 +4,15 @@ import {
   updateMyProfile,
   uploadMyAvatar,
   handleMulterError,
+  searchUsersController,
 } from "../controllers/users.controller";
 import { auth } from "../middleware/auth";
 import { uploadAvatar } from "../middleware/upload";
 
 const router = Router();
+
+// GET  /api/users/search
+router.get("/search", auth, searchUsersController);
 
 // GET  /api/users/:id
 // Auth is required so profile avatar visibility can depend on viewer friendship.

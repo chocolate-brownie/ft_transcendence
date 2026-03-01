@@ -20,4 +20,10 @@ export const usersService = {
     formData.append("avatar", file);
     return apiClient.post<User>("/api/users/me/avatar", formData);
   },
+
+  searchUsers(query: string): Promise<User[]> {
+    return apiClient.get<User[]>(
+      `/api/users/search?q=${encodeURIComponent(query)}`
+    );
+  },
 };
