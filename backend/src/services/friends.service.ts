@@ -74,7 +74,7 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
     },
     include: {
       requester: {
-        select: { id: true, username: true },
+        select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true },
       },
       addressee: {
         select: { id: true, username: true },

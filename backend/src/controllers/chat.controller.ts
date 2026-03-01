@@ -6,6 +6,7 @@ import {
   userExists,
   areFriends,
   getChatHistoryPaginated,
+  getConversations,
 } from "../services/chat.service";
 
 export async function getChatHistory(req: AuthRequest, res: Response): Promise<void> {
@@ -65,6 +66,22 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
     res.status(200).json(result);
   } catch (error) {
     console.error("[getChatHistory] Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function getConversationList(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId = req.user?.id;
+    if (!currentUserId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const conversations = await getConversations(currentUserId);
+    res.status(200).json(conversations);
+  } catch (error) {
+    console.error("[getConversationList] Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

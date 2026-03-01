@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import type { User, FriendInfo, PendingRequest } from "../types";
 import { usersService } from "../services/users.service";
 import { friendsService } from "../services/friends.service";
@@ -13,6 +14,7 @@ import FriendRequestButton from "../components/Friends/FriendRequestButton";
 export default function Profile() {
   const { id } = useParams();
   const { user, updateUser } = useAuth();
+  const { socket } = useSocket();
 
   // Compute target user ID before any hooks.
   // isMeAlias → will redirect to /profile (no id param).
@@ -140,6 +142,20 @@ export default function Profile() {
       cancelled = true;
     };
   }, [user]);
+
+  // Real-time: prepend incoming friend requests to the list
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleFriendRequest = (request: PendingRequest) => {
+      setPendingRequests((prev) => [request, ...prev]);
+    };
+
+    socket.on("friend_request", handleFriendRequest);
+    return () => {
+      socket.off("friend_request", handleFriendRequest);
+    };
+  }, [socket, user]);
 
   // Conditional redirects AFTER all hooks
   if (isMeAlias && user?.id != null) return <Navigate to="/profile" replace />;
@@ -365,6 +381,7 @@ export default function Profile() {
                     src={avatarSrc}
                     alt="Avatar"
                     className="h-full w-full object-cover"
+                    onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                   />
 
                   {isMine && (

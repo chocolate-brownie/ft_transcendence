@@ -145,15 +145,18 @@
 ### Backend + Frontend — Chat — [Real-Time: zamgar, tzizi, mgodawat]
 
 - [x] Socket.io events: `send_message` (client → server), `receive_message` (server → client)
-- [ ] `typing` indicator event
+- [x] `typing` indicator event (`typing` client → server, `user_typing` server → client with userId, username, isTyping) — mgodawat
 - [x] Store messages in database (Messages table via Prisma)
 - [x] `GET /api/messages/:userId` — load chat history with a specific user (paginated)
-- [ ] Frontend chat sidebar/overlay:
-  - [ ] Chat list: friends you've messaged (sorted by most recent)
-  - [ ] Message thread: scrollable, auto-scroll to bottom on new message
-  - [ ] Message input with send button
-  - [ ] Typing indicator ("User is typing...")
-  - [ ] Connect Socket.io client to backend for real-time messages
+- [x] `GET /api/messages/conversations` — conversation list with last message + unread count per partner — mgodawat
+- [x] Frontend chat sidebar/overlay — mgodawat (PR #119):
+  - [x] Chat list: friends you've messaged (sorted by most recent) — `ConversationList.tsx` + `ConversationItem.tsx`
+  - [x] Message thread: scrollable, auto-scroll to bottom on new message — `MessageThread.tsx`
+  - [x] Message input with send button — `MessageInput.tsx`
+  - [x] Typing indicator ("User is typing...") — integrated in `MessageThread.tsx`
+  - [x] Connect Socket.io client to backend for real-time messages
+  - [x] Floating chat widget (messenger-style popup, bottom-right) — `ChatWidget.tsx` + `ChatContext.tsx`
+  - [x] Message button on friends list opens widget directly to that conversation
 
 ### Frontend — Game Board Start — [Frontend: zamgar]
 
@@ -168,7 +171,7 @@
 
 - [ ] Test profile view and edit flows
 - [x] Test friend request flow end-to-end — mgodawat
-- [ ] Test chat between two users (two browser windows)
+- [x] Test chat between two users (two browser windows) — mgodawat
 - [x] Finalize Privacy Policy and Terms of Service React pages
 - [x] Link Privacy Policy and ToS from footer component
 
