@@ -6,6 +6,7 @@ import {
   makeMoveInDb,
   validateCreateGame,
   getGameByIdFromDb,
+  getCompletedGamesFromDb,
 } from "../services/games.service";
 
 // ── createGame ────────────────────────────────────────
@@ -105,3 +106,25 @@ export const getGameById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// ── getGameHistory ────────────────────────────────────
+
+export const getGameHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user.id;
+
+    const limit  = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
+    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+
+    const { games, total } = await getCompletedGamesFromDb(userId, limit, offset);
+
+    return res.status(200).json({
+      games,
+      total,
+      limit,
+      offset,
+    });
+  } catch (error) {
+    console.error('Error fetching game history:', error);
+    return res.status(500).json({ error: 'Failed to fetch game history' });
+  }
+};

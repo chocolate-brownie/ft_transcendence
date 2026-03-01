@@ -171,6 +171,65 @@ export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResu
   return { gameOver: false, winner: null, isDraw: false, line: null };
 };
 
+// ───────────────── Verify Completed Game ─────────────────
+
+/**
+ * Verify a completed game has all required data.
+ * Returns true if valid, false + logs errors if not.
+ */
+export const verifyCompletedGame = (game: {
+  id: number;
+  status: string;
+  finishedAt: Date | null;
+  winnerId: number | null;
+  player1Id: number;
+  player2Id: number | null;
+  boardState: unknown;
+}): boolean => {
+  let isValid = true;
+
+  // Must have completion timestamp
+  if (!game.finishedAt) {
+    console.error(`Game ${game.id}: Missing finishedAt timestamp`);
+    isValid = false;
+  }
+
+  // Must have both players
+  if (!game.player2Id) {
+    console.error(`Game ${game.id}: Completed without player2`);
+    isValid = false;
+  }
+
+  // If FINISHED, must have a winnerId that is one of the two players
+  if (game.status === 'FINISHED') {
+    if (game.winnerId === null) {
+      console.error(`Game ${game.id}: FINISHED but no winnerId`);
+      isValid = false;
+    } else if (
+      game.winnerId !== game.player1Id &&
+      game.winnerId !== game.player2Id
+    ) {
+      console.error(`Game ${game.id}: winnerId ${game.winnerId} is not a player`);
+      isValid = false;
+    }
+  }
+
+  // If DRAW, winnerId must be null and board must be full
+  if (game.status === 'DRAW') {
+    if (game.winnerId !== null) {
+      console.error(`Game ${game.id}: DRAW but winnerId is set`);
+      isValid = false;
+    }
+    const board = game.boardState as CellValue[];
+    if (!board.every(cell => cell !== null)) {
+      console.warn(`Game ${game.id}: DRAW with non-full board`);
+      // warn only — could happen with future rule variants
+    }
+  }
+
+  return isValid;
+};
+
 // ───────────────── DB Operations ─────────────────
 
 //        VALIDATE CREATE GAME (DB checks)
@@ -180,7 +239,6 @@ export const validateCreateGame = async (
   player2Id: number,
 ): Promise<CreateValidationResult> => {
 
-  //has player 2 ?
   const player2 = await prisma.user.findUnique({
     where: { id: player2Id },
   });
@@ -188,7 +246,6 @@ export const validateCreateGame = async (
     return { valid: false, error: CREATE_ERRORS.PLAYER_NOT_FOUND };
   }
 
-  //has relationship ?
   const friendship = await prisma.friend.findFirst({
     where: {
       status: 'ACCEPTED',
@@ -288,14 +345,32 @@ export const makeMoveInDb = async (
     }
 
     // 5. Save to database
-    return tx.game.update({
+    const updatedGame = await tx.game.update({
       where: { id: gameId },
       data:  updateData,
       include: {
         player1: playerSelect,
         player2: playerSelect,
+        winner:  playerSelect,
       },
     });
+
+    // 6. Verify completed games have valid data
+    if (updatedGame.status === 'FINISHED' || updatedGame.status === 'DRAW') {
+      const isValid = verifyCompletedGame(updatedGame);
+      if (!isValid) {
+        // Log but don't throw — game data is already saved,
+        // this catches logic bugs during development
+        console.error(`Game ${updatedGame.id}: completed but verification failed`);
+      } else {
+        const outcome = updatedGame.status === 'DRAW'
+          ? 'Draw'
+          : `Winner: ${updatedGame.winner?.username ?? updatedGame.winnerId}`;
+        console.log(`Game ${updatedGame.id} completed — ${outcome}`);
+      }
+    }
+
+    return updatedGame;
   });
 };
 
@@ -305,12 +380,12 @@ export const getGameByIdFromDb = async (
   gameId: number,
   userId: number,
 ) => {
-  // Fetch game with player info
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
       player1: playerSelect,
       player2: playerSelect,
+      winner:  playerSelect,
     },
   });
 
@@ -320,12 +395,50 @@ export const getGameByIdFromDb = async (
     throw new Error('Game not found');
   }
 
-  // Compute moveCount from board
   const board = game.boardState as CellValue[];
   const moveCount = board.filter(cell => cell !== null).length;
 
   return {
-    ...game,    // Copy all game attributs
-    moveCount,  // Add Move counter
+    ...game,
+    moveCount,
   };
+};
+
+// ───────────────── GET COMPLETED GAMES (History) ─────────────────
+
+export const getCompletedGamesFromDb = async (
+  userId: number,
+  limit: number = 10,
+  offset: number = 0,
+) => {
+  const [games, total] = await Promise.all([
+    prisma.game.findMany({
+      where: {
+        status: { in: ['FINISHED', 'DRAW'] },
+        OR: [
+          { player1Id: userId },
+          { player2Id: userId },
+        ],
+      },
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+        winner:  playerSelect,
+      },
+      orderBy: { finishedAt: 'desc' },
+      skip: offset,
+      take: limit,
+    }),
+    prisma.game.count({
+      where: {
+        status: { in: ['FINISHED', 'DRAW'] },
+        OR: [
+          { player1Id: userId },
+          { player2Id: userId },
+        ],
+      },
+    }),
+  ]);
+
+  return { games, total };
 };
