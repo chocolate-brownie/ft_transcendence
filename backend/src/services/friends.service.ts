@@ -101,6 +101,7 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
     }
 
     // No existing relationship → create the friend request
+    // Fix: Using transaction (tx) AND including new fields from main
     const friendRequest = await tx.friend.create({
       data: {
         requester: { connect: { id: requesterId } },
@@ -108,8 +109,12 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
         status: "PENDING",
       },
       include: {
-        requester: { select: { id: true, username: true } },
-        addressee: { select: { id: true, username: true } },
+        requester: { 
+          select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } 
+        },
+        addressee: { 
+          select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } 
+        },
       },
     });
 

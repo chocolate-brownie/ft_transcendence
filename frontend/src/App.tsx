@@ -11,6 +11,8 @@ import GameLobby from "./pages/GameLobby";
 import Game from "./pages/Game";
 import Tournaments from "./pages/Tournaments";
 import Leaderboard from "./pages/Leaderboard";
+import { ChatWidget } from "./components/Chat/ChatWidget";
+import { ChatProvider } from "./context/ChatContext";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -23,6 +25,7 @@ function HomeLayout() {
         <Outlet />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
@@ -43,12 +46,14 @@ function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
 
 function App() {
   return (
+    <ChatProvider>
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
@@ -73,6 +78,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </ChatProvider>
   );
 }
 

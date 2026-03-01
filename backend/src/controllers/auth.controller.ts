@@ -89,12 +89,12 @@ export async function getMeController(req: AuthRequest, res: Response) {
       },
     });
 
-    if (!user) {
+    res.status(200).json({ user });
+  } catch (err: any) {
+    // P2025 = record not found — token refers to a deleted user
+    if (err?.code === "P2025") {
       return res.status(404).json({ message: "User not found" });
     }
-
-    res.status(200).json({ user });
-  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 }

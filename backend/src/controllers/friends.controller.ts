@@ -2,6 +2,7 @@
 // Calls friends.service.ts for business logic
 
 import { Response } from "express";
+import type { Server as SocketIOServer } from "socket.io";
 import { AuthRequest } from "../middleware/auth";
 import {
   createFriendRequest,
@@ -36,6 +37,23 @@ export async function sendFriendRequest(req: AuthRequest, res: Response): Promis
 
     //Call service
     const friendRequest = await createFriendRequest(requesterId, addresseeId);
+
+    // Notify the addressee in real-time
+    const io = req.app.get("io") as SocketIOServer | undefined;
+    if (io) {
+      io.to(`user:${addresseeId}`).emit("friend_request", {
+        id: friendRequest.id,
+        senderId: friendRequest.requesterId,
+        sender: {
+          id: friendRequest.requester.id,
+          username: friendRequest.requester.username,
+          displayName: friendRequest.requester.displayName ?? null,
+          avatarUrl: friendRequest.requester.avatarUrl ?? null,
+          isOnline: friendRequest.requester.isOnline,
+        },
+        createdAt: friendRequest.createdAt.toISOString(),
+      });
+    }
 
     res.status(201).json(friendRequest);
   } catch (error: any) {

@@ -144,33 +144,36 @@
 
 ### Backend + Frontend — Chat — [Real-Time: zamgar, tzizi, mgodawat]
 
-- [ ] Socket.io events: `send_message` (client → server), `receive_message` (server → client)
-- [ ] `typing` indicator event
-- [ ] Store messages in database (Messages table via Prisma)
-- [ ] `GET /api/messages/:userId` — load chat history with a specific user (paginated)
-- [ ] Frontend chat sidebar/overlay:
-  - [ ] Chat list: friends you've messaged (sorted by most recent)
-  - [ ] Message thread: scrollable, auto-scroll to bottom on new message
-  - [ ] Message input with send button
-  - [ ] Typing indicator ("User is typing...")
-  - [ ] Connect Socket.io client to backend for real-time messages
+- [x] Socket.io events: `send_message` (client → server), `receive_message` (server → client)
+- [x] `typing` indicator event (`typing` client → server, `user_typing` server → client with userId, username, isTyping) — mgodawat
+- [x] Store messages in database (Messages table via Prisma)
+- [x] `GET /api/messages/:userId` — load chat history with a specific user (paginated)
+- [x] `GET /api/messages/conversations` — conversation list with last message + unread count per partner — mgodawat
+- [x] Frontend chat sidebar/overlay — mgodawat (PR #119):
+  - [x] Chat list: friends you've messaged (sorted by most recent) — `ConversationList.tsx` + `ConversationItem.tsx`
+  - [x] Message thread: scrollable, auto-scroll to bottom on new message — `MessageThread.tsx`
+  - [x] Message input with send button — `MessageInput.tsx`
+  - [x] Typing indicator ("User is typing...") — integrated in `MessageThread.tsx`
+  - [x] Connect Socket.io client to backend for real-time messages
+  - [x] Floating chat widget (messenger-style popup, bottom-right) — `ChatWidget.tsx` + `ChatContext.tsx`
+  - [x] Message button on friends list opens widget directly to that conversation
 
 ### Frontend — Game Board Start — [Frontend: zamgar]
 
-- [ ] Create Tic-Tac-Toe board component (`components/GameBoard.tsx`):
-  - [ ] 3x3 CSS grid of clickable cells
-  - [ ] Each cell displays: empty, "X", or "O"
-  - [ ] Click handler: call `onCellClick(cellIndex)`
-  - [ ] Visual feedback: hover effect on empty cells, cursor pointer
-  - [ ] Current turn indicator: "Your turn (X)" or "Waiting for opponent (O)"
+- [x] Create Tic-Tac-Toe board component (`components/GameBoard.tsx`):
+  - [x] 3x3 CSS grid of clickable cells
+  - [x] Each cell displays: empty, "X", or "O"
+  - [x] Click handler: call `onCellClick(cellIndex)`
+  - [x] Visual feedback: hover effect on empty cells, cursor pointer
+  - [x] Current turn indicator: "Your turn (X)" or "Waiting for opponent (O)"
 
 ### QA & Testing — [PM: mgodawat]
 
 - [ ] Test profile view and edit flows
 - [x] Test friend request flow end-to-end — mgodawat
-- [ ] Test chat between two users (two browser windows)
-- [ ] Finalize Privacy Policy and Terms of Service React pages
-- [ ] Link Privacy Policy and ToS from footer component
+- [x] Test chat between two users (two browser windows) — mgodawat
+- [x] Finalize Privacy Policy and Terms of Service React pages
+- [x] Link Privacy Policy and ToS from footer component
 
 ### Modules Progressed
 
@@ -184,14 +187,14 @@
 
 ### Backend — Game Logic — [Backend: mamahtal, tzizi]
 
-- [ ] Game state model: `{ board: [9 cells], currentTurn: "X"|"O", status, winner }`
-- [ ] Move validation function: is it this player's turn? Is the cell empty? Is the game active?
-- [ ] Win detection function: check 8 winning lines → return winner or null
-- [ ] Draw detection: all 9 cells filled, no winner
-- [ ] `POST /api/games` — create new game
-- [ ] `POST /api/games/:id/move` — make a move (REST fallback)
+- [x] Game state model: `{ board: [9 cells], currentTurn: "X"|"O", status, winner }`
+- [x] Move validation function: is it this player's turn? Is the cell empty? Is the game active?
+- [x] Win detection function: check 8 winning lines → return winner or null
+- [x] Draw detection: all 9 cells filled, no winner
+- [x] `POST /api/games` — create new game
+- [x] `POST /api/games/:id/move` — make a move (REST fallback)
 - [ ] `GET /api/games/:id` — get current game state
-- [ ] Save completed game to database (winner, final board, timestamps)
+- [x] Save completed game to database (winner, final board, timestamps)
 
 ### Frontend — Game UI Complete — [Frontend: zamgar, mgodawat]
 

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { FriendInfo } from "../types";
+import { useChat } from "../context/ChatContext";
 
 interface FriendsListProps {
   friends: FriendInfo[];
@@ -10,6 +11,7 @@ interface FriendsListProps {
 
 export function FriendsList({ friends, onRemoveFriend, className }: FriendsListProps) {
   const navigate = useNavigate();
+  const { openChat } = useChat();
 
   const sortedFriends = useMemo(() => {
     return [...friends].sort((a, b) => {
@@ -56,6 +58,7 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
                   src={avatarSrc}
                   alt={`${friend.username} avatar`}
                   className="h-12 w-12 rounded-full object-cover border border-black/10"
+                  onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-pong-text truncate">
@@ -73,7 +76,16 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openChat(friend.id, friend.displayName ?? friend.username);
+                  }}
+                  className="text-xs font-semibold text-pong-accent border border-pong-accent/40 px-3 py-1 rounded-md transition hover:bg-pong-accent/10"
+                >
+                  Message
+                </button>
                 <button
                   onClick={(e) => handleRemove(e, friend)}
                   className="text-xs font-semibold text-red-500 border border-red-500/40 px-3 py-1 rounded-md transition hover:bg-red-500/10"

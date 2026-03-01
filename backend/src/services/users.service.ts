@@ -113,3 +113,30 @@ export const updateUserAvatar = async (userId: number, newAvatarUrl: string) => 
 
   return updatedUser;
 };
+
+export const searchUsers = async (currentUserId: number, query: string) => {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      id: { not: currentUserId },
+      username: { contains: trimmed, mode: "insensitive" },
+    },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      isOnline: true,
+    },
+    take: 10,
+    orderBy: {
+      username: "asc",
+    },
+  });
+
+  return users;
+}
