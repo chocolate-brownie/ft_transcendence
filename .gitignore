@@ -16,13 +16,30 @@ backend/certs/*.key
 
 # ── IDE / OS ──────────────────────────────────────────────────────────────
 .vscode/
-.claude/
-.codex/
 .idea/
 .DS_Store
 *.swp
 *.swo
 NvimTree_*
+
+# ── AI coding assistants ───────────────────────────────────────────────────
+# Claude Code
+.claude/
+CLAUDE.local.md
+# OpenAI Codex
+.codex/
+# Cursor
+.cursor/
+.cursorrules
+# Windsurf
+.windsurfrules
+# Gemini CLI
+GEMINI.md
+# Aider
+.aider*
+# GitHub Copilot
+.github/copilot-instructions.md
+# Generic AI agent instructions (keep AGENTS.md private)
 AGENTS.md
 
 # ── Logs ──────────────────────────────────────────────────────────────────
