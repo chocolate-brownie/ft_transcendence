@@ -172,8 +172,8 @@
 - [ ] Test profile view and edit flows
 - [x] Test friend request flow end-to-end — mgodawat
 - [x] Test chat between two users (two browser windows) — mgodawat
-- [x] Finalize Privacy Policy and Terms of Service React pages
-- [x] Link Privacy Policy and ToS from footer component
+- [x] Finalize Privacy Policy and Terms of Service React pages — mgodawat (Issue #63)
+- [x] Link Privacy Policy and ToS from footer component — mgodawat (Issue #63)
 
 ### Modules Progressed
 

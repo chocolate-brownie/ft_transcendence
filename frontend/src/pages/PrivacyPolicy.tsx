@@ -1,7 +1,7 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="w-full py-10 md:py-12">
+      <div className="max-w-4xl mx-auto px-6 self-start w-full">
         <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
           <div
             className="max-w-none text-black [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mt-8 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-2 [&_p]:leading-relaxed [&_p]:mb-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mb-2 [&_strong]:font-semibold [&_a]:text-blue-600 [&_a]:no-underline hover:[&_a]:underline"
@@ -62,6 +62,8 @@ export default function PrivacyPolicy() {
 <ul>
 <li>Email address</li>
 <li>Username</li>
+<li>Profile avatar</li>
+<li>Password hash used for authentication (we do not store plain-text passwords)</li>
 <li>Game stats</li>
 <li>Chat messages</li>
 </ul>
@@ -205,6 +207,13 @@ export default function PrivacyPolicy() {
 </ul>
 <h3>Security of Your Personal Data</h3>
 <p>The security of Your Personal Data is important to Us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While We strive to use commercially reasonable means to protect Your Personal Data, We cannot guarantee its absolute security.</p>
+<h3>How We Store and Protect Data</h3>
+<p>Account, profile, game, and chat data is stored in PostgreSQL databases managed by the ft_transcendence platform.</p>
+<p>Passwords are never stored in plain text. We store salted password hashes and apply access controls so only authorized services can process authentication data.</p>
+<p>We also use transport encryption (HTTPS) and operational security controls to reduce the risk of unauthorized access.</p>
+<h3>Your Privacy Rights</h3>
+<p>Subject to applicable law, You can request access, correction, export, or deletion of Your Personal Data.</p>
+<p>You may also object to or request restriction of certain processing activities where legally available.</p>
 <h2>Children's Privacy</h2>
 <p>Our Service does not address anyone under the age of 16. We do not knowingly collect personally identifiable information from anyone under the age of 16. If You are a parent or guardian and You are aware that Your child has provided Us with Personal Data, please contact Us. If We become aware that We have collected Personal Data from anyone under the age of 16 without verification of parental consent, We take steps to remove that information from Our servers.</p>
 <p>If We need to rely on consent as a legal basis for processing Your information and Your country requires consent from a parent, We may require Your parent's consent before We collect and use that information.</p>
