@@ -118,6 +118,11 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
     };
   }, [socket, otherUserId, user?.id]);
 
+  // Scroll to bottom when the typing indicator appears
+  useEffect(() => {
+    if (typingUser) scrollToBottom();
+  }, [typingUser]);
+
   // Socket.io: typing indicator
   useEffect(() => {
     if (!socket) return;

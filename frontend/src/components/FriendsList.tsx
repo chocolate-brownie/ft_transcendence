@@ -58,6 +58,7 @@ export function FriendsList({ friends, onRemoveFriend, className }: FriendsListP
                   src={avatarSrc}
                   alt={`${friend.username} avatar`}
                   className="h-12 w-12 rounded-full object-cover border border-black/10"
+                  onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-pong-text truncate">

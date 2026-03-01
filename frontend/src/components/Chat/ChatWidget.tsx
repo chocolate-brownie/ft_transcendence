@@ -6,7 +6,7 @@ import { MessageInput } from "./MessageInput";
 
 export function ChatWidget() {
   const { user } = useAuth();
-  const { isOpen, active, openWidget, closeWidget, setActive } = useChat();
+  const { isOpen, active, totalUnread, openWidget, closeWidget, setActive } = useChat();
 
   if (!user) return null;
 
@@ -63,9 +63,15 @@ export function ChatWidget() {
       {/* Floating toggle button */}
       <button
         onClick={isOpen ? closeWidget : openWidget}
-        className="h-14 w-14 rounded-full bg-pong-accent shadow-lg flex items-center justify-center text-white transition hover:scale-105 active:scale-95"
+        className="relative h-14 w-14 rounded-full bg-pong-accent shadow-lg flex items-center justify-center text-white transition hover:scale-105 active:scale-95"
         aria-label="Toggle chat"
       >
+        {/* Unread badge — only shown when widget is closed and there are unseen messages */}
+        {!isOpen && totalUnread > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white leading-none">
+            {totalUnread > 99 ? "99+" : totalUnread}
+          </span>
+        )}
         {isOpen ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />

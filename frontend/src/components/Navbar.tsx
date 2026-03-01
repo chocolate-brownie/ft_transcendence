@@ -108,6 +108,7 @@ export default function Navbar() {
                   src={avatarSrc}
                   alt={`${user.username} avatar`}
                   className="h-7 w-7 rounded-full object-cover"
+                  onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                 />
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-pong-surface bg-green-400" />
               </div>
@@ -124,7 +125,7 @@ export default function Navbar() {
               <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-pong-surface/95 shadow-xl backdrop-blur-md z-50">
                 {/* User header */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
-                  <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full object-cover" onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }} />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-pong-text/90 truncate">{user.username}</p>
                     <p className="text-xs text-green-400">Online</p>

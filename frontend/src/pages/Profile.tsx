@@ -365,6 +365,7 @@ export default function Profile() {
                     src={avatarSrc}
                     alt="Avatar"
                     className="h-full w-full object-cover"
+                    onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                   />
 
                   {isMine && (

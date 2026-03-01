@@ -33,6 +33,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           src={avatarSrc}
           alt={`${message.sender.username} avatar`}
           className="h-7 w-7 rounded-full object-cover border border-black/10 flex-shrink-0 mb-1"
+          onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
         />
       )}
 

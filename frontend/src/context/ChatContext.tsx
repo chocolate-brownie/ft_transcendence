@@ -1,4 +1,8 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { useSocket } from "./SocketContext";
+import { useAuth } from "./AuthContext";
+import { apiClient } from "../lib/apiClient";
+import type { ConversationSummary, MessageWithSender } from "../types";
 
 interface ActiveConversation {
   userId: number;
@@ -8,6 +12,7 @@ interface ActiveConversation {
 interface ChatContextType {
   isOpen: boolean;
   active: ActiveConversation | null;
+  totalUnread: number;
   openWidget: () => void;
   openChat: (userId: number, username: string) => void;
   closeWidget: () => void;
@@ -17,14 +22,55 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | null>(null);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { socket } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
   const [active, setActive] = useState<ActiveConversation | null>(null);
+  const [totalUnread, setTotalUnread] = useState(0);
 
-  const openWidget = () => setIsOpen(true);
+  // Mirror isOpen in a ref so the socket handler always reads the latest value
+  // without needing to re-register on every open/close cycle.
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
+
+  // Initialize total unread from server whenever the user session starts
+  useEffect(() => {
+    if (!user) {
+      setTotalUnread(0);
+      return;
+    }
+    apiClient
+      .get<ConversationSummary[]>("/api/messages/conversations")
+      .then((convos) => setTotalUnread(convos.reduce((sum, c) => sum + c.unreadCount, 0)))
+      .catch(() => {});
+  }, [user?.id]);
+
+  // Real-time: increment badge only when a message arrives while the widget is closed
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handle = (msg: MessageWithSender) => {
+      if (msg.senderId === user.id) return; // own outbound message — never counts
+      if (!isOpenRef.current) {
+        setTotalUnread((n) => n + 1);
+      }
+    };
+
+    socket.on("receive_message", handle);
+    return () => {
+      socket.off("receive_message", handle);
+    };
+  }, [socket, user?.id]);
+
+  const openWidget = () => {
+    setIsOpen(true);
+    setTotalUnread(0);
+  };
 
   const openChat = (userId: number, username: string) => {
     setActive({ userId, username });
     setIsOpen(true);
+    setTotalUnread(0);
   };
 
   const closeWidget = () => {
@@ -33,7 +79,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ChatContext.Provider value={{ isOpen, active, openWidget, openChat, closeWidget, setActive }}>
+    <ChatContext.Provider value={{ isOpen, active, totalUnread, openWidget, openChat, closeWidget, setActive }}>
       {children}
     </ChatContext.Provider>
   );

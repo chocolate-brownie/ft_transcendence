@@ -52,6 +52,7 @@ export function ConversationItem({ conversation, isActive, currentUserId, onClic
           src={avatarSrc}
           alt={`${user.username} avatar`}
           className="h-11 w-11 rounded-full object-cover border border-black/10"
+          onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
         />
         {user.isOnline && (
           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />

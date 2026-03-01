@@ -40,6 +40,7 @@ services:
       # Without it, SELinux blocks the container from reading host files
       - ./backend/src:/app/src:z
       - ./backend/prisma:/app/prisma:z
+      - ./backend/uploads:/app/uploads:z
     depends_on:
       db:
         condition: service_healthy
