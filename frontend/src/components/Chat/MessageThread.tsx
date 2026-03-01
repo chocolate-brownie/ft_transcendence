@@ -16,9 +16,11 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
 
   const [messages, setMessages] = useState<MessageWithSender[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [notFriend, setNotFriend] = useState(false);
 
   // Typing indicator state
   const [typingUser, setTypingUser] = useState<string | null>(null);
@@ -37,6 +39,7 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
   // Load initial chat history
   useEffect(() => {
     setIsLoading(true);
+    setFetchError(false);
     setMessages([]);
     setNextCursor(null);
 
@@ -48,7 +51,7 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
       })
-      .catch(console.error)
+      .catch(() => setFetchError(true))
       .finally(() => setIsLoading(false));
   }, [otherUserId]);
 
@@ -109,6 +112,11 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
         (msg.senderId === user?.id && msg.receiverId === otherUserId)
       ) {
         setMessages((prev) => [...prev, msg]);
+
+        // Mark as read in DB so unread badge doesn't reappear after refresh (#138)
+        if (msg.senderId === otherUserId) {
+          apiClient.patch(`/api/messages/${otherUserId}/read`).catch(() => {});
+        }
       }
     };
 
@@ -117,6 +125,20 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
       socket.off("receive_message", handleReceiveMessage);
     };
   }, [socket, otherUserId, user?.id]);
+
+  // Socket.io: detect "not friends" error to show thread-level banner (#135)
+  useEffect(() => {
+    if (!socket) return;
+    const handleMessageError = (err: { message: string }) => {
+      if (err.message === "You can only send messages to friends") {
+        setNotFriend(true);
+      }
+    };
+    socket.on("message_error", handleMessageError);
+    return () => {
+      socket.off("message_error", handleMessageError);
+    };
+  }, [socket]);
 
   // Scroll to bottom when the typing indicator appears
   useEffect(() => {
@@ -156,6 +178,32 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
     );
   }
 
+  if (fetchError) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="text-sm text-pong-text/60">Failed to load messages.</p>
+        <button
+          onClick={() => {
+            setFetchError(false);
+            setIsLoading(true);
+            apiClient
+              .get<ChatHistoryResponse>(`/api/messages/${otherUserId}`)
+              .then((data) => {
+                setMessages([...data.messages].reverse());
+                setHasMore(data.hasMore);
+                setNextCursor(data.nextCursor);
+              })
+              .catch(() => setFetchError(true))
+              .finally(() => setIsLoading(false));
+          }}
+          className="rounded-lg bg-pong-accent px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div
@@ -184,6 +232,13 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
               isOwn={msg.senderId === user?.id}
             />
           ))
+        )}
+
+        {/* Not-friends banner — shown after a rejected send attempt (#135) */}
+        {notFriend && (
+          <div className="mx-1 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+            You are no longer friends — messaging is disabled.
+          </div>
         )}
 
         {/* Typing indicator */}

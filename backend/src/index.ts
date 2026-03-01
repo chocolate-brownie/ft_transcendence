@@ -196,6 +196,9 @@ io.on("connection", (socket) => {
         return socket.emit("message_error", { message: "Invalid content" });
       }
 
+      // Strip HTML tags before validation (defence-in-depth, mirrors displayName handling)
+      payload.content = payload.content.replace(/<[^>]*>/g, "").trim();
+
       if (!validateMessageContent(payload.content)) {
         return socket.emit("message_error", {
           message: "Content must be 1-2000 characters",
@@ -223,7 +226,8 @@ io.on("connection", (socket) => {
 
       io.to(`user:${payload.receiverId}`).emit("receive_message", messageWithSender);
 
-      socket.emit("receive_message", messageWithSender);
+      // Emit to ALL sender sockets (covers multi-tab — each tab has its own socket connection)
+      io.to(`user:${senderId}`).emit("receive_message", messageWithSender);
     } catch (error) {
       console.error("Error handling send_message:", error);
       socket.emit("message_error", { message: "Internal server error" });

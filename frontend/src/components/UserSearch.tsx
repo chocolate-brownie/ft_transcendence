@@ -130,6 +130,7 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
         <input
           id="search-users"
           name="search-users"
+          aria-label="Search users"
           type="text"
           className="w-full rounded-lg border border-black/10 bg-white/70 pl-9 pr-3 py-2 text-sm shadow-sm outline-none"
           value={query}

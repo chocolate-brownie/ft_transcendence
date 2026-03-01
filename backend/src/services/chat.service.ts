@@ -219,6 +219,20 @@ export async function getChatHistoryPaginated(
   };
 }
 
+export async function markConversationAsRead(
+  currentUserId: number,
+  otherUserId: number,
+): Promise<void> {
+  await prisma.message.updateMany({
+    where: {
+      senderId: otherUserId,
+      receiverId: currentUserId,
+      read: false,
+    },
+    data: { read: true },
+  });
+}
+
 export async function getConversations(currentUserId: number): Promise<ConversationSummary[]> {
   // Fetch all messages involving current user, newest first
   // Include both sides of the conversation for partner info

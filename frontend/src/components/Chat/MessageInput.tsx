@@ -9,6 +9,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
   const { socket } = useSocket();
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const isTypingRef = useRef(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -18,20 +19,27 @@ export function MessageInput({ receiverId }: MessageInputProps) {
   const MAX_LENGTH = 2000;
 
   // Surface backend rejections (validation failures, not-friends, etc.) to the user
+  // Also reset isSending so the button re-enables after server response
   useEffect(() => {
     if (!socket) return;
     const handleMessageError = (err: { message: string }) => {
       setError(err.message);
+      setIsSending(false);
+    };
+    const handleReceiveMessage = () => {
+      setIsSending(false);
     };
     socket.on("message_error", handleMessageError);
+    socket.on("receive_message", handleReceiveMessage);
     return () => {
       socket.off("message_error", handleMessageError);
+      socket.off("receive_message", handleReceiveMessage);
     };
   }, [socket]);
 
   const handleSend = () => {
     const trimmed = message.trim();
-    if (!trimmed || !socket) return;
+    if (!trimmed || !socket || isSending) return;
     if (trimmed.length > MAX_LENGTH) {
       setError(`Message too long (${trimmed.length}/${MAX_LENGTH})`);
       return;
@@ -51,6 +59,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
       isTypingRef.current = false;
     }
 
+    setIsSending(true);
     socket.emit("send_message", { receiverId, content: trimmed });
     setMessage("");
     setError(null);
@@ -101,7 +110,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
     }, 3000);
   };
 
-  const isSendDisabled = !message.trim() || message.length > MAX_LENGTH;
+  const isSendDisabled = !message.trim() || message.length > MAX_LENGTH || isSending;
 
   return (
     <div className="border-t border-black/10 px-4 py-3 flex flex-col gap-1">
