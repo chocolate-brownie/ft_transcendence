@@ -29,46 +29,39 @@ Track A and Track B can run in parallel because they don't depend on each other 
 
 **Rule:** Within a track, follow the order. Across tracks, work simultaneously.
 
-**Example:** teammate_1 can build the game board while teammate_2 builds auth endpoints. They don't block each other. But teammate_3 cannot build remote multiplayer until the game logic exists.
+**Example:** zamgar can build the game board while mamahtal and tzizi build auth endpoints. They don't block each other. But mgodawat cannot build remote multiplayer until the game logic exists.
 
 ---
 
 ## Role Responsibilities
 
-### Tech Lead (mgodawat)
+### Project Manager + Fullstack Developer (mgodawat)
 
-**Primary job: remove blockers, not write the most code.**
+**Primary job: keep the project on track and own real-time features.**
 
-- Owns infrastructure (Docker, deployment, repo setup)
+- Owns infrastructure (Docker, deployment, repo setup, HTTPS)
 - Reviews every PR before it gets merged
 - Defines API contracts when two people's work needs to connect
 - Makes architectural decisions that affect multiple people
+- Owns Socket.io gateway, real-time chat, and WebSocket multiplayer
+- Tracks progress on the GitHub Project board and manages GitHub Issues
+- Tests completed features from a user's perspective
+- Writes Privacy Policy and Terms of Service content
 - Unblocks teammates when they're stuck
 
-### Frontend Developer (teammate_1)
+### Frontend Developers (zamgar, jayzatov)
 
 - Builds React pages, components, and UI
 - Responsible for responsive design and TailwindCSS styling
 - Tests their own work in Chrome before submitting a PR
+- zamgar: Phases 1–3 (auth UI, profile, friends list, chat widgets)
+- jayzatov: Phase 4+ (game UI, customization, statistics)
 
-### Backend Developer (teammate_2)
+### Backend Developers (mamahtal, tzizi)
 
 - Builds Express API endpoints and Prisma queries
 - Responsible for input validation and error handling on all endpoints
 - Tests their own endpoints (curl, Postman, or similar) before submitting a PR
-
-### Fullstack / Real-Time Specialist (teammate_3)
-
-- Builds Socket.io events for chat, multiplayer, and real-time features
-- Bridges frontend and backend for anything that needs WebSocket
-- Tests real-time features with multiple browser windows
-
-### Product Owner / PM (teammate_4)
-
-- Tracks progress on the GitHub Project board
-- Tests completed features from a user's perspective
-- Writes Privacy Policy and Terms of Service content
-- Reports bugs as GitHub Issues
 
 ### Everyone
 
@@ -163,10 +156,10 @@ The riskiest parts of the project are where two people's work meets:
 
 | Integration Point | Who's Involved | Risk |
 | :--- | :--- | :--- |
-| Frontend auth ↔ Backend auth API | teammate_1 + teammate_2 | Request/response shape mismatch |
-| Chat UI ↔ Socket.io events | teammate_1 + teammate_3 | Event names don't match, messages not received |
-| Game board ↔ Game logic API | teammate_1 + teammate_2 | Board state format differs between frontend and backend |
-| Multiplayer ↔ Game logic | teammate_3 + teammate_2 | Server validates moves differently than client expects |
+| Frontend auth ↔ Backend auth API | zamgar + mamahtal, tzizi | Request/response shape mismatch |
+| Chat UI ↔ Socket.io events | zamgar + mgodawat | Event names don't match, messages not received |
+| Game board ↔ Game logic API | zamgar, jayzatov + mamahtal, tzizi | Board state format differs between frontend and backend |
+| Multiplayer ↔ Game logic | mgodawat + mamahtal, tzizi | Server validates moves differently than client expects |
 
 **How to reduce risk:** Define the contract before building. Test the integration as soon as both sides have a basic version. Don't wait until Day 10 to connect frontend to backend for the first time.
 
