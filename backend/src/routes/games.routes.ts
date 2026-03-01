@@ -1,11 +1,19 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth";
-import { createGame, makeMove, getGameById } from "../controllers/games.controller";
+import {
+  createGame,
+  makeMove,
+  getGameById,
+  getGameHistory,
+} from "../controllers/games.controller";
 
 const router = Router();
 
 // POST /api/games
 router.post("/", auth, createGame);
+
+// GET  /api/games/history  ← AVANT /:id sinon "history" serait capturé comme un id
+router.get("/history", auth, getGameHistory);
 
 // GET  /api/games/:id
 router.get("/:id", auth, getGameById);

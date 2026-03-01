@@ -68,6 +68,12 @@ model Game {
   player2     User?       @relation("Player2Games", fields: [player2Id], references: [id])
   winner      User?       @relation("WinnerGames", fields: [winnerId], references: [id])
 
+// ─── Indexes for game history & leaderboard queries ───
+  @@index([status])
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([finishedAt])
+
   @@map("games")
 }
 
