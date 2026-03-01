@@ -120,12 +120,15 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
 }
 
 // Attach Socket.io to the HTTPS server
+// Register io on the app so controllers can emit events via req.app.get("io")
 const io = new SocketIOServer(server, {
   cors: {
     origin: ["https://localhost:5173", "http://localhost:5173"],
     credentials: true,
   },
 });
+
+app.set("io", io);
 
 /** ref: https://socket.io/docs/v4/middlewares/
  * [x] Add JWT authentication to Socket.io connection handshake */
