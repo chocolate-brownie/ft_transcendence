@@ -43,12 +43,13 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
 
     // Validation métier : displayName 3-50 caractères
     const trimmedName = typeof displayName === "string" ? displayName.trim() : "";
-    if (trimmedName.length < 3 || trimmedName.length > 50) {
+    const sanitizedName = trimmedName.replace(/<[^>]*>/g, "");
+    if (sanitizedName.length < 3 || sanitizedName.length > 50) {
       return res.status(400).json({ error: "displayName must be 3-50 characters" });
     }
 
     // Appel au service pour mettre à jour
-    const updatedUser = await updateUserById(userId, { displayName: trimmedName });
+    const updatedUser = await updateUserById(userId, { displayName: sanitizedName });
 
     return res.status(200).json(updatedUser);
   } catch (error: any) {

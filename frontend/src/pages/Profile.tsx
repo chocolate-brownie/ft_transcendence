@@ -209,7 +209,7 @@ export default function Profile() {
   }
 
   function handleSave() {
-    const trimmed = editDisplayName.trim();
+    const trimmed = editDisplayName.trim().replace(/<[^>]*>/g, "");
     if (trimmed.length < 3 || trimmed.length > 50) {
       setEditError("Display name must be between 3 and 50 characters.");
       return;
