@@ -41,6 +41,7 @@ services:
       - ./backend/src:/app/src:z
       - ./backend/prisma:/app/prisma:z
       - ./backend/uploads:/app/uploads:z
+      - ./backend/certs:/app/certs:z
     depends_on:
       db:
         condition: service_healthy

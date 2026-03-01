@@ -128,6 +128,8 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
           />
         </svg>
         <input
+          id="search-users"
+          name="search-users"
           type="text"
           className="w-full rounded-lg border border-black/10 bg-white/70 pl-9 pr-3 py-2 text-sm shadow-sm outline-none"
           value={query}
@@ -144,7 +146,10 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 rounded-lg border border-black/10 bg-white/95 shadow-lg">
+        <div
+          className="absolute left-0 right-0 mt-2 rounded-lg border border-black/10 bg-white/95 shadow-lg"
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {/* Loading */}
           {loading && (
             <div className="flex items-center gap-2 px-3 py-2">

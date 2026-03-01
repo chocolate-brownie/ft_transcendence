@@ -18,8 +18,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const viewerId = (req as AuthRequest).user?.id;
-    const user = await getUserById(id, viewerId);
+    const user = await getUserById(id);
 
     if (!user) {
       res.status(404).json({ error: "User not found" });
@@ -41,17 +40,15 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
 
     const { displayName } = req.body;
 
-    // Validation métier : displayName 1-50 caractères
-    if (
-      typeof displayName !== "string" ||
-      displayName.length < 1 ||
-      displayName.length > 50
-    ) {
-      return res.status(400).json({ error: "displayName must be 1-50 characters" });
+    // Validation métier : displayName 3-50 caractères
+    const trimmedName = typeof displayName === "string" ? displayName.trim() : "";
+    const sanitizedName = trimmedName.replace(/<[^>]*>/g, "");
+    if (sanitizedName.length < 3 || sanitizedName.length > 50) {
+      return res.status(400).json({ error: "displayName must be 3-50 characters" });
     }
 
     // Appel au service pour mettre à jour
-    const updatedUser = await updateUserById(userId, { displayName });
+    const updatedUser = await updateUserById(userId, { displayName: sanitizedName });
 
     return res.status(200).json(updatedUser);
   } catch (error: any) {
