@@ -85,6 +85,17 @@ export async function markAsRead(req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
+    if (otherUserId === currentUserId) {
+      res.status(400).json({ message: "Cannot mark your own conversation as read" });
+      return;
+    }
+
+    const isFriends = await areFriends(currentUserId, otherUserId);
+    if (!isFriends) {
+      res.status(403).json({ message: "You are not friends with this user" });
+      return;
+    }
+
     await markConversationAsRead(currentUserId, otherUserId);
     res.status(204).send();
   } catch (error) {

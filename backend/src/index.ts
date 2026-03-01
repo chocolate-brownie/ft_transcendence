@@ -196,8 +196,12 @@ io.on("connection", (socket) => {
         return socket.emit("message_error", { message: "Invalid content" });
       }
 
-      // Strip HTML tags before validation (defence-in-depth, mirrors displayName handling)
-      payload.content = payload.content.replace(/<[^>]*>/g, "").trim();
+      // Strip complete tags first, then strip any leftover angle brackets so
+      // malformed fragments like "<img ..."(without a closing '>') are neutralized.
+      payload.content = payload.content
+        .replace(/<[^>]*>/g, "")
+        .replace(/[<>]/g, "")
+        .trim();
 
       if (!validateMessageContent(payload.content)) {
         return socket.emit("message_error", {

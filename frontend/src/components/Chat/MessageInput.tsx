@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
+import type { MessageWithSender } from "../../types";
 
 interface MessageInputProps {
   receiverId: number;
 }
 
 export function MessageInput({ receiverId }: MessageInputProps) {
+  const { user } = useAuth();
   const { socket } = useSocket();
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,13 +24,19 @@ export function MessageInput({ receiverId }: MessageInputProps) {
   // Surface backend rejections (validation failures, not-friends, etc.) to the user
   // Also reset isSending so the button re-enables after server response
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
     const handleMessageError = (err: { message: string }) => {
       setError(err.message);
       setIsSending(false);
     };
-    const handleReceiveMessage = () => {
-      setIsSending(false);
+    const handleReceiveMessage = (msg: MessageWithSender) => {
+      const isCurrentConversationMessage =
+        (msg.senderId === user.id && msg.receiverId === receiverId) ||
+        (msg.senderId === receiverId && msg.receiverId === user.id);
+
+      if (isCurrentConversationMessage) {
+        setIsSending(false);
+      }
     };
     socket.on("message_error", handleMessageError);
     socket.on("receive_message", handleReceiveMessage);
@@ -35,7 +44,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
       socket.off("message_error", handleMessageError);
       socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket]);
+  }, [socket, receiverId, user]);
 
   const handleSend = () => {
     const trimmed = message.trim();

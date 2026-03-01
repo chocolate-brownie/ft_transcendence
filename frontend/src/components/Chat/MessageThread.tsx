@@ -28,6 +28,8 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const markAsReadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMarkAsReadInFlightRef = useRef(false);
   // Tracks whether the next messages update is a prepend (load older) vs append (new message)
   const isPrependRef = useRef(false);
   const prevScrollHeightRef = useRef<number | null>(null);
@@ -36,12 +38,32 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const scheduleMarkAsRead = useCallback(() => {
+    if (markAsReadTimeoutRef.current) {
+      clearTimeout(markAsReadTimeoutRef.current);
+    }
+
+    markAsReadTimeoutRef.current = setTimeout(() => {
+      if (isMarkAsReadInFlightRef.current) return;
+
+      isMarkAsReadInFlightRef.current = true;
+      apiClient
+        .patch(`/api/messages/${otherUserId}/read`)
+        .catch(() => {})
+        .finally(() => {
+          isMarkAsReadInFlightRef.current = false;
+        });
+      markAsReadTimeoutRef.current = null;
+    }, 400);
+  }, [otherUserId]);
+
   // Load initial chat history
   useEffect(() => {
     setIsLoading(true);
     setFetchError(false);
     setMessages([]);
     setNextCursor(null);
+    setNotFriend(false);
 
     apiClient
       .get<ChatHistoryResponse>(`/api/messages/${otherUserId}`)
@@ -115,7 +137,7 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
 
         // Mark as read in DB so unread badge doesn't reappear after refresh (#138)
         if (msg.senderId === otherUserId) {
-          apiClient.patch(`/api/messages/${otherUserId}/read`).catch(() => {});
+          scheduleMarkAsRead();
         }
       }
     };
@@ -124,7 +146,15 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
     return () => {
       socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket, otherUserId, user?.id]);
+  }, [socket, otherUserId, scheduleMarkAsRead, user?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (markAsReadTimeoutRef.current) {
+        clearTimeout(markAsReadTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Socket.io: detect "not friends" error to show thread-level banner (#135)
   useEffect(() => {
