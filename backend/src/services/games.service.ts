@@ -298,3 +298,34 @@ export const makeMoveInDb = async (
     });
   });
 };
+
+// ───────────────── GET GAME BY ID ─────────────────
+
+export const getGameByIdFromDb = async (
+  gameId: number,
+  userId: number,
+) => {
+  // Fetch game with player info
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      player1: playerSelect,
+      player2: playerSelect,
+    },
+  });
+
+  const isPlayer = game?.player1Id === userId || game?.player2Id === userId;
+
+  if (!game || !isPlayer) {
+    throw new Error('Game not found');
+  }
+
+  // Compute moveCount from board
+  const board = game.boardState as CellValue[];
+  const moveCount = board.filter(cell => cell !== null).length;
+
+  return {
+    ...game,    // Copy all game attributs
+    moveCount,  // Add Move counter
+  };
+};

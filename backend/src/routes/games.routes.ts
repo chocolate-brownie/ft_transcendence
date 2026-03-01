@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth";
-import { createGame, makeMove } from "../controllers/games.controller";
+import { createGame, makeMove, getGameById } from "../controllers/games.controller";
 
 const router = Router();
 
@@ -8,6 +8,7 @@ const router = Router();
 router.post("/", auth, createGame);
 
 // GET  /api/games/:id
+router.get("/:id", auth, getGameById);
 
 // POST /api/games/:id/move
 router.post("/:id/move", auth, makeMove);
