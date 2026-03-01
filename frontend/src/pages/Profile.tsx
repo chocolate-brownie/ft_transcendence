@@ -247,13 +247,15 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
+    setAvatarError(null);
+
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       setAvatarError("File is too large (max 5MB).");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setAvatarError(null);
     handleAvatarUpload(file);
   }
 
@@ -278,6 +280,7 @@ export default function Profile() {
       .finally(() => {
         avatarSavingRef.current = false;
         setAvatarSaving(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       });
   }
 
