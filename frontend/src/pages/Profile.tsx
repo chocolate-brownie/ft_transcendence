@@ -337,7 +337,7 @@ export default function Profile() {
       ? rawAvatar
       : "/default-avatar.png";
 
-  const joined = new Date(profile.createdAt).toLocaleDateString("en-US", {
+  const joined = new Date(profile.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
   });
@@ -413,8 +413,8 @@ export default function Profile() {
               </div>
 
               {/* User infos */}
-              <p className="text-lg font-semibold">{profile.username}</p>
-              <p className="text-sm text-pong-text/60">{displayName}</p>
+              <p className="text-lg font-semibold break-all">{profile.username}</p>
+              <p className="text-sm text-pong-text/60 break-all">{displayName}</p>
 
               <p className="mt-2 text-xs text-pong-text/50">
                 <span className={isOnline ? "text-green-500" : "text-gray-400"}>
