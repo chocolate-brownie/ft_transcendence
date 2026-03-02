@@ -52,18 +52,3 @@ export function initializeBoard(): Board {
     null, null, null,
   ];
 }
-
-// Return 'X' or 'O' attribuate to a player in the game
-// Send error if bad userId
-export function getPlayerSymbol(game: GameState, userId: number): Player {
-  if (userId === game.player1Id) return game.player1Symbol;
-  if (userId === game.player2Id) return game.player2Symbol;
-  throw new Error(`User ${userId} is not a player in game ${game.id}`);
-}
-
-// Check Player Turn
-export function isPlayerTurn(game: GameState, userId: number): boolean {
-  if (game.status !== 'IN_PROGRESS') return false;
-  const symbol = getPlayerSymbol(game, userId);
-  return symbol === game.currentTurn;
-}

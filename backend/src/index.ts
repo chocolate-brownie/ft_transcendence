@@ -25,6 +25,8 @@ import {
   SendMessagePayload,
   ToggleTypingStatus,
 } from "./services/chat.service";
+import { matchmakingService } from "./services/matchmaking.service";
+import { createGameInDb } from "./services/games.service";
 
 // Route imports
 import authRoutes from "./routes/auth.routes";
@@ -175,6 +177,9 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
 
+    // ── Matchmaking cleanup ──
+    matchmakingService.removeFromQueue(userId);
+
     prisma.user
       .update({ where: { id: userId }, data: { isOnline: false } })
       .catch((error) => console.error("Failed to set user offline:", error));
@@ -183,8 +188,10 @@ io.on("connection", (socket) => {
     notifyFriends(userId, "user_offline").catch(console.error);
   });
 
+  // ─────────────────────────────────────────────────────────────────────────
   // #region Chat message handling
-  // Handle send_message event
+  // ─────────────────────────────────────────────────────────────────────────
+
   socket.on("send_message", async (payload: SendMessagePayload) => {
     try {
       const senderId = socket.data.user.id;
@@ -196,8 +203,6 @@ io.on("connection", (socket) => {
         return socket.emit("message_error", { message: "Invalid content" });
       }
 
-      // Strip complete tags first, then strip any leftover angle brackets so
-      // malformed fragments like "<img ..."(without a closing '>') are neutralized.
       payload.content = payload.content
         .replace(/<[^>]*>/g, "")
         .replace(/[<>]/g, "")
@@ -229,8 +234,6 @@ io.on("connection", (socket) => {
       }
 
       io.to(`user:${payload.receiverId}`).emit("receive_message", messageWithSender);
-
-      // Emit to ALL sender sockets (covers multi-tab — each tab has its own socket connection)
       io.to(`user:${senderId}`).emit("receive_message", messageWithSender);
     } catch (error) {
       console.error("Error handling send_message:", error);
@@ -238,7 +241,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // - [x] `typing` indicator event
   socket.on("typing", async (payload: ToggleTypingStatus) => {
     try {
       const senderId = socket.data.user.id;
@@ -274,6 +276,118 @@ io.on("connection", (socket) => {
       socket.emit("message_error", { message: "Internal server error" });
     }
   });
+
+  // #endregion
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // #region Matchmaking
+  // ─────────────────────────────────────────────────────────────────────────
+
+  socket.on("find_game", async () => {
+    try {
+      // 1. Already in queue?
+      if (matchmakingService.isInQueue(userId)) {
+        return socket.emit("error", { message: "Already searching for a game" });
+      }
+
+      // 2. Already in a running game?
+      const activeGame = await prisma.game.findFirst({
+        where: {
+          OR: [{ player1Id: userId }, { player2Id: userId }],
+          status: "IN_PROGRESS",
+        },
+      });
+      if (activeGame) {
+        return socket.emit("error", { message: "Already in an active game" });
+      }
+
+      // 3. Enter queue
+      matchmakingService.addToQueue({
+        userId,
+        socketId: socket.id,
+        joinedAt: new Date(),
+      });
+
+      // 4. Acknowledge to this client
+      socket.emit("searching", {
+        position: matchmakingService.getQueuePosition(userId),
+      });
+
+      // 5. Attempt to form a match (need 2+ in queue)
+      const match = matchmakingService.dequeueMatch();
+      if (!match) return;
+
+      const { player1, player2 } = match;
+
+      // 6. Verify both sockets are still alive
+      const p1Socket = io.sockets.sockets.get(player1.socketId);
+      const p2Socket = io.sockets.sockets.get(player2.socketId);
+
+      if (!p1Socket || !p2Socket) {
+        if (p1Socket) matchmakingService.requeueAtFront(player1);
+        if (p2Socket) matchmakingService.requeueAtFront(player2);
+        return;
+      }
+
+      // 7. Create the game in DB
+      let game;
+      try {
+        game = await createGameInDb(player1.userId, player2.userId);
+      } catch (err) {
+        matchmakingService.requeueAtFront(player2);
+        matchmakingService.requeueAtFront(player1);
+        console.error("[Matchmaking] Game creation failed:", err);
+        p1Socket.emit("error", { message: "Matchmaking failed, please retry" });
+        p2Socket.emit("error", { message: "Matchmaking failed, please retry" });
+        return;
+      }
+
+      // 8. Socket.io room
+      const roomName = `game-${game.id}`;
+      await p1Socket.join(roomName);
+      await p2Socket.join(roomName);
+
+      // 9. Notify player 1
+      p1Socket.emit("match_found", {
+        gameId: game.id,
+        opponent: {
+          id: game.player2!.id,
+          username: game.player2!.username,
+          avatarUrl: game.player2!.avatarUrl,
+        },
+        yourSymbol: game.player1Symbol,
+        room: roomName,
+      });
+
+      // 10. Notify player 2
+      p2Socket.emit("match_found", {
+        gameId: game.id,
+        opponent: {
+          id: game.player1.id,
+          username: game.player1.username,
+          avatarUrl: game.player1.avatarUrl,
+        },
+        yourSymbol: game.player2Symbol,
+        room: roomName,
+      });
+
+      console.log(
+        `[Matchmaking] Game ${game.id} created — ${game.player1.username} (X) vs ${game.player2!.username} (O)`,
+      );
+    } catch (error: any) {
+      console.error("[Matchmaking] Error:", error);
+      socket.emit("error", { message: error.message || "Matchmaking failed" });
+    }
+  });
+
+  socket.on("cancel_search", () => {
+    const removed = matchmakingService.removeFromQueue(userId);
+    if (removed) {
+      socket.emit("search_cancelled");
+    }
+  });
+
+  // #endregion
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
