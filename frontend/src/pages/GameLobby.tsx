@@ -2,29 +2,12 @@ import { useNavigate } from "react-router-dom";
 import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
 import { useState } from "react";
-import { gamesService } from "../services/games.service";
 
 type AiDifficulty = "easy" | "medium" | "hard";
 
 export default function GameLobby() {
   const navigate = useNavigate();
-  const [isCreatingOnlineGame, setIsCreatingOnlineGame] = useState(false);
-  const [onlineError, setOnlineError] = useState<string | null>(null);
   const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>("medium");
-
-  async function handlePlayOnline() {
-    try {
-      setOnlineError(null);
-      setIsCreatingOnlineGame(true);
-
-      const game = await gamesService.createGame();
-      void navigate(`/game/${game.id}`);
-    } catch (err) {
-      setOnlineError(err instanceof Error ? err.message : "Failed to create online game");
-    } finally {
-      setIsCreatingOnlineGame(false);
-    }
-  }
 
   return (
     <div className="w-full max-w-6xl space-y-10 py-4">
@@ -57,9 +40,10 @@ export default function GameLobby() {
           title="Play Online"
           description="Play against a friend or find a match"
           buttonText="Find Match"
-          onClick={() => void handlePlayOnline()}
+          onClick={() => {}}
           color="green"
-          loading={isCreatingOnlineGame}
+          disabled
+          badgeText="Coming Soon"
         />
 
         <GameModeCard
@@ -93,10 +77,6 @@ export default function GameLobby() {
           </div>
         </GameModeCard>
       </div>
-
-      {onlineError ? (
-        <p className="text-center text-sm text-red-500">{onlineError}</p>
-      ) : null}
 
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs text-pong-text/40">or</span>
