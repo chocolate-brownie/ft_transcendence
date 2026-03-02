@@ -46,6 +46,9 @@ AGENTS.md
 *.log
 npm-debug.log*
 
+# ── Test artifacts ────────────────────────────────────────────────────────
+frontend/test-results/
+
 # ── Uploaded files (keep folder structure, ignore actual uploads) ─────────
 backend/uploads/avatars/*
 !backend/uploads/avatars/.gitkeep

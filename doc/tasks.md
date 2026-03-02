@@ -193,7 +193,7 @@
 - [x] Draw detection: all 9 cells filled, no winner
 - [x] `POST /api/games` — create new game
 - [x] `POST /api/games/:id/move` — make a move (REST fallback)
-- [ ] `GET /api/games/:id` — get current game state
+- [x] `GET /api/games/:id` — get current game state
 - [x] Save completed game to database (winner, final board, timestamps)
 
 ### Frontend — Game UI Complete — [Frontend: zamgar, jayzatov]
@@ -202,10 +202,10 @@
 - [ ] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!"
 - [ ] Draw display: "It's a draw!"
 - [ ] Game over screen: winner display, "Play Again" button, "Back to Lobby" button
-- [ ] Pre-game lobby page (`pages/GameLobby.tsx`):
-  - [ ] "Play Local" (two players, same screen)
-  - [ ] "Play Online" (matchmaking)
-  - [ ] "Play vs AI" (with difficulty selector)
+- [x] Pre-game lobby page (`pages/GameLobby.tsx`):
+  - [x] "Play Local" (two players, same screen)
+  - [x] "Play Online" (matchmaking)
+  - [x] "Play vs AI" (with difficulty selector)
 - [ ] Local game mode: alternate turns on same screen
 
 ### Backend + Frontend — Multiplayer — [Real-Time: mgodawat]

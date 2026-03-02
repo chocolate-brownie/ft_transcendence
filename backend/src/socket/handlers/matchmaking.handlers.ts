@@ -1,0 +1,127 @@
+import type { Server, Socket } from "socket.io";
+import prisma from "../../lib/prisma";
+import { matchmakingService } from "../services/matchmaking.service";
+import { createGameInDb } from "../../services/games.service";
+
+export function registerMatchmakingHandlers(io: Server, socket: Socket) {
+  const userId: number = socket.data.user.id;
+
+  socket.on("find_game", async () => {
+    if (!matchmakingService.startProcessing(userId)) return;
+    try {
+      if (matchmakingService.isInQueue(userId)) {
+        return socket.emit("error", { message: "Already searching for a game" });
+      }
+
+      const activeGame = await prisma.game.findFirst({
+        where: {
+          OR: [{ player1Id: userId }, { player2Id: userId }],
+          status: "IN_PROGRESS",
+        },
+      });
+      if (activeGame) {
+        return socket.emit("error", { message: "Already in an active game" });
+      }
+
+      matchmakingService.addToQueue({
+        userId,
+        socketId: socket.id,
+        joinedAt: new Date(),
+      });
+
+      socket.emit("searching", {
+        position: matchmakingService.getQueuePosition(userId),
+      });
+
+      const match = matchmakingService.dequeueMatch();
+      if (!match) return;
+
+      const { player1, player2 } = match;
+
+      const p1Socket = io.sockets.sockets.get(player1.socketId);
+      const p2Socket = io.sockets.sockets.get(player2.socketId);
+
+      if (!p1Socket || !p2Socket) {
+        if (p1Socket) matchmakingService.requeueAtFront(player1);
+        if (p2Socket) matchmakingService.requeueAtFront(player2);
+        return;
+      }
+
+      for (const player of [player1, player2]) {
+        const active = await prisma.game.findFirst({
+          where: {
+            OR: [{ player1Id: player.userId }, { player2Id: player.userId }],
+            status: "IN_PROGRESS",
+          },
+        });
+        if (active) {
+          const other = player === player1 ? player2 : player1;
+          matchmakingService.requeueAtFront(other);
+          io.sockets.sockets.get(player.socketId)?.emit("error", {
+            message: "Already in an active game",
+          });
+          return;
+        }
+      }
+
+      let game;
+      try {
+        game = await createGameInDb(player1.userId, player2.userId);
+      } catch (err) {
+        matchmakingService.requeueAtFront(player2);
+        matchmakingService.requeueAtFront(player1);
+        console.error("[Matchmaking] Game creation failed:", err);
+        p1Socket.emit("error", { message: "Matchmaking failed, please retry" });
+        p2Socket.emit("error", { message: "Matchmaking failed, please retry" });
+        return;
+      }
+
+      if (!game.player2) {
+        console.error("[Matchmaking] Game created without player2");
+        p1Socket.emit("error", { message: "Matchmaking failed" });
+        p2Socket.emit("error", { message: "Matchmaking failed" });
+        return;
+      }
+
+      const roomName = `game-${game.id}`;
+      await p1Socket.join(roomName);
+      await p2Socket.join(roomName);
+
+      p1Socket.emit("match_found", {
+        gameId: game.id,
+        opponent: {
+          id: game.player2.id,
+          username: game.player2.username,
+          avatarUrl: game.player2.avatarUrl,
+        },
+        yourSymbol: game.player1Symbol,
+        room: roomName,
+      });
+
+      p2Socket.emit("match_found", {
+        gameId: game.id,
+        opponent: {
+          id: game.player1.id,
+          username: game.player1.username,
+          avatarUrl: game.player1.avatarUrl,
+        },
+        yourSymbol: game.player2Symbol,
+        room: roomName,
+      });
+
+    } catch (error: unknown) {
+      console.error("[Matchmaking] Error:", error);
+      const message = error instanceof Error ? error.message : "Matchmaking failed";
+      socket.emit("error", { message });
+    } finally {
+      matchmakingService.stopProcessing(userId);
+    }
+  });
+
+  socket.on("cancel_search", () => {
+    const removed = matchmakingService.removeFromQueue(userId);
+    if (removed) {
+      socket.emit("search_cancelled");
+    }
+  });
+}
