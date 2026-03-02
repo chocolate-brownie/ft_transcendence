@@ -270,6 +270,43 @@ export default function Profile() {
   }
 
   // ── Handlers: avatar
+  //
+  // On Linux/Chrome the GTK file chooser enumerates every GIO/GVFS mount
+  // (network shares, etc.) before opening, which can hang the browser for
+  // minutes. showOpenFilePicker() uses xdg-desktop-portal instead — a
+  // completely different code path that delegates to the desktop's native
+  // file picker and doesn't have this problem.
+  // Falls back to the hidden <input> on browsers that lack the API (Firefox).
+  async function handleAvatarClick() {
+    if (!isMine || avatarSaving) return;
+    setAvatarError(null);
+    avatarSavingRef.current = true;
+
+    if ("showOpenFilePicker" in window) {
+      try {
+        const [handle] = await (window as any).showOpenFilePicker({
+          types: [{ description: "Images", accept: { "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] } }],
+          multiple: false,
+        });
+        const file = (await handle.getFile()) as File;
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          setAvatarError("File is too large (max 5MB).");
+          avatarSavingRef.current = false;
+          return;
+        }
+        handleAvatarUpload(file);
+      } catch {
+        // User dismissed the picker — reset guard
+        avatarSavingRef.current = false;
+      }
+      return;
+    }
+
+    // Fallback: hidden <input type="file"> (Firefox, Safari)
+    fileInputRef.current?.click();
+  }
+
   function handleAvatarChange(e: any) {
     const file = e.target.files[0];
     if (!file) return;
@@ -384,21 +421,12 @@ export default function Profile() {
           <Card variant="elevated">
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
-                {/* Avatar — use a <label> so the browser activates the file
-                    input natively, avoiding the programmatic .click() path
-                    that causes a GTK dialog hang on Linux/Chrome. */}
-                <label
-                  htmlFor="avatar-file-input"
-                  className={
-                    "group relative block h-full w-full overflow-hidden rounded-full bg-black/10 " +
-                    (isMine && !avatarSaving ? "cursor-pointer" : "cursor-default")
-                  }
-                  onClick={(e) => {
-                    if (!isMine || avatarSaving) { e.preventDefault(); return; }
-                    // Guard must be set before the picker opens because
-                    // visibilitychange fires before onChange.
-                    avatarSavingRef.current = true;
-                  }}
+                {/* Avatar */}
+                <button
+                  type="button"
+                  className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
+                  onClick={() => void handleAvatarClick()}
+                  disabled={!isMine || avatarSaving}
                 >
                   <img
                     src={avatarSrc}
@@ -414,11 +442,11 @@ export default function Profile() {
                       </span>
                     </div>
                   )}
-                </label>
+                </button>
 
+                {/* Fallback input for browsers without showOpenFilePicker (Firefox, Safari) */}
                 {isMine && (
                   <input
-                    id="avatar-file-input"
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
