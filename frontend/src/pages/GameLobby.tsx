@@ -26,6 +26,7 @@ export default function GameLobby() {
     }
   }
 
+
   return (
     <div className="w-full max-w-6xl space-y-10 py-4">
       <div className="text-center">
