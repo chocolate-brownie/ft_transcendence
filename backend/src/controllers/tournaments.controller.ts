@@ -34,7 +34,9 @@ export async function createTournamentController(
         .json({ message: "Name must be between 3 and 50 characters" });
     }
 
-    if (![4, 8].includes(maxPlayers)) {
+    const mp = Number(maxPlayers); // Validates that maxPlayers is a number
+
+    if (![4, 8].includes(mp)) {
       return res
         .status(400)
         .json({ message: "maxPlayers must be 4 or 8" });
@@ -42,7 +44,7 @@ export async function createTournamentController(
 
     const tournament = await createTournament(
       trimmedName,
-      maxPlayers as 4 | 8,
+      mp as 4 | 8,
       req.user.id,
     );
 

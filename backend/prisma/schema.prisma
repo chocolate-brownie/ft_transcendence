@@ -164,7 +164,7 @@ model TournamentParticipant {
   tournamentId  Int      @map("tournament_id")
   userId        Int      @map("user_id")
   seed          Int
-  eliminatedAt  Int?     @map("eliminated_at")
+  eliminatedInRound  Int?     @map("eliminated_in_round")
   joinedAt      DateTime @default(now()) @map("joined_at")
 
   tournament    Tournament @relation(fields: [tournamentId], references: [id])

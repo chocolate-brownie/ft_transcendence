@@ -1,8 +1,6 @@
 // Tournaments service — business logic for tournament operations
 // Create, join, bracket generation, progression
 
-// backend/src/services/tournaments.service.ts
-
 import prisma from "../lib/prisma";
 import { TournamentStatus } from "@prisma/client";
 
@@ -74,6 +72,8 @@ export async function joinTournament(tournamentId: number, userId: number) {
     const alreadyJoined = tournament.participants.some(
       (p) => p.userId === userId,
     );
+    
+    // Note: Creator must join explicitly. The @@unique constraint protects against race conditions.
     if (alreadyJoined) {
       throw new TournamentError("Already joined this tournament", 400);
     }
@@ -128,6 +128,7 @@ export async function joinTournament(tournamentId: number, userId: number) {
 // ─── List ──────────────────────────────────────────────────────────────────
 
 export async function getTournaments(status?: TournamentStatus) {
+  // TODO: Add pagination when tournament count grows
   const where = status ? { status } : {};
 
   const tournaments = await prisma.tournament.findMany({
