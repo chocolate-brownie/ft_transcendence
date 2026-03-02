@@ -276,7 +276,6 @@ io.on("connection", (socket) => {
       socket.emit("message_error", { message: "Internal server error" });
     }
   });
-
   // #endregion
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -329,7 +328,25 @@ io.on("connection", (socket) => {
         return;
       }
 
-      // 7. Create the game in DB
+      // 7. Verify BOTH players don't have active games (race condition fix)
+      for (const player of [player1, player2]) {
+        const active = await prisma.game.findFirst({
+          where: {
+            OR: [{ player1Id: player.userId }, { player2Id: player.userId }],
+            status: "IN_PROGRESS",
+          },
+        });
+        if (active) {
+          const other = player === player1 ? player2 : player1;
+          matchmakingService.requeueAtFront(other);
+          io.sockets.sockets.get(player.socketId)?.emit("error", {
+            message: "Already in an active game",
+          });
+          return;
+        }
+      }
+
+      // 8. Create the game in DB
       let game;
       try {
         game = await createGameInDb(player1.userId, player2.userId);
@@ -342,24 +359,32 @@ io.on("connection", (socket) => {
         return;
       }
 
-      // 8. Socket.io room
+      // 9. Defensive check — should never happen but ensures type safety
+      if (!game.player2) {
+        console.error("[Matchmaking] Game created without player2");
+        p1Socket.emit("error", { message: "Matchmaking failed" });
+        p2Socket.emit("error", { message: "Matchmaking failed" });
+        return;
+      }
+
+      // 10. Socket.io room
       const roomName = `game-${game.id}`;
       await p1Socket.join(roomName);
       await p2Socket.join(roomName);
 
-      // 9. Notify player 1
+      // 11. Notify player 1
       p1Socket.emit("match_found", {
         gameId: game.id,
         opponent: {
-          id: game.player2!.id,
-          username: game.player2!.username,
-          avatarUrl: game.player2!.avatarUrl,
+          id: game.player2.id,
+          username: game.player2.username,
+          avatarUrl: game.player2.avatarUrl,
         },
         yourSymbol: game.player1Symbol,
         room: roomName,
       });
 
-      // 10. Notify player 2
+      // 12. Notify player 2
       p2Socket.emit("match_found", {
         gameId: game.id,
         opponent: {
@@ -372,7 +397,7 @@ io.on("connection", (socket) => {
       });
 
       console.log(
-        `[Matchmaking] Game ${game.id} created — ${game.player1.username} (X) vs ${game.player2!.username} (O)`,
+        `[Matchmaking] Game ${game.id} created — ${game.player1.username} (X) vs ${game.player2.username} (O)`,
       );
     } catch (error: any) {
       console.error("[Matchmaking] Error:", error);
