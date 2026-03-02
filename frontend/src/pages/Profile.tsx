@@ -249,6 +249,7 @@ export default function Profile() {
         };
 
         setProfile(updatedProfile);
+        updateUser({ displayName: updatedProfile.displayName ?? trimmed });
         setIsEditing(false);
         setSuccessMessage("Profile updated");
         setTimeout(() => setSuccessMessage(null), 3000);

@@ -23,7 +23,7 @@ export const createGame = async (req: AuthRequest, res: Response) => {
       }
 
       // Check RelationShip
-      const validation = await validateCreateGame(player1Id, player2Id);
+      const validation = await validateCreateGame(player1Id, player2Id, true);
 
       if (!validation.valid) {
         const status = validation.error === CREATE_ERRORS.NOT_FRIENDS ? 403 : 400;

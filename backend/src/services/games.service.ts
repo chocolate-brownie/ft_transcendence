@@ -237,7 +237,14 @@ export const verifyCompletedGame = (game: {
 export const validateCreateGame = async (
   player1Id: number,
   player2Id: number,
+  requireFriendship: boolean = false
 ): Promise<CreateValidationResult> => {
+
+
+  if (player1Id === player2Id) {
+    return { valid: false, error: CREATE_ERRORS.SELF_PLAY };
+  }
+
 
   const player2 = await prisma.user.findUnique({
     where: { id: player2Id },
@@ -246,17 +253,21 @@ export const validateCreateGame = async (
     return { valid: false, error: CREATE_ERRORS.PLAYER_NOT_FOUND };
   }
 
-  const friendship = await prisma.friend.findFirst({
-    where: {
-      status: 'ACCEPTED',
-      OR: [
-        { requesterId: player1Id, addresseeId: player2Id },
-        { requesterId: player2Id, addresseeId: player1Id },
-      ],
-    },
-  });
-  if (!friendship) {
-    return { valid: false, error: CREATE_ERRORS.NOT_FRIENDS };
+
+  if (requireFriendship) {
+    const friendship = await prisma.friend.findFirst({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { requesterId: player1Id, addresseeId: player2Id },
+          { requesterId: player2Id, addresseeId: player1Id },
+        ],
+      },
+    });
+
+    if (!friendship) {
+      return { valid: false, error: CREATE_ERRORS.NOT_FRIENDS };
+    }
   }
 
   return { valid: true };
