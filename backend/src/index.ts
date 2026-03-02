@@ -1,7 +1,6 @@
 // ─── ft_transcendence Backend ──────────────────────────────────────────────
-// Express + HTTPS + Socket.io server
-// This is the entry point — server setup and route mounting only.
-// All business logic lives in services/, controllers handle HTTP, routes define URLs.
+// Express + HTTPS + Socket.io server entrypoint.
+// App/route wiring lives here; socket behavior is delegated to socket/* modules.
 
 import express from "express";
 import https from "https";
@@ -10,23 +9,10 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-import { Server as SocketIOServer, Socket } from "socket.io";
-import jwt from "jsonwebtoken";
+import { Server as SocketIOServer } from "socket.io";
 import prisma from "./lib/prisma";
-import {
-  validateMessageContent,
-  userExists,
-  areFriends,
-  saveMessage,
-  getMessageWithSender,
-  SendMessagePayload,
-  ToggleTypingStatus,
-} from "./services/chat.service";
-import { matchmakingService } from "./services/matchmaking.service";
-import { createGameInDb } from "./services/games.service";
+import { socketAuthMiddleware } from "./socket/auth";
+import { registerSocketHandlers } from "./socket";
 
 // Route imports
 import authRoutes from "./routes/auth.routes";
@@ -35,6 +21,9 @@ import friendsRoutes from "./routes/friends.routes";
 import gamesRoutes from "./routes/games.routes";
 import chatRoutes from "./routes/chat.routes";
 import tournamentsRoutes from "./routes/tournaments.routes";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ─── Initialize ────────────────────────────────────────────────────────────
 
@@ -52,12 +41,10 @@ app.use(
 app.use(express.json());
 
 // Serve uploaded files (avatars, etc.) as static assets
-// Example: GET /uploads/avatars/42-1709049600000.jpg
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 
-// Health check — verifies the server + database are alive
 app.get("/api/health", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -83,8 +70,7 @@ app.use("/api/messages", chatRoutes);
 app.use("/api/tournaments", tournamentsRoutes);
 
 // ─── Global error handler ──────────────────────────────────────────────────
-// Catches any error passed via next(err) or thrown synchronously in a route.
-// Must have exactly 4 parameters so Express recognises it as an error handler.
+
 app.use(
   (
     err: Error,
@@ -121,8 +107,6 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
   server = http.createServer(app);
 }
 
-// Attach Socket.io to the HTTPS server
-// Register io on the app so controllers can emit events via req.app.get("io")
 const io = new SocketIOServer(server, {
   cors: {
     origin: ["https://localhost:5173", "http://localhost:5173"],
@@ -132,291 +116,14 @@ const io = new SocketIOServer(server, {
 
 app.set("io", io);
 
-/** ref: https://socket.io/docs/v4/middlewares/
- * [x] Add JWT authentication to Socket.io connection handshake */
-io.use((socket: Socket, next: (err?: Error) => void) => {
-  /* if auth exists, get token. If auth is undefined, just return undefined instead of crashing. */
-  const token = socket.handshake.auth?.token;
-
-  if (!token || !token.startsWith("Bearer ")) {
-    return next(new Error("No token provided"));
-  }
-
-  try {
-    // veryify the validity of the jwt token
-    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET!);
-    socket.data.user = decoded;
-    next();
-  } catch (err: any) {
-    if (err.name === "TokenExpiredError") {
-      return next(new Error("Token expired"));
-    }
-    return next(new Error("Invalid token"));
-  }
-});
-
-// Basic Socket.io connection handler
+io.use(socketAuthMiddleware);
 
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
-
-  const userId = socket.data.user.id;
-
-  // Each user joins a personal room so others can send them targeted events
-  void socket.join(`user:${userId}`);
-
-  // [x] On connect: set user `isOnline = true` in database
-  prisma.user
-    .update({ where: { id: userId }, data: { isOnline: true } })
-    .catch((error) => console.error("Failed to set user online:", error));
-
-  // [x] Broadcast online status to friends
-  notifyFriends(userId, "user_online").catch(console.error);
-
-  // [x] On disconnect: set user `isOnline = false` in database + notify friends
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
-
-    // ── Matchmaking cleanup ──
-    matchmakingService.removeFromQueue(userId);
-
-    prisma.user
-      .update({ where: { id: userId }, data: { isOnline: false } })
-      .catch((error) => console.error("Failed to set user offline:", error));
-
-    // [x] Broadcast online status to friends
-    notifyFriends(userId, "user_offline").catch(console.error);
-  });
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // #region Chat message handling
-  // ─────────────────────────────────────────────────────────────────────────
-
-  socket.on("send_message", async (payload: SendMessagePayload) => {
-    try {
-      const senderId = socket.data.user.id;
-
-      if (!payload.receiverId || typeof payload.receiverId !== "number") {
-        return socket.emit("message_error", { message: "Invalid receiverId" });
-      }
-      if (!payload.content || typeof payload.content !== "string") {
-        return socket.emit("message_error", { message: "Invalid content" });
-      }
-
-      payload.content = payload.content
-        .replace(/<[^>]*>/g, "")
-        .replace(/[<>]/g, "")
-        .trim();
-
-      if (!validateMessageContent(payload.content)) {
-        return socket.emit("message_error", {
-          message: "Content must be 1-2000 characters",
-        });
-      }
-
-      const receiverExists = await userExists(payload.receiverId);
-      if (!receiverExists) {
-        return socket.emit("message_error", { message: "Receiver does not exist" });
-      }
-
-      const friends = await areFriends(senderId, payload.receiverId);
-      if (!friends) {
-        return socket.emit("message_error", {
-          message: "You can only send messages to friends",
-        });
-      }
-
-      const message = await saveMessage(senderId, payload.receiverId, payload.content);
-
-      const messageWithSender = await getMessageWithSender(message.id);
-      if (!messageWithSender) {
-        return socket.emit("message_error", { message: "Failed to retrieve message" });
-      }
-
-      io.to(`user:${payload.receiverId}`).emit("receive_message", messageWithSender);
-      io.to(`user:${senderId}`).emit("receive_message", messageWithSender);
-    } catch (error) {
-      console.error("Error handling send_message:", error);
-      socket.emit("message_error", { message: "Internal server error" });
-    }
-  });
-
-  socket.on("typing", async (payload: ToggleTypingStatus) => {
-    try {
-      const senderId = socket.data.user.id;
-      const senderUsername = socket.data.user.username;
-
-      if (!payload.receiverId || typeof payload.receiverId !== "number") {
-        return socket.emit("message_error", { message: "Invalid receiverId" });
-      }
-
-      if (typeof payload.isTyping !== "boolean") {
-        return socket.emit("message_error", { message: "Invalid isTyping value" });
-      }
-
-      const receiverExists = await userExists(payload.receiverId);
-      if (!receiverExists) {
-        return socket.emit("message_error", { message: "Receiver does not exist" });
-      }
-
-      const friends = await areFriends(senderId, payload.receiverId);
-      if (!friends) {
-        return socket.emit("message_error", {
-          message: "You can only send messages to friends",
-        });
-      }
-
-      io.to(`user:${payload.receiverId}`).emit("user_typing", {
-        userId: senderId,
-        username: senderUsername,
-        isTyping: payload.isTyping,
-      });
-    } catch (error) {
-      console.error("Error handling send_typing:", error);
-      socket.emit("message_error", { message: "Internal server error" });
-    }
-  });
-  // #endregion
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // #region Matchmaking
-  // ─────────────────────────────────────────────────────────────────────────
-
-  socket.on("find_game", async () => {
-    try {
-      // 1. Already in queue?
-      if (matchmakingService.isInQueue(userId)) {
-        return socket.emit("error", { message: "Already searching for a game" });
-      }
-
-      // 2. Already in a running game?
-      const activeGame = await prisma.game.findFirst({
-        where: {
-          OR: [{ player1Id: userId }, { player2Id: userId }],
-          status: "IN_PROGRESS",
-        },
-      });
-      if (activeGame) {
-        return socket.emit("error", { message: "Already in an active game" });
-      }
-
-      // 3. Enter queue
-      matchmakingService.addToQueue({
-        userId,
-        socketId: socket.id,
-        joinedAt: new Date(),
-      });
-
-      // 4. Acknowledge to this client
-      socket.emit("searching", {
-        position: matchmakingService.getQueuePosition(userId),
-      });
-
-      // 5. Attempt to form a match (need 2+ in queue)
-      const match = matchmakingService.dequeueMatch();
-      if (!match) return;
-
-      const { player1, player2 } = match;
-
-      // 6. Verify both sockets are still alive
-      const p1Socket = io.sockets.sockets.get(player1.socketId);
-      const p2Socket = io.sockets.sockets.get(player2.socketId);
-
-      if (!p1Socket || !p2Socket) {
-        if (p1Socket) matchmakingService.requeueAtFront(player1);
-        if (p2Socket) matchmakingService.requeueAtFront(player2);
-        return;
-      }
-
-      // 7. Verify BOTH players don't have active games (race condition fix)
-      for (const player of [player1, player2]) {
-        const active = await prisma.game.findFirst({
-          where: {
-            OR: [{ player1Id: player.userId }, { player2Id: player.userId }],
-            status: "IN_PROGRESS",
-          },
-        });
-        if (active) {
-          const other = player === player1 ? player2 : player1;
-          matchmakingService.requeueAtFront(other);
-          io.sockets.sockets.get(player.socketId)?.emit("error", {
-            message: "Already in an active game",
-          });
-          return;
-        }
-      }
-
-      // 8. Create the game in DB
-      let game;
-      try {
-        game = await createGameInDb(player1.userId, player2.userId);
-      } catch (err) {
-        matchmakingService.requeueAtFront(player2);
-        matchmakingService.requeueAtFront(player1);
-        console.error("[Matchmaking] Game creation failed:", err);
-        p1Socket.emit("error", { message: "Matchmaking failed, please retry" });
-        p2Socket.emit("error", { message: "Matchmaking failed, please retry" });
-        return;
-      }
-
-      // 9. Defensive check — should never happen but ensures type safety
-      if (!game.player2) {
-        console.error("[Matchmaking] Game created without player2");
-        p1Socket.emit("error", { message: "Matchmaking failed" });
-        p2Socket.emit("error", { message: "Matchmaking failed" });
-        return;
-      }
-
-      // 10. Socket.io room
-      const roomName = `game-${game.id}`;
-      await p1Socket.join(roomName);
-      await p2Socket.join(roomName);
-
-      // 11. Notify player 1
-      p1Socket.emit("match_found", {
-        gameId: game.id,
-        opponent: {
-          id: game.player2.id,
-          username: game.player2.username,
-          avatarUrl: game.player2.avatarUrl,
-        },
-        yourSymbol: game.player1Symbol,
-        room: roomName,
-      });
-
-      // 12. Notify player 2
-      p2Socket.emit("match_found", {
-        gameId: game.id,
-        opponent: {
-          id: game.player1.id,
-          username: game.player1.username,
-          avatarUrl: game.player1.avatarUrl,
-        },
-        yourSymbol: game.player2Symbol,
-        room: roomName,
-      });
-
-      console.log(
-        `[Matchmaking] Game ${game.id} created — ${game.player1.username} (X) vs ${game.player2.username} (O)`,
-      );
-    } catch (error: any) {
-      console.error("[Matchmaking] Error:", error);
-      socket.emit("error", { message: error.message || "Matchmaking failed" });
-    }
-  });
-
-  socket.on("cancel_search", () => {
-    const removed = matchmakingService.removeFromQueue(userId);
-    if (removed) {
-      socket.emit("search_cancelled");
-    }
-  });
-
-  // #endregion
+  registerSocketHandlers(io, socket);
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
-// Skip listening when imported by tests (Supertest binds its own ephemeral port)
 
 if (process.env.NODE_ENV !== "test") {
   server.listen(PORT, "0.0.0.0", () => {
@@ -425,7 +132,6 @@ if (process.env.NODE_ENV !== "test") {
   });
 }
 
-// Graceful shutdown
 const shutdown = () => {
   console.log("\nShutting down...");
   prisma.$disconnect().catch(() => {});
@@ -435,24 +141,6 @@ const shutdown = () => {
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
-// Catch unhandled promise rejections — prevents Node.js from crashing and
-// logs the actual error so we can see what went wrong.
 process.on("unhandledRejection", (reason) => {
   console.error("[Unhandled Rejection]", reason);
 });
-
-// ─── Utils functions ─────────────────────────────────────────────────────────────────
-async function notifyFriends(userId: number, event: "user_online" | "user_offline") {
-  const friends = await prisma.friend.findMany({
-    where: {
-      OR: [{ requesterId: userId }, { addresseeId: userId }],
-      status: "ACCEPTED",
-    },
-  });
-
-  friends.forEach((friend) => {
-    const friendId =
-      friend.requesterId === userId ? friend.addresseeId : friend.requesterId;
-    io.to(`user:${friendId}`).emit(event, { userId });
-  });
-}
