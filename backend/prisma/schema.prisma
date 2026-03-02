@@ -35,6 +35,8 @@ model User {
   sentMessages    Message[] @relation("MessageSender")
   recvMessages    Message[] @relation("MessageReceiver")
   tournamentEntries TournamentParticipant[]
+  createdTournaments Tournament[] @relation("CreatedTournaments")
+  wonTournaments     Tournament[] @relation("WonTournaments")
 
   @@map("users")
 }
@@ -134,16 +136,25 @@ model Message {
 // ─── Tournaments ──────────────────────────────────────────────────────────
 
 model Tournament {
-  id          Int               @id @default(autoincrement())
-  name        String
-  status      TournamentStatus  @default(REGISTERING)
-  maxPlayers  Int               @default(8) @map("max_players")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  startedAt   DateTime?         @map("started_at")
-  finishedAt  DateTime?         @map("finished_at")
+  id            Int               @id @default(autoincrement())
+  name          String
+  status        TournamentStatus  @default(REGISTERING)
+  maxPlayers    Int               @default(8) @map("max_players")
+  currentRound  Int               @default(0) @map("current_round")
+  createdById   Int               @map("created_by_id")
+  winnerId      Int?              @map("winner_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  startedAt     DateTime?         @map("started_at")
+  finishedAt    DateTime?         @map("finished_at")
 
-  participants TournamentParticipant[]
-  games        Game[]
+  participants  TournamentParticipant[]
+  games         Game[]
+  creator       User    @relation("CreatedTournaments", fields: [createdById], references: [id])
+  winner        User?   @relation("WonTournaments", fields: [winnerId], references: [id])
+
+  @@index([status])
+  @@index([createdById])
+  @@index([winnerId])
 
   @@map("tournaments")
 }
@@ -152,8 +163,8 @@ model TournamentParticipant {
   id            Int      @id @default(autoincrement())
   tournamentId  Int      @map("tournament_id")
   userId        Int      @map("user_id")
-  seed          Int?     // bracket position
-  eliminatedAt  Int?     @map("eliminated_at") // round eliminated
+  seed          Int
+  eliminatedAt  Int?     @map("eliminated_at")
   joinedAt      DateTime @default(now()) @map("joined_at")
 
   tournament    Tournament @relation(fields: [tournamentId], references: [id])
