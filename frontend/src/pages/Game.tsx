@@ -3,36 +3,11 @@ import type { Board } from "../types/game";
 import GameBoard from "../components/Game/GameBoard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import Button from "../components/Button";
+import { findWinningLine } from "../utils/gameUtils";
 
 //TEMP FOR DEV (maybe make it a backend issue to send winning line info? or just calculate it on the frontend?)
 // TODO: when backend game API is wired to this page,
 // use the server-provided winningLine instead of calculating it here.
-
-// Every possible winning outcome
-const WIN_LINES: number[][] = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8], // horizontal
-  [0, 3, 6], [1, 4, 7], [2, 5, 8], // vertical
-  [0, 4, 8], [2, 4, 6],            // diagonal
-];
-
-// Function to check a line
-function findWinningLine(board: Board) {
-  for (let i = 0; i < WIN_LINES.length; i++) {
-    const line = WIN_LINES[i];
-    const a = line[0];
-    const b = line[1];
-    const c = line[2];
-
-    const value = board[a];
-
-    if (value && value === board[b] && value === board[c]) {
-      return line;
-    }
-  }
-
-  return null;
-}
-//TEMP FOR DEV
 
 // Game page container (mock local state for now)
 export default function Game() {
