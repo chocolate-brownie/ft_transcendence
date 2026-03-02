@@ -57,7 +57,7 @@ export default function Game() {
     console.log(
       `[Game] Cell clicked at index ${index}, placed ${currentPlayer}, next player: ${nextPlayer}`,
     );
-}
+  }
 
   const winningLine = findWinningLine(board);
   const playerSymbol: "X" | "O" = "X";

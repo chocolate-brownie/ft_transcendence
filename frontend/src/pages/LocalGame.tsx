@@ -1,0 +1,205 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { Board } from "../types/game";
+import GameBoard from "../components/Game/GameBoard";
+import TurnIndicator from "../components/Game/TurnIndicator";
+import Button from "../components/Button";
+
+// Every possible winning outcome
+const WIN_LINES: number[][] = [
+  [0, 1, 2], // horizontal
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6], // vertical
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8], // diagonal
+  [2, 4, 6],
+];
+
+// Function to check a line
+function findWinningLine(board: Board) {
+  for (let i = 0; i < WIN_LINES.length; i++) {
+    const line = WIN_LINES[i];
+    const a = line[0];
+    const b = line[1];
+    const c = line[2];
+
+    const value = board[a];
+
+    if (value && value === board[b] && value === board[c]) {
+      return line;
+    }
+  }
+
+  return null;
+}
+
+export default function LocalGame() {
+	const [board, setBoard] = useState<Board>(Array(9).fill(null));
+	const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
+	const [result, setResult] = useState<"X" | "O" | "DRAW" | null>(null);
+	const [scoreX, setScoreX] = useState(0);
+	const [scoreO, setScoreO] = useState(0);
+	const [scoreDraw, setScoreDraw] = useState(0);
+
+	const navigate = useNavigate();
+
+	function handleBackToLobby() {
+		navigate("/game");
+	}
+
+	function handleCellClick(index: number) {
+		if (result !== null) return;
+		if (board[index] !== null) return;
+
+		const nextBoard = [...board];
+		nextBoard[index] = currentPlayer;
+
+		const nextWinningLine = findWinningLine(nextBoard);
+    const isBoardFull = nextBoard.every((c) => c !== null);
+    const isDraw = nextWinningLine === null && isBoardFull;
+
+		setBoard(nextBoard);
+
+		if (nextWinningLine !== null) {
+      setResult(currentPlayer);
+			if (currentPlayer === "X") {
+				setScoreX(scoreX + 1);
+			} else {
+				setScoreO(scoreO + 1);
+			}
+      return;
+    }
+
+    if (isDraw) {
+      setResult("DRAW");
+			setScoreDraw(scoreDraw + 1);
+      return;
+    }
+
+		const nextPlayer: "X" | "O" = currentPlayer === "X" ? "O" : "X";
+		setCurrentPlayer(nextPlayer);
+
+		console.log(
+			`[Game] Cell clicked at index ${index}, placed ${currentPlayer}, next player: ${nextPlayer}`,
+		);
+	}
+
+	function handlePlayAgain() {
+  	setBoard(Array(9).fill(null));
+  	setCurrentPlayer("X");
+  	setResult(null);
+	}
+
+	const winningLine = findWinningLine(board);
+	const playerSymbol: "X" | "O" = "X";
+	const isYourTurn = result === null && currentPlayer === playerSymbol;
+
+	return (
+		<div className="min-h-screen w-full px-4 pt-4">
+			{/* Back to lobby */}
+			<div className="flex w-full justify-start">
+				<button
+					type="button"
+					onClick={handleBackToLobby}
+					className={
+						"relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
+						"transition-colors " +
+						"bg-pong-surface text-pong-text/70 " +
+						"hover:bg-pong-accent/10 hover:text-pong-accent " +
+						"focus:outline-none"
+					}
+				>
+					<span className="text-base leading-none">←</span>
+					<span>Back to Lobby</span>
+				</button>
+			</div>
+			{/* Game content */}
+			<div className="flex flex-col items-center gap-6">
+				<h1 className="text-2xl font-bold text-pong-text -mb-4">Local Game Mode</h1>
+				{/* Turn indicator */}
+					<TurnIndicator
+						currentPlayer={currentPlayer}
+						playerSymbol={playerSymbol}
+						isYourTurn={isYourTurn}
+						className={"-mb-6" + (result !== null ? " invisible" : "")}
+						textOverride={
+							result !== null
+								? ""
+								: currentPlayer === "X"
+									? "Player 1’s turn (X)"
+									: "Player 2’s turn (O)"
+						}
+					/>
+				<div className="relative">
+					{/* Board */}
+					<GameBoard
+					board={board}
+					onCellClick={handleCellClick}
+					winningLine={winningLine}
+					className={
+						"transition-opacity duration-200 " +
+						(result !== null ? "opacity-40 pointer-events-none" : "opacity-100")
+					}
+					/>
+					{/* Game Over / Play Again */}
+					{result !== null && (
+						<div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
+							<span
+								className={
+									"text-xl font-semibold " +
+									(result === "X"
+										? "text-pong-accent"
+										: result === "O"
+											? "text-pong-secondary"
+											: "text-pong-text")
+								}
+							>
+								{result === "DRAW"
+									? "It's a draw!"
+									: result === "X"
+										? "Player 1 wins! (X)"
+										: "Player 2 wins! (O)"}
+							</span>
+							<Button variant="primary" onClick={handlePlayAgain}>
+								Play Again
+							</Button>
+						</div>
+					)}
+				</div>
+				{/* Scoreboard / Player vs Player */}
+				<div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
+					<div className="flex items-center gap-8 text-pong-text/80">
+						{/* Player 1 */}
+						<div className="flex flex-col items-center px-3">
+							<span className="font-semibold uppercase tracking-wide text-pong-text/50">
+								Player 1
+							</span>
+							<span className="text-sm">
+								You <span className="text-pong-accent">(X)</span>
+							</span>
+							<span className="text-3xl font-sans font-bold text-pong-accent">{scoreX}</span>
+						</div>
+						{/* Ties (optionnel, comme sur ton screenshot) */}
+						<div className="flex flex-col items-center px-7">
+							<span className="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
+								VS
+							</span>
+						</div>
+						{/* Player 2 */}
+						<div className="flex flex-col items-center">
+							<span className="font-semibold uppercase tracking-wide text-pong-text/50">
+								Player 2
+							</span>
+							<span className="text-sm">
+								Opponent <span className="text-pong-secondary">(O)</span>
+							</span>
+							<span className="text-3xl font-sans font-bold text-pong-secondary">{scoreO}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

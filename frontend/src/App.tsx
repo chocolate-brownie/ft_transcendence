@@ -9,6 +9,7 @@ import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import GameLobby from "./pages/GameLobby";
 import Game from "./pages/Game";
+import LocalGame from "./pages/LocalGame";
 import Tournaments from "./pages/Tournaments";
 import Leaderboard from "./pages/Leaderboard";
 import { ChatWidget } from "./components/Chat/ChatWidget";
@@ -73,6 +74,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<Profile />} />
             <Route path="/game" element={<GameLobby />} />
+            <Route path="/game/local" element={<LocalGame />} />
             <Route path="/game/:id" element={<Game />} />
           </Route>
         </Route>
