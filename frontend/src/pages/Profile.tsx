@@ -384,20 +384,21 @@ export default function Profile() {
           <Card variant="elevated">
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
-                {/* Avatar */}
-                <button
-                  type="button"
-                  className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
-                  onClick={() => {
-                    if (!isMine || avatarSaving) return;
-                    // Set flag BEFORE file picker opens — visibilitychange
-                    // fires before onChange, so we must guard early.
+                {/* Avatar — use a <label> so the browser activates the file
+                    input natively, avoiding the programmatic .click() path
+                    that causes a GTK dialog hang on Linux/Chrome. */}
+                <label
+                  htmlFor="avatar-file-input"
+                  className={
+                    "group relative block h-full w-full overflow-hidden rounded-full bg-black/10 " +
+                    (isMine && !avatarSaving ? "cursor-pointer" : "cursor-default")
+                  }
+                  onClick={(e) => {
+                    if (!isMine || avatarSaving) { e.preventDefault(); return; }
+                    // Guard must be set before the picker opens because
+                    // visibilitychange fires before onChange.
                     avatarSavingRef.current = true;
-                    if (fileInputRef.current) {
-                      fileInputRef.current.click();
-                    }
                   }}
-                  disabled={!isMine || avatarSaving}
                 >
                   <img
                     src={avatarSrc}
@@ -413,10 +414,11 @@ export default function Profile() {
                       </span>
                     </div>
                   )}
-                </button>
+                </label>
 
                 {isMine && (
                   <input
+                    id="avatar-file-input"
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
