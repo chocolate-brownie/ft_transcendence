@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import Button from "../Button";
 import Card from "../Card";
 
@@ -15,6 +16,7 @@ interface GameModeCardProps {
   color?: GameModeColor;
   badgeText?: string;
   className?: string;
+  children?: ReactNode;
 }
 
 export default function GameModeCard({
@@ -29,6 +31,7 @@ export default function GameModeCard({
   color = "blue",
   badgeText,
   className = "",
+  children,
 }: GameModeCardProps) {
   const colorClassMap: Record<GameModeColor, string> = {
     blue: "border border-pong-accent/30",
@@ -83,7 +86,8 @@ export default function GameModeCard({
         <p className="text-sm text-pong-text/70">{description}</p>
       </div>
 
-      <div className="mt-auto">
+      <div className="mt-auto w-full space-y-3">
+        {children}
         <Button
           variant={buttonVariant}
           className="w-full"
