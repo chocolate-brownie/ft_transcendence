@@ -18,8 +18,8 @@ export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void
     const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET!);
     socket.data.user = decoded as JwtSocketUser;
     next();
-  } catch (err: any) {
-    if (err.name === "TokenExpiredError") {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === "TokenExpiredError") {
       return next(new Error("Token expired"));
     }
     return next(new Error("Invalid token"));
