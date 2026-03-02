@@ -36,6 +36,16 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const avatarSavingRef = useRef(false);
 
+  // Attach the "cancel" listener once so we don't accumulate a new listener
+  // on every avatar-button click.
+  useEffect(() => {
+    const input = fileInputRef.current;
+    if (!input) return;
+    const handleCancel = () => { avatarSavingRef.current = false; };
+    input.addEventListener("cancel", handleCancel);
+    return () => input.removeEventListener("cancel", handleCancel);
+  }, []);
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -384,14 +394,6 @@ export default function Profile() {
                     // fires before onChange, so we must guard early.
                     avatarSavingRef.current = true;
                     if (fileInputRef.current) {
-                      // Reset guard if the user dismisses without selecting a file.
-                      // The 'cancel' event fires on the input but isn't in React's
-                      // type definitions, so we wire it up natively.
-                      fileInputRef.current.addEventListener(
-                        "cancel",
-                        () => { avatarSavingRef.current = false; },
-                        { once: true },
-                      );
                       fileInputRef.current.click();
                     }
                   }}
