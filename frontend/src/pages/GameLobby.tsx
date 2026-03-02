@@ -3,21 +3,14 @@ import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
 import { useState } from "react";
 import { gamesService } from "../services/games.service";
-import { useAuth } from "../context/AuthContext";
 
 type AiDifficulty = "easy" | "medium" | "hard";
 
 export default function GameLobby() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [isCreatingOnlineGame, setIsCreatingOnlineGame] = useState(false);
   const [onlineError, setOnlineError] = useState<string | null>(null);
   const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>("medium");
-
-  const avatarSrc =
-    user?.avatarUrl?.startsWith("/uploads/") && !user.avatarUrl.includes("default")
-      ? user.avatarUrl
-      : "/default-avatar.png";
 
   async function handlePlayOnline() {
     try {
@@ -35,22 +28,7 @@ export default function GameLobby() {
 
   return (
     <div className="w-full max-w-6xl space-y-10 py-4">
-      <div className="relative text-center">
-        {/* User chip — top-right corner of the header */}
-        {user && (
-          <div className="absolute right-0 top-0 hidden sm:flex items-center gap-2 rounded-full border border-black/10 bg-white/30 backdrop-blur-sm px-3 py-1.5">
-            <img
-              src={avatarSrc}
-              alt={user.username}
-              className="h-6 w-6 rounded-full object-cover"
-              onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
-            />
-            <span className="text-sm font-medium text-pong-text/80">
-              {user.displayName ?? user.username}
-            </span>
-          </div>
-        )}
-
+      <div className="text-center">
         <h1 className="text-4xl font-bold text-pong-accent">Choose Game Mode</h1>
         <p className="mt-2 text-pong-text/70">
           Pick your battlefield and enter the arena.

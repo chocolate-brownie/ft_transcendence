@@ -58,6 +58,7 @@ export default function Navbar() {
     !user.avatarUrl.includes("default")
       ? user.avatarUrl
       : "/default-avatar.png";
+  const displayLabel = user ? user.displayName ?? user.username : "";
 
   const navLinks = [
     { label: "Play", to: "/game" },
@@ -113,13 +114,13 @@ export default function Navbar() {
               <div className="relative">
                 <img
                   src={avatarSrc}
-                  alt={`${user.username} avatar`}
+                  alt={`${displayLabel} avatar`}
                   className="h-7 w-7 rounded-full object-cover"
                   onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                 />
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-pong-surface bg-green-400" />
               </div>
-              <span className="hidden sm:inline text-sm font-medium text-pong-text/80">{user.username}</span>
+              <span className="hidden sm:inline text-sm font-medium text-pong-text/80">{displayLabel}</span>
               <svg
                 className={`h-3 w-3 text-pong-text/40 transition-transform ${open ? "rotate-180" : ""}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
@@ -129,14 +130,19 @@ export default function Navbar() {
             </button>
 
             {open && (
-              <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-pong-surface/95 shadow-xl backdrop-blur-md z-50">
+              <div className="absolute right-0 mt-2 w-72 md:w-48 md:overflow-hidden rounded-xl border border-white/10 bg-pong-surface/95 shadow-xl backdrop-blur-md z-50">
                 {/* User header */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
                   <img src={avatarSrc} alt="" className="h-8 w-8 rounded-full object-cover" onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }} />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-pong-text/90 truncate">{user.username}</p>
+                    <p className="text-sm font-semibold text-pong-text/90 truncate">{displayLabel}</p>
                     <p className="text-xs text-green-400">Online</p>
                   </div>
+                </div>
+
+                {/* Search — only shown on mobile (hidden on md+) */}
+                <div className="md:hidden px-3 py-2 border-b border-white/5">
+                  <UserSearch className="w-full" />
                 </div>
 
                 {/* Nav links — only shown on mobile (hidden on md+) */}
