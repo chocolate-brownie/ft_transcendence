@@ -198,6 +198,29 @@ describe("Socket Game Rooms", () => {
     }
   });
 
+  it("rejects join for non-existent game", async () => {
+    const p1Token = jwt.sign(
+      { id: player1.id, username: player1.username },
+      JWT_SECRET,
+    );
+
+    const socket = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+
+    try {
+      await waitForEvent(socket, "connect");
+      const errorPromise = waitForEvent<{ message: string }>(socket, "error");
+
+      socket.emit("join_game_room", { gameId: 999999 });
+      const errorPayload = await errorPromise;
+
+      expect(errorPayload.message).toBe("Game not found");
+    } finally {
+      socket.close();
+    }
+  });
+
   it("rejects join when user is not in game", async () => {
     const game = await prisma.game.create({
       data: {
@@ -289,6 +312,59 @@ describe("Socket Game Rooms", () => {
     } finally {
       p1.close();
       p2.close();
+    }
+  });
+
+  it("updates socket ID on reconnection", async () => {
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign(
+      { id: player1.id, username: player1.username },
+      JWT_SECRET,
+    );
+
+    const p1First = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+
+    try {
+      await waitForEvent(p1First, "connect");
+      p1First.emit("join_game_room", { gameId: game.id });
+      await waitForEvent(p1First, "room_joined");
+
+      const firstSocketId = p1First.id;
+      const playersAfterFirstJoin = gameRoomService.getPlayersInRoom(game.id);
+      expect(playersAfterFirstJoin).toHaveLength(1);
+      expect(playersAfterFirstJoin[0].socketId).toBe(firstSocketId);
+
+      // Simulate reconnection with a new socket (same user, new socket ID)
+      const p1Second = Client(`http://localhost:${port}`, {
+        auth: { token: `Bearer ${p1Token}` },
+      });
+
+      try {
+        await waitForEvent(p1Second, "connect");
+        p1Second.emit("join_game_room", { gameId: game.id });
+        await waitForEvent(p1Second, "room_joined");
+
+        const secondSocketId = p1Second.id;
+        expect(secondSocketId).not.toBe(firstSocketId);
+
+        const playersAfterReconnect = gameRoomService.getPlayersInRoom(game.id);
+        expect(playersAfterReconnect).toHaveLength(1);
+        expect(playersAfterReconnect[0].socketId).toBe(secondSocketId);
+      } finally {
+        p1Second.close();
+      }
+    } finally {
+      p1First.close();
     }
   });
 });
