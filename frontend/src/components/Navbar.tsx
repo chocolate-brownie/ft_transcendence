@@ -80,25 +80,28 @@ export default function Navbar() {
 
       {user ? (
         <div className="flex items-center gap-1">
-          {/* Nav links */}
-          {navLinks.map(({ label, to }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                isActive(to)
-                  ? "text-pong-accent bg-pong-accent/10"
-                  : "text-pong-text/60 hover:text-pong-text/90 hover:bg-white/5"
-              }`}
-            >
-              {label}
-              {isActive(to) && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-pong-accent" />
-              )}
-            </Link>
-          ))}
+          {/* Nav links — hidden on mobile, shown md+ */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map(({ label, to }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  isActive(to)
+                    ? "text-pong-accent bg-pong-accent/10"
+                    : "text-pong-text/60 hover:text-pong-text/90 hover:bg-white/5"
+                }`}
+              >
+                {label}
+                {isActive(to) && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-pong-accent" />
+                )}
+              </Link>
+            ))}
+          </div>
 
-          <UserSearch className="ml-2 w-64" />
+          {/* Search — hidden on mobile */}
+          <UserSearch className="hidden md:block ml-2 w-64" />
 
           {/* Avatar dropdown */}
           <div className="relative ml-2" ref={menuRef}>
@@ -116,7 +119,7 @@ export default function Navbar() {
                 />
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-pong-surface bg-green-400" />
               </div>
-              <span className="text-sm font-medium text-pong-text/80">{user.username}</span>
+              <span className="hidden sm:inline text-sm font-medium text-pong-text/80">{user.username}</span>
               <svg
                 className={`h-3 w-3 text-pong-text/40 transition-transform ${open ? "rotate-180" : ""}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
@@ -134,6 +137,24 @@ export default function Navbar() {
                     <p className="text-sm font-semibold text-pong-text/90 truncate">{user.username}</p>
                     <p className="text-xs text-green-400">Online</p>
                   </div>
+                </div>
+
+                {/* Nav links — only shown on mobile (hidden on md+) */}
+                <div className="md:hidden border-b border-white/5 py-1">
+                  {navLinks.map(({ label, to }) => (
+                    <button
+                      key={to}
+                      type="button"
+                      className={`flex w-full items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${
+                        isActive(to)
+                          ? "text-pong-accent"
+                          : "text-pong-text/70 hover:bg-white/5 hover:text-pong-text/90"
+                      }`}
+                      onClick={() => goTo(to)}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Menu items */}
