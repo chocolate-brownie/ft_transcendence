@@ -7,6 +7,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   const userId: number = socket.data.user.id;
 
   socket.on("find_game", async () => {
+    if (!matchmakingService.startProcessing(userId)) return;
     try {
       if (matchmakingService.isInQueue(userId)) {
         return socket.emit("error", { message: "Already searching for a game" });
@@ -108,12 +109,12 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         room: roomName,
       });
 
-      console.log(
-        `[Matchmaking] Game ${game.id} created — ${game.player1.username} (X) vs ${game.player2.username} (O)`,
-      );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[Matchmaking] Error:", error);
-      socket.emit("error", { message: error.message || "Matchmaking failed" });
+      const message = error instanceof Error ? error.message : "Matchmaking failed";
+      socket.emit("error", { message });
+    } finally {
+      matchmakingService.stopProcessing(userId);
     }
   });
 

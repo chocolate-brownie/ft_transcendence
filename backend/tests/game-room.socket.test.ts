@@ -35,7 +35,7 @@ function waitForEvent<T = unknown>(
 describe("Socket Game Rooms", () => {
   let server: http.Server;
   let io: SocketIOServer;
-  const port = 3010;
+  let port!: number;
 
   let player1: TestUser;
   let player2: TestUser;
@@ -75,7 +75,11 @@ describe("Socket Game Rooms", () => {
     });
 
     await new Promise<void>((resolve) => {
-      server.listen(port, () => resolve());
+      server.listen(0, () => {
+        const addr = server.address();
+        port = typeof addr === "object" && addr ? addr.port : 0;
+        resolve();
+      });
     });
 
     player1 = await prisma.user.create({

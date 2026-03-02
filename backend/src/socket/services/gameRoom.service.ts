@@ -25,12 +25,10 @@ class GameRoomService {
       existing.socketId = player.socketId;
       existing.joinedAt = new Date();
       existing.username = player.username;
-      console.log(`[GameRoom] Player ${player.username} reconnected to room ${gameId} with new socket ID`);
       return;
     }
 
     room.players.push(player);
-    console.log(`[GameRoom] Player ${player.username} joined room ${gameId}. Players in room: ${this.rooms.get(gameId)!.players.length}`);
   }
 
   removePlayerFromRoom(gameId: number, userId: number): PlayerInRoom | null {
@@ -42,11 +40,8 @@ class GameRoomService {
 
     const [removed] = room.players.splice(index, 1);
 
-    console.log(`[GameRoom] Player ${removed.username} left room ${gameId}. Players remaining: ${room.players.length}`);
-
     if (room.players.length === 0) {
       this.rooms.delete(gameId);
-      console.log(`[GameRoom] Room ${gameId} deleted (empty)`);
     }
 
     return removed;

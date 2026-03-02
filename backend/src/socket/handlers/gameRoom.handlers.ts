@@ -60,13 +60,12 @@ function buildJoinedPayload(game: {
   createdAt: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
-  player1: { id: number; username: string; avatarUrl: string };
-  player2: { id: number; username: string; avatarUrl: string } | null;
+  player1: { id: number; username: string; avatarUrl: string | null };
+  player2: { id: number; username: string; avatarUrl: string | null } | null;
 }): Record<string, unknown> {
   return {
     gameId: game.id,
     game: {
-      board: game.boardState,
       boardState: game.boardState,
       boardSize: game.boardSize,
       currentTurn: game.currentTurn,
@@ -86,7 +85,7 @@ function buildJoinedPayload(game: {
   };
 }
 
-export function registerGameRoomHandlers(io: Server, socket: Socket) {
+export function registerGameRoomHandlers(_io: Server, socket: Socket) {
   socket.on("join_game_room", async (payload: JoinGameRoomPayload) => {
     try {
       const user = getSocketUser(socket);
@@ -137,7 +136,6 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
         },
       });
 
-      console.log(`[GameRoom] ${user.username} joined room ${roomName}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to join room";
       socket.emit("error", { message });
@@ -158,27 +156,27 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
         username: user.username,
       });
 
-      console.log(`[GameRoom] ${user.username} left room ${roomName}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to leave room";
       socket.emit("error", { message });
     }
   });
 
-  socket.on("disconnect", () => {
-    try {
-      const user = getSocketUser(socket);
-      const removedEntries = gameRoomService.removePlayerFromAllRooms(user.id);
+}
 
-      for (const { gameId } of removedEntries) {
-        const roomName = roomNameForGame(gameId);
-        socket.to(roomName).emit("opponent_disconnected", {
-          userId: user.id,
-          username: user.username,
-        });
-      }
-    } catch {
-      // Ignore disconnect cleanup errors
+export function handleGameRoomDisconnect(_io: Server, socket: Socket) {
+  try {
+    const user = getSocketUser(socket);
+    const removedEntries = gameRoomService.removePlayerFromAllRooms(user.id);
+
+    for (const { gameId } of removedEntries) {
+      const roomName = roomNameForGame(gameId);
+      socket.to(roomName).emit("opponent_disconnected", {
+        userId: user.id,
+        username: user.username,
+      });
     }
-  });
+  } catch {
+    // Ignore disconnect cleanup errors
+  }
 }

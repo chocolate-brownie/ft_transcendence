@@ -31,16 +31,16 @@ export function registerPresenceHandlers(io: Server, socket: Socket) {
     .catch((error) => console.error("Failed to set user online:", error));
 
   notifyFriends(io, userId, "user_online").catch(console.error);
+}
 
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
+export function handlePresenceDisconnect(io: Server, socket: Socket) {
+  const userId: number = socket.data.user.id;
 
-    matchmakingService.removeFromQueue(userId);
+  matchmakingService.removeFromQueue(userId);
 
-    prisma.user
-      .update({ where: { id: userId }, data: { isOnline: false } })
-      .catch((error) => console.error("Failed to set user offline:", error));
+  prisma.user
+    .update({ where: { id: userId }, data: { isOnline: false } })
+    .catch((error) => console.error("Failed to set user offline:", error));
 
-    notifyFriends(io, userId, "user_offline").catch(console.error);
-  });
+  notifyFriends(io, userId, "user_offline").catch(console.error);
 }
