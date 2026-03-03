@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useSocket } from "../context/SocketContext";
@@ -32,16 +32,10 @@ export default function Matchmaking() {
 
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
     if (!socket) return;
-    if (status !== "idle") return;
-  
-    setQueuePosition(null);
-    setMatchData(null);
-    setError(null);  
-    setIsCancelling(false);
-    setStatus("searching");
-    socket.emit("find_game");
 
     function onSearching(payload: { position?: number }) {
       setStatus("searching");
@@ -74,13 +68,23 @@ export default function Matchmaking() {
     socket.on("search_cancelled", onSearchCancelled);
     socket.on("error", onError);
 
+    if (!startedRef.current) {
+      startedRef.current = true;
+      setQueuePosition(null);
+      setMatchData(null);
+      setError(null);
+      setIsCancelling(false);
+      setStatus("searching");
+      socket.emit("find_game");
+    }
+
     return () => {
       socket.off("searching", onSearching);
       socket.off("match_found", onMatchFound);
       socket.off("search_cancelled", onSearchCancelled);
       socket.off("error", onError);
     };
-  }, [socket, navigate, status]);
+  }, [socket, navigate]);
 
   useEffect(() => {
     return () => {
@@ -110,6 +114,7 @@ export default function Matchmaking() {
     setMatchData(null);
     setError(null);  
     setIsCancelling(false);
+    startedRef.current = true;
     setStatus("searching");
     socket.emit("find_game");
   }
@@ -129,11 +134,9 @@ export default function Matchmaking() {
         <Card variant="elevated">
           <p className="text-sm font-semibold text-red-400">Matchmaking error</p>
           <p className="mt-2 text-sm text-pong-text/70">{error}</p>
-          <div className="mt-4 flex gap-3">
-            <Button variant="primary" className="w-full py-3 text-base" onClick={handleRetry}>
-              Try again
-            </Button>
-          </div>
+          <Button variant="primary" className="w-full mt-4 py-3 text-base" onClick={handleRetry}>
+            Try again
+          </Button>
         </Card>
       ) : status === "searching" ? (
         <SearchingScreen queuePosition={queuePosition} onCancel={handleCancel} isCancelling={isCancelling} />
