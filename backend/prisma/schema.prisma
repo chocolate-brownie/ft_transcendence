@@ -38,6 +38,11 @@ model User {
   createdTournaments Tournament[] @relation("CreatedTournaments")
   wonTournaments     Tournament[] @relation("WonTournaments")
 
+  // ─── Tournament Match relations (Issue #156) ───
+  player1Matches TournamentMatch[] @relation("Player1Matches")
+  player2Matches TournamentMatch[] @relation("Player2Matches")
+  wonMatches     TournamentMatch[] @relation("WonMatches")
+
   @@map("users")
 }
 
@@ -69,6 +74,9 @@ model Game {
   player1     User        @relation("Player1Games", fields: [player1Id], references: [id])
   player2     User?       @relation("Player2Games", fields: [player2Id], references: [id])
   winner      User?       @relation("WinnerGames", fields: [winnerId], references: [id])
+
+  // ─── Reverse relation for TournamentMatch (Issue #156) ───
+  tournamentMatch TournamentMatch?
 
 // ─── Indexes for game history & leaderboard queries ───
   @@index([status])
@@ -149,6 +157,7 @@ model Tournament {
 
   participants  TournamentParticipant[]
   games         Game[]
+  matches       TournamentMatch[]    // ← Issue #156
   creator       User    @relation("CreatedTournaments", fields: [createdById], references: [id])
   winner        User?   @relation("WonTournaments", fields: [winnerId], references: [id])
 
@@ -179,4 +188,29 @@ enum TournamentStatus {
   IN_PROGRESS
   FINISHED
   CANCELLED
+}
+
+// ─── Tournament Matches / Bracket  ────────────────────────────
+
+model TournamentMatch {
+  id             Int       @id @default(autoincrement())
+  tournamentId   Int       @map("tournament_id")
+  round          Int                                  // 1 = quarterfinals, 2 = semis, etc.
+  matchNumber    Int       @map("match_number")       // Position within the round
+  player1Id      Int?      @map("player1_id")         // null until determined
+  player2Id      Int?      @map("player2_id")         // null until determined
+  winnerId       Int?      @map("winner_id")          // null until played
+  gameId         Int?      @unique @map("game_id")    // Link to actual Game record
+  completedAt    DateTime? @map("completed_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player1    User?      @relation("Player1Matches", fields: [player1Id], references: [id])
+  player2    User?      @relation("Player2Matches", fields: [player2Id], references: [id])
+  winner     User?      @relation("WonMatches", fields: [winnerId], references: [id])
+  game       Game?      @relation(fields: [gameId], references: [id])
+
+  @@unique([tournamentId, round, matchNumber])
+  @@index([tournamentId])
+  @@index([round])
+  @@map("tournament_matches")
 }
