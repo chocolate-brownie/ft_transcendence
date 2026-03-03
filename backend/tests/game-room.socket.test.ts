@@ -146,14 +146,8 @@ describe("Socket Game Rooms", () => {
       },
     });
 
-    const p1Token = jwt.sign(
-      { id: player1.id, username: player1.username },
-      JWT_SECRET,
-    );
-    const p2Token = jwt.sign(
-      { id: player2.id, username: player2.username },
-      JWT_SECRET,
-    );
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
 
     const p1 = Client(`http://localhost:${port}`, {
       auth: { token: `Bearer ${p1Token}` },
@@ -165,20 +159,20 @@ describe("Socket Game Rooms", () => {
     try {
       await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
 
-      const p1JoinedPromise = waitForEvent<{ gameId: number; game: { yourSymbol: string } }>(
-        p1,
-        "room_joined",
-      );
+      const p1JoinedPromise = waitForEvent<{
+        gameId: number;
+        game: { yourSymbol: string };
+      }>(p1, "room_joined");
       p1.emit("join_game_room", { gameId: game.id });
       const p1Joined = await p1JoinedPromise;
 
       expect(p1Joined.gameId).toBe(game.id);
       expect(p1Joined.game.yourSymbol).toBe("X");
 
-      const p2JoinedPromise = waitForEvent<{ gameId: number; game: { yourSymbol: string } }>(
-        p2,
-        "room_joined",
-      );
+      const p2JoinedPromise = waitForEvent<{
+        gameId: number;
+        game: { yourSymbol: string };
+      }>(p2, "room_joined");
       const p1OpponentJoinedPromise = waitForEvent<{
         opponent: { id: number; username: string };
       }>(p1, "opponent_joined");
@@ -203,10 +197,7 @@ describe("Socket Game Rooms", () => {
   });
 
   it("rejects join for non-existent game", async () => {
-    const p1Token = jwt.sign(
-      { id: player1.id, username: player1.username },
-      JWT_SECRET,
-    );
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
 
     const socket = Client(`http://localhost:${port}`, {
       auth: { token: `Bearer ${p1Token}` },
@@ -268,14 +259,8 @@ describe("Socket Game Rooms", () => {
       },
     });
 
-    const p1Token = jwt.sign(
-      { id: player1.id, username: player1.username },
-      JWT_SECRET,
-    );
-    const p2Token = jwt.sign(
-      { id: player2.id, username: player2.username },
-      JWT_SECRET,
-    );
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
 
     const p1 = Client(`http://localhost:${port}`, {
       auth: { token: `Bearer ${p1Token}` },
@@ -329,10 +314,7 @@ describe("Socket Game Rooms", () => {
       },
     });
 
-    const p1Token = jwt.sign(
-      { id: player1.id, username: player1.username },
-      JWT_SECRET,
-    );
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
 
     const p1First = Client(`http://localhost:${port}`, {
       auth: { token: `Bearer ${p1Token}` },

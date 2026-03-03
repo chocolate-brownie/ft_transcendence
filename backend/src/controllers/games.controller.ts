@@ -17,7 +17,6 @@ export const createGame = async (req: AuthRequest, res: Response) => {
     const { player2Id } = req.body;
 
     if (player2Id != null) {
-
       if (player2Id === player1Id) {
         return res.status(400).json({ error: CREATE_ERRORS.SELF_PLAY });
       }
@@ -48,7 +47,7 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
   try {
     const gameId = parseInt(req.params.id as string);
     if (isNaN(gameId)) {
-      return res.status(400).json({ error: 'Invalid game ID' });
+      return res.status(400).json({ error: "Invalid game ID" });
     }
 
     const userId = req.user.id;
@@ -56,32 +55,30 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
 
     if (
       cellIndex === undefined ||
-      typeof cellIndex !== 'number' ||
+      typeof cellIndex !== "number" ||
       !Number.isInteger(cellIndex) ||
       cellIndex < 0 ||
       cellIndex > 8
     ) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid cell index (must be 0-8)' });
+      return res.status(400).json({ error: "Invalid cell index (must be 0-8)" });
     }
 
     const updatedGame = await makeMoveInDb(gameId, cellIndex, userId);
 
     return res.status(200).json(updatedGame);
   } catch (error: any) {
-    console.error('Error making move:', error);
+    console.error("Error making move:", error);
 
-    if (error.message === 'Game not found') {
-      return res.status(404).json({ error: 'Game not found' });
+    if (error.message === "Game not found") {
+      return res.status(404).json({ error: "Game not found" });
     }
 
-    if (error.message.startsWith('Invalid move: ')) {
-      const cleanMessage = error.message.replace('Invalid move: ', '');
+    if (error.message.startsWith("Invalid move: ")) {
+      const cleanMessage = error.message.replace("Invalid move: ", "");
       return res.status(400).json({ error: cleanMessage });
     }
 
-    return res.status(500).json({ error: 'Failed to process move' });
+    return res.status(500).json({ error: "Failed to process move" });
   }
 };
 
@@ -93,16 +90,16 @@ export const getGameById = async (req: AuthRequest, res: Response) => {
     const userId = req.user.id;
 
     if (isNaN(gameId)) {
-      return res.status(400).json({ error: 'Invalid game ID' });
+      return res.status(400).json({ error: "Invalid game ID" });
     }
 
     const game = await getGameByIdFromDb(gameId, userId);
     return res.status(200).json(game);
   } catch (error: any) {
-    if (error.message === 'Game not found') {
-      return res.status(404).json({ error: 'Game not found' });
+    if (error.message === "Game not found") {
+      return res.status(404).json({ error: "Game not found" });
     }
-    return res.status(500).json({ error: 'Failed to fetch game' });
+    return res.status(500).json({ error: "Failed to fetch game" });
   }
 };
 
@@ -112,7 +109,7 @@ export const getGameHistory = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
 
-    const limit  = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
     const { games, total } = await getCompletedGamesFromDb(userId, limit, offset);
@@ -124,7 +121,7 @@ export const getGameHistory = async (req: AuthRequest, res: Response) => {
       offset,
     });
   } catch (error) {
-    console.error('Error fetching game history:', error);
-    return res.status(500).json({ error: 'Failed to fetch game history' });
+    console.error("Error fetching game history:", error);
+    return res.status(500).json({ error: "Failed to fetch game history" });
   }
 };

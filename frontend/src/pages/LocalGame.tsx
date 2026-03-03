@@ -39,7 +39,7 @@ export default function LocalGame() {
   else if (result === "O") gameOverText = "Player 2 wins! (O)";
 
   function handleBackToLobby() {
-    navigate("/game");
+    void navigate("/game");
   }
 
   function handleCellClick(index: number) {

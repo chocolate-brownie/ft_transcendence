@@ -6,10 +6,10 @@ This project has two layers of automated tests. Both replace the need to manuall
 
 ## Overview
 
-| Layer | Tool | Location | Needs Docker? |
-|---|---|---|---|
-| Backend API tests | Jest + Supertest | `backend/tests/` | No |
-| Frontend E2E tests | Playwright | `frontend/tests/e2e/` | Yes |
+| Layer              | Tool             | Location              | Needs Docker? |
+| ------------------ | ---------------- | --------------------- | ------------- |
+| Backend API tests  | Jest + Supertest | `backend/tests/`      | No            |
+| Frontend E2E tests | Playwright       | `frontend/tests/e2e/` | Yes           |
 
 ---
 
@@ -56,6 +56,7 @@ These tests open a real (headless) browser, navigate to pages, fill in forms, an
 ### Prerequisites
 
 1. The full Docker stack must be running:
+
    ```bash
    # from project root
    make up
@@ -66,6 +67,7 @@ These tests open a real (headless) browser, navigate to pages, fill in forms, an
 ### The test account
 
 The E2E tests log in as:
+
 - **Email:** `e2e_login_test@example.com`
 - **Password:** `E2eTestPass1x`
 
@@ -118,11 +120,13 @@ Running 13 tests using 1 worker
 When you implement a new backend endpoint or frontend page, follow this pattern:
 
 **Backend:** Create `backend/tests/<feature>.test.ts`
+
 - Mock Prisma with `jest.unstable_mockModule`
 - Import `app` from `../src/index.js` after setting up mocks
 - Use `supertest` to fire HTTP requests and assert responses
 
 **Frontend:** Create `frontend/tests/e2e/<feature>.spec.ts`
+
 - Use `page.goto()`, `page.locator()`, `page.fill()`, `expect()` from `@playwright/test`
 - Start from a clean state with `localStorage.clear()` in `beforeEach`
 

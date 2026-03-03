@@ -26,7 +26,11 @@ describe("Chat Flow - Socket.io & History API", () => {
       data: { email: "sender@test.com", username: "senderUser", passwordHash: "hash" },
     });
     user2 = await prisma.user.create({
-      data: { email: "receiver@test.com", username: "receiverUser", passwordHash: "hash" },
+      data: {
+        email: "receiver@test.com",
+        username: "receiverUser",
+        passwordHash: "hash",
+      },
     });
 
     user1Token = jwt.sign({ id: user1.id, email: user1.email }, JWT_SECRET);
@@ -48,13 +52,19 @@ describe("Chat Flow - Socket.io & History API", () => {
         const decoded = jwt.verify(token.split(" ")[1], JWT_SECRET) as any;
         socket.data.user = decoded;
         next();
-      } catch (err) { next(new Error("Invalid token")); }
+      } catch (err) {
+        next(new Error("Invalid token"));
+      }
     });
 
     io.on("connection", (socket) => {
       socket.join(`user:${socket.data.user.id}`);
       socket.on("send_message", async (payload) => {
-        const message = await saveMessage(socket.data.user.id, payload.receiverId, payload.content);
+        const message = await saveMessage(
+          socket.data.user.id,
+          payload.receiverId,
+          payload.content,
+        );
         const fullMsg = await getMessageWithSender(message.id);
         io.to(`user:${payload.receiverId}`).emit("receive_message", fullMsg);
         socket.emit("receive_message", fullMsg);
@@ -66,8 +76,19 @@ describe("Chat Flow - Socket.io & History API", () => {
 
   afterAll(async () => {
     // Nettoyage final
-    await prisma.message.deleteMany({ where: { OR: [{ senderId: user1.id }, { receiverId: user1.id }, { senderId: user2.id }, { receiverId: user2.id }] } });
-    await prisma.friend.deleteMany({ where: { OR: [{ requesterId: user1.id }, { addresseeId: user1.id }] } });
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: user1.id },
+          { receiverId: user1.id },
+          { senderId: user2.id },
+          { receiverId: user2.id },
+        ],
+      },
+    });
+    await prisma.friend.deleteMany({
+      where: { OR: [{ requesterId: user1.id }, { addresseeId: user1.id }] },
+    });
     await prisma.user.deleteMany({ where: { id: { in: [user1.id, user2.id] } } });
 
     if (clientSocket) clientSocket.close();
@@ -83,7 +104,10 @@ describe("Chat Flow - Socket.io & History API", () => {
     });
 
     clientSocket.on("connect", () => {
-      clientSocket.emit("send_message", { receiverId: user2.id, content: "Hello from test!" });
+      clientSocket.emit("send_message", {
+        receiverId: user2.id,
+        content: "Hello from test!",
+      });
     });
 
     clientSocket.on("receive_message", async (msg: any) => {
@@ -96,21 +120,25 @@ describe("Chat Flow - Socket.io & History API", () => {
         expect(response.status).toBe(200);
         expect(response.body.messages.length).toBeGreaterThan(0);
         done();
-      } catch (error: any) { done(error); }
+      } catch (error: any) {
+        done(error);
+      }
     });
   });
 
   // --- TEST 2: PAGINATION 200 MESSAGES ---
   it("should handle pagination correctly for 200 messages", async () => {
     // Nettoyage spécifique pour ce test
-    await prisma.message.deleteMany({ where: { OR: [{ senderId: user1.id }, { receiverId: user1.id }] } });
+    await prisma.message.deleteMany({
+      where: { OR: [{ senderId: user1.id }, { receiverId: user1.id }] },
+    });
 
     const totalMessages = 200;
     const limit = 50;
 
     // Création des 200 messages (Ordre chronologique pour tester le DESC)
     const messagesData = Array.from({ length: totalMessages }).map((_, i) => ({
-      content: `Message ${i.toString().padStart(3, '0')}`,
+      content: `Message ${i.toString().padStart(3, "0")}`,
       senderId: user1.id,
       receiverId: user2.id,
       createdAt: new Date(Date.now() + i * 1000),
@@ -149,7 +177,12 @@ describe("Chat Flow - Socket.io & History API", () => {
 
     // User 1 envoie un message à User 2
     const msg = await prisma.message.create({
-      data: { content: "Unread msg", senderId: user1.id, receiverId: user2.id, read: false }
+      data: {
+        content: "Unread msg",
+        senderId: user1.id,
+        receiverId: user2.id,
+        read: false,
+      },
     });
 
     // User 2 (le destinataire) appelle l'API pour voir ses messages avec User 1
@@ -168,7 +201,7 @@ describe("Chat Flow - Socket.io & History API", () => {
   it("should return hasMore: false and empty data when reaching the end", async () => {
     // On récupère l'ID du tout premier message (le plus vieux)
     const firstMessage = await prisma.message.findFirst({
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: "asc" },
     });
 
     // On demande ce qu'il y a AVANT le premier message

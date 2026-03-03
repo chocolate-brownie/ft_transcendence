@@ -19,7 +19,7 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
     }
 
     // Extract and validate userId param
-    const userId  = req.params.userId.toString();
+    const userId = req.params.userId.toString();
     const otherUserId = parseInt(userId, 10);
 
     if (isNaN(otherUserId) || otherUserId <= 0) {
@@ -35,7 +35,9 @@ export async function getChatHistory(req: AuthRequest, res: Response): Promise<v
 
     // Extract pagination params
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
-    const before = req.query.before ? parseInt(req.query.before as string, 10) : undefined;
+    const before = req.query.before
+      ? parseInt(req.query.before as string, 10)
+      : undefined;
 
     if (req.query.before && isNaN(before!)) {
       res.status(400).json({ error: "Format du curseur 'before' invalide" });
@@ -104,7 +106,10 @@ export async function markAsRead(req: AuthRequest, res: Response): Promise<void>
   }
 }
 
-export async function getConversationList(req: AuthRequest, res: Response): Promise<void> {
+export async function getConversationList(
+  req: AuthRequest,
+  res: Response,
+): Promise<void> {
   try {
     const currentUserId = req.user?.id;
     if (!currentUserId) {

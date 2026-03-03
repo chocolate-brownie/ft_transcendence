@@ -233,7 +233,9 @@ export async function markConversationAsRead(
   });
 }
 
-export async function getConversations(currentUserId: number): Promise<ConversationSummary[]> {
+export async function getConversations(
+  currentUserId: number,
+): Promise<ConversationSummary[]> {
   // Fetch all messages involving current user, newest first
   // Include both sides of the conversation for partner info
   const recentMessages = await prisma.message.findMany({
@@ -242,13 +244,29 @@ export async function getConversations(currentUserId: number): Promise<Conversat
     },
     orderBy: { createdAt: "desc" },
     include: {
-      sender: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
-      receiver: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+      sender: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          isOnline: true,
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          isOnline: true,
+        },
+      },
     },
   });
 
   // Group by conversation partner — first occurrence is the most recent message
-  const partnerLastMessage = new Map<number, typeof recentMessages[0]>();
+  const partnerLastMessage = new Map<number, (typeof recentMessages)[0]>();
   for (const msg of recentMessages) {
     const partnerId = msg.senderId === currentUserId ? msg.receiverId : msg.senderId;
     if (!partnerLastMessage.has(partnerId)) {
@@ -274,7 +292,8 @@ export async function getConversations(currentUserId: number): Promise<Conversat
 
   return partnerIds.map((partnerId) => {
     const lastMsg = partnerLastMessage.get(partnerId)!;
-    const otherUser = lastMsg.senderId === currentUserId ? lastMsg.receiver : lastMsg.sender;
+    const otherUser =
+      lastMsg.senderId === currentUserId ? lastMsg.receiver : lastMsg.sender;
 
     return {
       user: {

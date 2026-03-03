@@ -10,11 +10,11 @@ This plan outlines the strategy to build a multiplayer Tic-Tac-Toe platform, adh
 
 With 5 team members, roles are fully specialized as recommended by the subject.
 
-| Role                                                                | Assigned To          | Responsibilities                                                      |
-| :------------------------------------------------------------------ | :------------------- | :-------------------------------------------------------------------- |
-| **Project Manager + Fullstack Developer**                           | mgodawat             | Docker, repo structure, tech stack decisions, HTTPS, Socket.io, chat, code reviews, GitHub Issues, evaluation prep |
-| **Frontend Developer / UI Designer**                                | zamgar (Phases 1–3), jayzatov (Phase 4+) | React pages, TailwindCSS, game board UI, responsive design |
-| **Backend Developer**                                               | mamahtal, tzizi      | Express API, auth, Prisma, AI opponent, tournament logic              |
+| Role                                      | Assigned To                              | Responsibilities                                                                                                   |
+| :---------------------------------------- | :--------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| **Project Manager + Fullstack Developer** | mgodawat                                 | Docker, repo structure, tech stack decisions, HTTPS, Socket.io, chat, code reviews, GitHub Issues, evaluation prep |
+| **Frontend Developer / UI Designer**      | zamgar (Phases 1–3), jayzatov (Phase 4+) | React pages, TailwindCSS, game board UI, responsive design                                                         |
+| **Backend Developer**                     | mamahtal, tzizi                          | Express API, auth, Prisma, AI opponent, tournament logic                                                           |
 
 ---
 
@@ -386,11 +386,11 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **Testing rotation (so everyone tests everything):**
 
-| Day | zamgar tests   | mamahtal, tzizi tests | mgodawat tests                       | jayzatov tests |
-| :-- | :------------- | :-------------------- | :----------------------------------- | :------------- |
-| 11  | Chat + friends | Game multiplayer      | Auth + profiles + All API endpoints  | Tournament     |
-| 12  | Tournament     | Auth + profiles       | Game custom. + WebSocket edges       | Chat + friends |
-| 13  | AI opponent    | Chat + friends        | Tournament + Full user flows         | Multiplayer    |
+| Day | zamgar tests   | mamahtal, tzizi tests | mgodawat tests                      | jayzatov tests |
+| :-- | :------------- | :-------------------- | :---------------------------------- | :------------- |
+| 11  | Chat + friends | Game multiplayer      | Auth + profiles + All API endpoints | Tournament     |
+| 12  | Tournament     | Auth + profiles       | Game custom. + WebSocket edges      | Chat + friends |
+| 13  | AI opponent    | Chat + friends        | Tournament + Full user flows        | Multiplayer    |
 
 **Focus areas:**
 

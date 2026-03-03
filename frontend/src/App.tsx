@@ -11,6 +11,7 @@ import GameLobby from "./pages/GameLobby";
 import Game from "./pages/Game";
 import LocalGame from "./pages/LocalGame";
 import Tournaments from "./pages/Tournaments";
+import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
@@ -65,6 +66,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />

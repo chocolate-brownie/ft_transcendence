@@ -19,7 +19,11 @@ export const authService = {
   },
 
   signup(email: string, username: string, password: string): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>("/api/auth/signup", { email, username, password });
+    return apiClient.post<AuthResponse>("/api/auth/signup", {
+      email,
+      username,
+      password,
+    });
   },
 
   me(): Promise<MeResponse> {

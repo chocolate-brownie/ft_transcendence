@@ -89,8 +89,7 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
         </div>
         <span
           className={
-            "h-2.5 w-2.5 rounded-full " +
-            (user.isOnline ? "bg-green-500" : "bg-gray-400")
+            "h-2.5 w-2.5 rounded-full " + (user.isOnline ? "bg-green-500" : "bg-gray-400")
           }
         />
       </li>
@@ -108,10 +107,7 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
 
   // ── Render
   return (
-    <div
-      className={`relative ${className}`}
-      onBlur={handleWrapperBlur}
-    >
+    <div className={`relative ${className}`} onBlur={handleWrapperBlur}>
       {/* Input */}
       <div className="relative">
         <svg
@@ -182,15 +178,11 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
           )}
           {/* Results */}
           {!loading && !error && results.length > 0 && (
-            <ul className="max-h-64 overflow-y-auto">
-              {results.map(renderResultItem)}
-            </ul>
+            <ul className="max-h-64 overflow-y-auto">{results.map(renderResultItem)}</ul>
           )}
           {/* No results */}
           {!loading && !error && results.length === 0 && query.trim() !== "" && (
-            <div className="px-3 py-2 text-sm text-pong-text/50">
-              No users found.
-            </div>
+            <div className="px-3 py-2 text-sm text-pong-text/50">No users found.</div>
           )}
         </div>
       )}

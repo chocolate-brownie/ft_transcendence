@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getChatHistory, getConversationList, markAsRead } from "../controllers/chat.controller";
+import {
+  getChatHistory,
+  getConversationList,
+  markAsRead,
+} from "../controllers/chat.controller";
 import { auth } from "../middleware/auth";
 
 const router = Router();

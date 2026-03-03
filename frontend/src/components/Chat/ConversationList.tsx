@@ -10,7 +10,10 @@ interface ConversationListProps {
   onSelectConversation: (userId: number, username: string) => void;
 }
 
-export function ConversationList({ activeUserId, onSelectConversation }: ConversationListProps) {
+export function ConversationList({
+  activeUserId,
+  onSelectConversation,
+}: ConversationListProps) {
   const { user } = useAuth();
   const { socket } = useSocket();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -42,7 +45,10 @@ export function ConversationList({ activeUserId, onSelectConversation }: Convers
       // We have no receiver profile in the socket payload — refetch to get the
       // correct partner row instead of building a malformed one.
       // Read from the ref (not closure state) so this check is always fresh.
-      if (msg.senderId === user.id && !conversationsRef.current.find((c) => c.user.id === partnerId)) {
+      if (
+        msg.senderId === user.id &&
+        !conversationsRef.current.find((c) => c.user.id === partnerId)
+      ) {
         apiClient
           .get<ConversationSummary[]>("/api/messages/conversations")
           .then(setConversations)

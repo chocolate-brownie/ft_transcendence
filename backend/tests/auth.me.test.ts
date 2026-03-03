@@ -101,12 +101,10 @@ describe("GET /api/auth/me", () => {
       const token = makeToken(VALID_PAYLOAD);
       mockFindUnique.mockResolvedValue(buildFakeUser());
 
-      await request(app)
-        .get("/api/auth/me")
-        .set("Authorization", `Bearer ${token}`);
+      await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
 
       expect(mockFindUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 1 } })
+        expect.objectContaining({ where: { id: 1 } }),
       );
     });
   });
@@ -163,17 +161,13 @@ describe("GET /api/auth/me", () => {
     it("returns 401 when Authorization header is missing 'Bearer ' prefix", async () => {
       const token = makeToken(VALID_PAYLOAD);
 
-      const res = await request(app)
-        .get("/api/auth/me")
-        .set("Authorization", token); // no "Bearer " prefix
+      const res = await request(app).get("/api/auth/me").set("Authorization", token); // no "Bearer " prefix
 
       expect(res.status).toBe(401);
     });
 
     it("does not call the database for an invalid token", async () => {
-      await request(app)
-        .get("/api/auth/me")
-        .set("Authorization", "Bearer invalid-token");
+      await request(app).get("/api/auth/me").set("Authorization", "Bearer invalid-token");
 
       expect(mockFindUnique).not.toHaveBeenCalled();
     });

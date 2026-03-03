@@ -249,9 +249,9 @@
 - [ ] Auto-generate bracket when registration full (power of 2 seeding)
 - [ ] After each match: advance winner to next round
 - [ ] Determine tournament champion
-- [ ] Frontend — Tournament list page (available, in progress, completed)
+- [x] Frontend — Tournament list page (available, in progress, completed) — mgodawat
 - [ ] Frontend — Tournament detail page with visual bracket
-- [ ] Frontend — Registration button
+- [x] Frontend — Registration button — mgodawat
 - [ ] Socket.io — Notify player when it's their turn in tournament
 
 ### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi]

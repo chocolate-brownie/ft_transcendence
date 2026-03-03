@@ -108,7 +108,9 @@ test.describe("Login page — /login", () => {
       await expect(page).not.toHaveURL("/");
     });
 
-    test("error message is the same for wrong password and non-existent email", async ({ page }) => {
+    test("error message is the same for wrong password and non-existent email", async ({
+      page,
+    }) => {
       // Wrong password
       await page.goto("/login");
       await fillLoginForm(page, TEST_EMAIL, "WrongPassword999!");
@@ -184,7 +186,9 @@ test.describe("Login page — /login", () => {
       expect(token).not.toBeNull();
     });
 
-    test("manual localStorage deletion triggers re-authentication on protected route", async ({ page }) => {
+    test("manual localStorage deletion triggers re-authentication on protected route", async ({
+      page,
+    }) => {
       // Login first
       await page.goto("/login");
       await fillLoginForm(page, TEST_EMAIL, TEST_PASSWORD);
@@ -204,7 +208,9 @@ test.describe("Login page — /login", () => {
   // ── Already Authenticated ──────────────────────────────────────────────────
 
   test.describe("Already authenticated", () => {
-    test("visiting /login while authenticated still shows the login form (no redirect implemented)", async ({ page }) => {
+    test("visiting /login while authenticated still shows the login form (no redirect implemented)", async ({
+      page,
+    }) => {
       // Login
       await page.goto("/login");
       await fillLoginForm(page, TEST_EMAIL, TEST_PASSWORD);
@@ -228,7 +234,9 @@ test.describe("Login page — /login", () => {
   // ── Rapid Form Submission ──────────────────────────────────────────────────
 
   test.describe("Rapid form submission", () => {
-    test("submit button shows loading state and is disabled while request is in flight", async ({ page }) => {
+    test("submit button shows loading state and is disabled while request is in flight", async ({
+      page,
+    }) => {
       await page.goto("/login");
       await fillLoginForm(page, TEST_EMAIL, TEST_PASSWORD);
 
@@ -237,7 +245,9 @@ test.describe("Login page — /login", () => {
       // before any network response — so we can reliably catch it.
       const clickAndCheck = Promise.all([
         page.getByRole("button", { name: /log in/i }).click(),
-        expect(page.getByRole("button", { name: /logging in/i })).toBeVisible({ timeout: 2000 }),
+        expect(page.getByRole("button", { name: /logging in/i })).toBeVisible({
+          timeout: 2000,
+        }),
       ]);
 
       await clickAndCheck;
@@ -245,6 +255,5 @@ test.describe("Login page — /login", () => {
       // The loading button must be disabled
       await expect(page.getByRole("button", { name: /logging in/i })).toBeDisabled();
     });
-
   });
 });

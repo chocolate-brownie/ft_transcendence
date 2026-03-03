@@ -1,8 +1,14 @@
 import type { Server, Socket } from "socket.io";
-import { registerPresenceHandlers, handlePresenceDisconnect } from "./handlers/presence.handlers";
+import {
+  registerPresenceHandlers,
+  handlePresenceDisconnect,
+} from "./handlers/presence.handlers";
 import { registerChatHandlers } from "./handlers/chat.handlers";
 import { registerMatchmakingHandlers } from "./handlers/matchmaking.handlers";
-import { registerGameRoomHandlers, handleGameRoomDisconnect } from "./handlers/gameRoom.handlers";
+import {
+  registerGameRoomHandlers,
+  handleGameRoomDisconnect,
+} from "./handlers/gameRoom.handlers";
 import { registerGameHandlers } from "./handlers/game.handlers";
 
 export function registerSocketHandlers(io: Server, socket: Socket) {

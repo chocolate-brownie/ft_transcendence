@@ -87,7 +87,8 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
         joinedAt: new Date(),
       });
 
-      const yourSymbol = game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
+      const yourSymbol =
+        game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
       const payloadForClient = buildJoinedPayload(game);
 
       socket.emit("room_joined", {
@@ -105,7 +106,6 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
           avatarUrl: user.avatarUrl,
         },
       });
-
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to join room";
       socket.emit("error", { message });
@@ -125,7 +125,6 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
         userId: user.id,
         username: user.username,
       });
-
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to leave room";
       socket.emit("error", { message });

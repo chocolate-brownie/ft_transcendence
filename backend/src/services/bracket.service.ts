@@ -123,8 +123,7 @@ export async function advanceWinner(
   });
 
   // 2. Mark loser as eliminated
-  const loserId =
-    match.player1Id === winnerId ? match.player2Id : match.player1Id;
+  const loserId = match.player1Id === winnerId ? match.player2Id : match.player1Id;
 
   if (loserId) {
     await tx.tournamentParticipant.updateMany({
@@ -150,9 +149,7 @@ export async function advanceWinner(
     const nextMatchNumber = Math.ceil(match.matchNumber / 2);
     const isPlayer1Slot = match.matchNumber % 2 === 1;
 
-    const updateData = isPlayer1Slot
-      ? { player1Id: winnerId }
-      : { player2Id: winnerId };
+    const updateData = isPlayer1Slot ? { player1Id: winnerId } : { player2Id: winnerId };
 
     nextMatch = await tx.tournamentMatch.update({
       where: {
