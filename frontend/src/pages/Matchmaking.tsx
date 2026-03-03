@@ -114,7 +114,7 @@ export default function Matchmaking() {
     setMatchData(null);
     setError(null);  
     setIsCancelling(false);
-    startedRef.current = true;
+    startedRef.current = false;
     setStatus("searching");
     socket.emit("find_game");
   }
