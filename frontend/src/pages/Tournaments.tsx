@@ -84,9 +84,7 @@ export default function Tournaments() {
 
   const isUserParticipant = (tournament: TournamentListItem): boolean => {
     if (!user) return false;
-    return (
-      tournament.creator.id === user.id || joinedTournamentIds.includes(tournament.id)
-    );
+    return joinedTournamentIds.includes(tournament.id);
   };
 
   const handleJoin = async (tournamentId: number) => {
@@ -113,10 +111,9 @@ export default function Tournaments() {
     setCreateError(null);
 
     try {
-      await tournamentService.createTournament(name, maxPlayers);
+      const created = await tournamentService.createTournament(name, maxPlayers);
       setShowCreateModal(false);
-      setActiveTab("available");
-      await loadTournaments();
+      void navigate(`/tournaments/${created.id}`);
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : "Failed to create tournament.";

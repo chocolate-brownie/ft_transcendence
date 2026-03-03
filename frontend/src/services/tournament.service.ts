@@ -14,11 +14,21 @@ export interface TournamentListItem {
     id: number;
     username: string;
   };
+  winner: {
+    id: number;
+    username: string;
+  } | null;
 }
 
 export interface TournamentParticipant {
   id: number;
   userId: number;
+  seed: number;
+  user: {
+    id: number;
+    username: string;
+    avatarUrl: string | null;
+  };
 }
 
 export interface TournamentDetails {
@@ -36,6 +46,31 @@ export interface TournamentDetails {
     id: number;
     username: string;
   } | null;
+}
+
+export interface BracketPlayer {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+}
+
+export interface BracketMatch {
+  id: number;
+  round: number;
+  matchNumber: number;
+  player1: BracketPlayer | null;
+  player2: BracketPlayer | null;
+  winner: { id: number; username: string } | null;
+  completedAt: string | null;
+}
+
+export interface BracketResponse {
+  tournamentId: number;
+  name: string;
+  status: TournamentStatus;
+  totalRounds: number;
+  currentRound: number | null;
+  matches: BracketMatch[];
 }
 
 interface TournamentsResponse {
@@ -76,5 +111,9 @@ export const tournamentService = {
       `/api/tournaments/${tournamentId}/join`,
       {},
     );
+  },
+
+  getBracket(id: number): Promise<BracketResponse> {
+    return apiClient.get<BracketResponse>(`/api/tournaments/${id}/bracket`);
   },
 };

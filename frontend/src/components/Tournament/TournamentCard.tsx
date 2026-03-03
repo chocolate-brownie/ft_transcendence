@@ -131,6 +131,16 @@ export default function TournamentCard({
         </div>
       </div>
 
+      {tournament.status === "FINISHED" && tournament.winner ? (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm">
+          <span>🏆</span>
+          <span className="text-pong-text/70">
+            <span className="font-semibold text-pong-text">{tournament.winner.username}</span>{" "}
+            won this tournament!
+          </span>
+        </div>
+      ) : null}
+
       {action()}
     </div>
   );
