@@ -1,59 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
-import { useState, useEffect } from "react";
-import { useSocket } from "../context/SocketContext";
+import { useState } from "react";
 
 type AiDifficulty = "easy" | "medium" | "hard";
 
 export default function GameLobby() {
   const navigate = useNavigate();
-  const { socket } = useSocket();
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>("medium");
 
-  useEffect(() => {
-    if (!socket) return;
-
-    function onMatchFound(payload: { gameId: number }) {
-      setIsSearching(false);
-      void navigate(`/game/${payload.gameId}`);
-    }
-
-    function onSearchCancelled() {
-      setIsSearching(false);
-    }
-
-    function onError(payload: { message: string }) {
-      setIsSearching(false);
-      setSearchError(payload.message);
-    }
-
-    socket.on("match_found", onMatchFound);
-    socket.on("search_cancelled", onSearchCancelled);
-    socket.on("error", onError);
-
-    return () => {
-      socket.off("match_found", onMatchFound);
-      socket.off("search_cancelled", onSearchCancelled);
-      socket.off("error", onError);
-    };
-  }, [socket, navigate]);
-
-  function handleFindGame() {
-    if (!socket) {
-      setSearchError("Not connected. Please refresh the page.");
-      return;
-    }
-    setSearchError(null);
-    setIsSearching(true);
-    socket.emit("find_game");
-  }
-
-  function handleCancelSearch() {
-    if (!socket) return;
-    socket.emit("cancel_search");
+  function handlePlayOnline() {
+    void navigate("/matchmaking");
   }
 
   return (
@@ -86,10 +43,9 @@ export default function GameLobby() {
           imageAlt="Play online mode"
           title="Play Online"
           description="Play against a friend or find a match"
-          buttonText={isSearching ? "Searching..." : "Find Match"}
-          onClick={isSearching ? handleCancelSearch : handleFindGame}
+          buttonText="Find Match"
+          onClick={handlePlayOnline}
           color="green"
-          loading={isSearching}
         />
 
         <GameModeCard
@@ -123,10 +79,6 @@ export default function GameLobby() {
           </div>
         </GameModeCard>
       </div>
-
-      {searchError ? (
-        <p className="text-center text-sm text-red-500">{searchError}</p>
-      ) : null}
 
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs text-pong-text/40">or</span>
