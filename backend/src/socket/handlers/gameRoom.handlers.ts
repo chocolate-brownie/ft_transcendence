@@ -1,15 +1,10 @@
 import type { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { gameRoomService } from "../services/gameRoom.service";
+import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 
 type JoinGameRoomPayload = { gameId?: unknown };
 type LeaveGameRoomPayload = { gameId?: unknown };
-
-type SocketUser = {
-  id: number;
-  username: string;
-  avatarUrl?: string;
-};
 
 const gamePlayersSelect = {
   player1: {
@@ -19,31 +14,6 @@ const gamePlayersSelect = {
     select: { id: true, username: true, avatarUrl: true },
   },
 } as const;
-
-function assertGameId(value: unknown): number {
-  if (!Number.isInteger(value) || Number(value) <= 0) {
-    throw new Error("Invalid gameId");
-  }
-  return Number(value);
-}
-
-function roomNameForGame(gameId: number): string {
-  return `game-${gameId}`;
-}
-
-function getSocketUser(socket: Socket): SocketUser {
-  const user = socket.data.user as Partial<SocketUser> | undefined;
-
-  if (!user || typeof user.id !== "number" || typeof user.username !== "string") {
-    throw new Error("Unauthorized");
-  }
-
-  return {
-    id: user.id,
-    username: user.username,
-    avatarUrl: user.avatarUrl,
-  };
-}
 
 function buildJoinedPayload(game: {
   id: number;
@@ -107,7 +77,7 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
         return;
       }
 
-      const roomName = roomNameForGame(gameId);
+      const roomName = getGameRoomName(gameId);
       await socket.join(roomName);
 
       gameRoomService.addPlayerToRoom(gameId, {
@@ -146,7 +116,7 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
     try {
       const user = getSocketUser(socket);
       const gameId = assertGameId(payload?.gameId);
-      const roomName = roomNameForGame(gameId);
+      const roomName = getGameRoomName(gameId);
 
       await socket.leave(roomName);
       gameRoomService.removePlayerFromRoom(gameId, user.id);
@@ -161,7 +131,6 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
       socket.emit("error", { message });
     }
   });
-
 }
 
 export function handleGameRoomDisconnect(_io: Server, socket: Socket) {
@@ -170,7 +139,7 @@ export function handleGameRoomDisconnect(_io: Server, socket: Socket) {
     const removedEntries = gameRoomService.removePlayerFromAllRooms(user.id);
 
     for (const { gameId } of removedEntries) {
-      const roomName = roomNameForGame(gameId);
+      const roomName = getGameRoomName(gameId);
       socket.to(roomName).emit("opponent_disconnected", {
         userId: user.id,
         username: user.username,
