@@ -16,14 +16,35 @@ function formatRelativeDate(date: string): string {
   const minutes = Math.floor(diffMs / (1000 * 60));
 
   if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 60) return `${minutes}m ago`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return `${hours}h ago`;
 
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return `${days}d ago`;
 }
+
+const statusBarMap: Record<string, string> = {
+  REGISTERING: "bg-pong-accent",
+  IN_PROGRESS: "bg-blue-400",
+  FINISHED: "bg-pong-secondary",
+  CANCELLED: "bg-shadow-grey-300",
+};
+
+const statusLabelMap: Record<string, string> = {
+  REGISTERING: "Pending",
+  IN_PROGRESS: "Active",
+  FINISHED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+const statusClassMap: Record<string, string> = {
+  REGISTERING: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+  IN_PROGRESS: "bg-blue-100 text-blue-800 border border-blue-200",
+  FINISHED: "bg-green-100 text-green-800 border border-green-200",
+  CANCELLED: "bg-gray-100 text-gray-700 border border-gray-200",
+};
 
 export default function TournamentCard({
   tournament,
@@ -34,20 +55,6 @@ export default function TournamentCard({
 }: TournamentCardProps) {
   const isRegistering = tournament.status === "REGISTERING";
   const isFull = tournament.currentParticipants >= tournament.maxPlayers;
-
-  const statusLabelMap = {
-    REGISTERING: "Pending",
-    IN_PROGRESS: "Active",
-    FINISHED: "Completed",
-    CANCELLED: "Cancelled",
-  };
-
-  const statusClassMap = {
-    REGISTERING: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-    IN_PROGRESS: "bg-blue-100 text-blue-800 border border-blue-200",
-    FINISHED: "bg-green-100 text-green-800 border border-green-200",
-    CANCELLED: "bg-gray-100 text-gray-700 border border-gray-200",
-  };
 
   const action = () => {
     if (!isRegistering) {
@@ -73,7 +80,7 @@ export default function TournamentCard({
     if (isFull) {
       return (
         <Button variant="secondary" className="w-full" disabled>
-          FULL
+          Full
         </Button>
       );
     }
@@ -91,57 +98,72 @@ export default function TournamentCard({
   };
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white/40 p-5 backdrop-blur-xl shadow-sm">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-semibold text-pong-text">{tournament.name}</h3>
-          <p className="mt-1 text-sm text-pong-text/60">
-            Created by {tournament.creator.username} •{" "}
-            {formatRelativeDate(tournament.createdAt)}
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusClassMap[tournament.status]}`}
-        >
-          {statusLabelMap[tournament.status]}
-        </span>
-      </div>
+    <div className="group relative overflow-hidden rounded-2xl border border-black/10 bg-white/50 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+      {/* Status accent bar */}
+      <div className={`h-1 w-full ${statusBarMap[tournament.status]}`} />
 
-      <div className="mb-5">
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-pong-text/60">Players</span>
+      <div className="flex flex-col gap-4 p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-xl font-bold text-pong-text">
+              {tournament.name}
+            </h3>
+            <p className="mt-0.5 text-xs text-pong-text/50">
+              by {tournament.creator.username} ·{" "}
+              {formatRelativeDate(tournament.createdAt)}
+            </p>
+          </div>
           <span
-            className={`font-semibold ${isFull ? "text-red-600" : "text-pong-secondary"}`}
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusClassMap[tournament.status]}`}
           >
-            {isFull
-              ? `FULL (${tournament.currentParticipants}/${tournament.maxPlayers})`
-              : `${tournament.currentParticipants}/${tournament.maxPlayers} players`}
+            {statusLabelMap[tournament.status]}
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-black/10">
-          <div
-            className={`h-2 rounded-full ${isFull ? "bg-red-500" : "bg-pong-secondary"}`}
-            style={{
-              width: `${Math.min(
-                100,
-                (tournament.currentParticipants / tournament.maxPlayers) * 100,
-              )}%`,
-            }}
-          />
+
+        {/* Players progress */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-xs font-medium uppercase tracking-wide text-pong-text/50">
+              Players
+            </span>
+            <span
+              className={`text-xs font-bold ${isFull ? "text-red-500" : "text-pong-secondary"}`}
+            >
+              {tournament.currentParticipants} / {tournament.maxPlayers}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/10">
+            <div
+              className={`h-1.5 rounded-full transition-all ${isFull ? "bg-red-400" : "bg-pong-secondary"}`}
+              style={{
+                width: `${Math.min(
+                  100,
+                  (tournament.currentParticipants / tournament.maxPlayers) * 100,
+                )}%`,
+              }}
+            />
+          </div>
         </div>
+
+        {/* Winner banner */}
+        {tournament.status === "FINISHED" && tournament.winner ? (
+          <div className="flex items-center gap-2.5 rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2">
+            <span className="text-base">🏆</span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-600">
+                Champion
+              </p>
+              <p className="truncate text-sm font-bold text-pong-text">
+                {tournament.winner.username}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Action button */}
+        {action()}
       </div>
-
-      {tournament.status === "FINISHED" && tournament.winner ? (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm">
-          <span>🏆</span>
-          <span className="text-pong-text/70">
-            <span className="font-semibold text-pong-text">{tournament.winner.username}</span>{" "}
-            won this tournament!
-          </span>
-        </div>
-      ) : null}
-
-      {action()}
     </div>
   );
 }

@@ -33,13 +33,33 @@ export default function CreateTournamentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-black/10 bg-pong-background p-6 shadow-xl">
-        <h2 className="text-2xl font-bold text-pong-text">Create Tournament</h2>
-        <p className="mt-1 text-sm text-pong-text/60">Set a name and bracket size.</p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white/70 p-6 shadow-2xl backdrop-blur-xl">
+        {/* Header */}
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-pong-text">Create Tournament</h2>
+            <p className="mt-0.5 text-sm text-pong-text/50">
+              Set a name and bracket size.
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="mt-0.5 rounded-lg p-1 text-pong-text/40 transition-colors hover:bg-black/8 hover:text-pong-text"
+          >
+            ✕
+          </button>
+        </div>
 
         <form
-          className="mt-5 space-y-4"
+          className="space-y-5"
           onSubmit={(e) => {
             void submit(e);
           }}
@@ -54,34 +74,44 @@ export default function CreateTournamentModal({
             required
           />
 
-          <fieldset className="space-y-2">
-            <legend className="text-sm text-pong-text/70">Max players</legend>
-            <label className="flex items-center gap-2 text-pong-text">
-              <input
-                type="radio"
-                name="maxPlayers"
-                checked={maxPlayers === 4}
-                onChange={() => setMaxPlayers(4)}
-              />
-              4 players
-            </label>
-            <label className="flex items-center gap-2 text-pong-text">
-              <input
-                type="radio"
-                name="maxPlayers"
-                checked={maxPlayers === 8}
-                onChange={() => setMaxPlayers(8)}
-              />
-              8 players
-            </label>
+          {/* Bracket size toggle */}
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-pong-text/70">
+              Bracket size
+            </legend>
+            <div className="flex gap-3">
+              {([4, 8] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setMaxPlayers(n)}
+                  className={`flex flex-1 flex-col items-center rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
+                    maxPlayers === n
+                      ? "border-pong-accent bg-pong-accent/10 text-pong-accent ring-1 ring-pong-accent/30"
+                      : "border-black/10 bg-black/5 text-pong-text/60 hover:border-black/20 hover:bg-black/8"
+                  }`}
+                >
+                  <span className="text-xl font-bold">{n}</span>
+                  <span className="mt-0.5 text-xs font-medium uppercase tracking-wide opacity-70">
+                    Players
+                  </span>
+                </button>
+              ))}
+            </div>
           </fieldset>
 
           {validationError ? (
-            <p className="text-sm text-red-500">{validationError}</p>
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {validationError}
+            </p>
           ) : null}
-          {error ? <p className="text-sm text-red-500">{error}</p> : null}
+          {error ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {error}
+            </p>
+          ) : null}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-1">
             <Button
               variant="secondary"
               type="button"
@@ -91,7 +121,7 @@ export default function CreateTournamentModal({
               Cancel
             </Button>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create"}
+              {isCreating ? "Creating..." : "Create Tournament"}
             </Button>
           </div>
         </form>

@@ -111,8 +111,8 @@ export default function TournamentDetail() {
         <div>
           <h1 className="text-4xl font-bold text-pong-text">{tournament.name}</h1>
           <p className="mt-1 text-sm text-pong-text/50">
-            Created by {tournament.creator.username} •{" "}
-            {tournament.maxPlayers} player bracket
+            Created by {tournament.creator.username} • {tournament.maxPlayers} player
+            bracket
           </p>
         </div>
         <span
@@ -130,7 +130,9 @@ export default function TournamentDetail() {
             <p className="text-xs font-semibold uppercase tracking-widest text-yellow-700">
               Tournament Champion
             </p>
-            <p className="text-xl font-bold text-pong-text">{tournament.winner.username}</p>
+            <p className="text-xl font-bold text-pong-text">
+              {tournament.winner.username}
+            </p>
           </div>
         </div>
       ) : null}
@@ -165,13 +167,16 @@ export default function TournamentDetail() {
 
         {isRegistering ? (
           <div className="rounded-xl border border-dashed border-black/15 bg-white/20 p-12 text-center">
-            <p className="text-lg font-semibold text-pong-text">Bracket not yet generated</p>
+            <p className="text-lg font-semibold text-pong-text">
+              Bracket not yet generated
+            </p>
             <p className="mt-1 text-sm text-pong-text/50">
-              Waiting for all {tournament.maxPlayers} players to join before the bracket is
-              drawn.
+              Waiting for all {tournament.maxPlayers} players to join before the bracket
+              is drawn.
             </p>
             <p className="mt-2 text-sm text-pong-accent">
-              {tournament.participants.length} / {tournament.maxPlayers} players registered
+              {tournament.participants.length} / {tournament.maxPlayers} players
+              registered
             </p>
           </div>
         ) : bracket ? (

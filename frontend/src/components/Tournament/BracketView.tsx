@@ -10,10 +10,7 @@ function MatchCard({ match, isCurrentRound }: MatchCardProps) {
   const player2 = match.player2;
   const isComplete = match.winner !== null;
 
-  function playerRow(
-    player: BracketMatch["player1"],
-    isWinner: boolean,
-  ) {
+  function playerRow(player: BracketMatch["player1"], isWinner: boolean) {
     const name = player?.username ?? "TBD";
     const isEmpty = !player;
 
@@ -85,9 +82,7 @@ export default function BracketView({ bracket }: BracketViewProps) {
             <div className="text-center">
               <span
                 className={`text-xs font-semibold uppercase tracking-widest ${
-                  round === currentRound
-                    ? "text-pong-accent"
-                    : "text-pong-text/40"
+                  round === currentRound ? "text-pong-accent" : "text-pong-text/40"
                 }`}
               >
                 {roundLabel(round, totalRounds)}

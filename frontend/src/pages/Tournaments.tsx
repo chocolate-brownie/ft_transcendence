@@ -113,6 +113,7 @@ export default function Tournaments() {
     try {
       const created = await tournamentService.createTournament(name, maxPlayers);
       setShowCreateModal(false);
+      await loadTournaments();
       void navigate(`/tournaments/${created.id}`);
     } catch (err) {
       const message =
@@ -129,43 +130,102 @@ export default function Tournaments() {
 
   return (
     <div className="w-full max-w-6xl py-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-4xl font-bold text-pong-text">Tournaments</h1>
-        <Button onClick={() => setShowCreateModal(true)}>+ Create Tournament</Button>
+      {/* ── Hero card ──────────────────────────────────────────── */}
+      <div className="mb-8 overflow-hidden rounded-2xl border border-black/10 bg-white/50 shadow-sm backdrop-blur-xl">
+        {/* Orange → lime gradient bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-pong-accent to-pong-secondary" />
+
+        <div className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-center">
+          {/* Illustration */}
+          <div className="flex h-36 w-36 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-carrot-orange-50/60">
+            <img
+              src="/tourn.png"
+              alt="Tournaments"
+              className="h-full w-full object-contain p-2"
+            />
+          </div>
+
+          {/* Title + description + tags */}
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <h1 className="text-4xl font-extrabold text-pong-accent sm:text-5xl">
+              Tournaments
+            </h1>
+            <p className="mt-2 text-sm text-pong-text/60 sm:text-base">
+              Compete in single-elimination brackets. Climb the ranks. Be crowned
+              champion.
+            </p>
+            {/* Feature tags — each coloured by its theme */}
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              <span className="rounded-full border border-pong-accent/25 bg-carrot-orange-50/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pong-accent">
+                4–8 Players
+              </span>
+              <span className="rounded-full border border-pong-secondary/25 bg-lime-moss-50/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pong-secondary">
+                Single Elimination
+              </span>
+              <span className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
+                Real-time
+              </span>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="shrink-0">
+            <Button
+              className="whitespace-nowrap"
+              onClick={() => setShowCreateModal(true)}
+            >
+              + Create Tournament
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-black/10 pb-3">
-        {(Object.keys(tabStatusMap) as TabKey[]).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === tab
-                ? "bg-pong-accent text-white"
-                : "bg-black/5 text-pong-text/70 hover:bg-black/10"
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tabLabelMap[tab]}
-          </button>
-        ))}
+      {/* ── Segment tabs ───────────────────────────────────────── */}
+      <div className="mb-6 flex rounded-xl bg-black/5 p-1">
+        {(Object.keys(tabStatusMap) as TabKey[]).map((tab) => {
+          const activeColor =
+            tab === "available"
+              ? "text-pong-accent"
+              : tab === "completed"
+                ? "text-pong-secondary"
+                : "text-blue-600";
+          return (
+            <button
+              key={tab}
+              type="button"
+              className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+                activeTab === tab
+                  ? `bg-white shadow-sm ${activeColor}`
+                  : "text-pong-text/55 hover:text-pong-text"
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tabLabelMap[tab]}
+            </button>
+          );
+        })}
       </div>
 
+      {/* ── Content ────────────────────────────────────────────── */}
       {loading ? (
-        <p className="py-12 text-center text-pong-text/70">Loading tournaments...</p>
+        <div className="py-20 text-center">
+          <p className="text-sm text-pong-text/50">Loading tournaments...</p>
+        </div>
       ) : null}
 
       {!loading && error ? (
-        <p className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <p className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </p>
       ) : null}
 
       {!loading && tournaments.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-black/15 bg-white/30 p-12 text-center">
-          <p className="text-lg font-semibold text-pong-text">No tournaments found</p>
-          <p className="mt-1 text-sm text-pong-text/60">
-            Switch tabs or create a new tournament to get started.
+        <div className="rounded-2xl border border-dashed border-black/15 bg-white/30 p-16 text-center backdrop-blur-sm">
+          <p className="text-lg font-semibold text-pong-text">No tournaments here yet</p>
+          <p className="mt-2 text-sm text-pong-text/50">
+            {activeTab === "available"
+              ? "Be the first — create a tournament and start the competition."
+              : "Nothing to show for this tab yet."}
           </p>
         </div>
       ) : null}
