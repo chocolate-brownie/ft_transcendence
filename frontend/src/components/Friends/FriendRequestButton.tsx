@@ -36,7 +36,9 @@ export default function FriendRequestButton({
         if (!cancelled) setStatus(nextStatus);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load friendship status");
+          setError(
+            err instanceof Error ? err.message : "Failed to load friendship status",
+          );
         }
       }
     };
@@ -116,10 +118,18 @@ export default function FriendRequestButton({
         </Button>
       ) : status === "pending_received" ? (
         <div className="flex gap-2">
-          <Button variant="primary" className="flex-1" onClick={() => void handleAccept()}>
+          <Button
+            variant="primary"
+            className="flex-1"
+            onClick={() => void handleAccept()}
+          >
             Accept
           </Button>
-          <Button variant="secondary" className="flex-1" onClick={() => void handleDecline()}>
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={() => void handleDecline()}
+          >
             Decline
           </Button>
         </div>

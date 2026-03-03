@@ -22,7 +22,12 @@ function formatRelativeTime(isoString: string): string {
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-export function ConversationItem({ conversation, isActive, currentUserId, onClick }: ConversationItemProps) {
+export function ConversationItem({
+  conversation,
+  isActive,
+  currentUserId,
+  onClick,
+}: ConversationItemProps) {
   const { user, lastMessage, unreadCount } = conversation;
 
   const avatarSrc =
@@ -52,7 +57,9 @@ export function ConversationItem({ conversation, isActive, currentUserId, onClic
           src={avatarSrc}
           alt={`${user.username} avatar`}
           className="h-11 w-11 rounded-full object-cover border border-black/10"
-          onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
+          onError={(e) => {
+            e.currentTarget.src = "/default-avatar.png";
+          }}
         />
         {user.isOnline && (
           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
@@ -62,14 +69,18 @@ export function ConversationItem({ conversation, isActive, currentUserId, onClic
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
-          <span className={`text-sm truncate ${unreadCount > 0 ? "font-semibold text-pong-text" : "font-medium text-pong-text/80"}`}>
+          <span
+            className={`text-sm truncate ${unreadCount > 0 ? "font-semibold text-pong-text" : "font-medium text-pong-text/80"}`}
+          >
             {displayName}
           </span>
           <span className="text-xs text-pong-text/40 flex-shrink-0">
             {formatRelativeTime(lastMessage.createdAt)}
           </span>
         </div>
-        <p className={`text-xs truncate mt-0.5 ${unreadCount > 0 ? "text-pong-text/80" : "text-pong-text/50"}`}>
+        <p
+          className={`text-xs truncate mt-0.5 ${unreadCount > 0 ? "text-pong-text/80" : "text-pong-text/50"}`}
+        >
           {truncatedPreview}
         </p>
       </div>

@@ -89,15 +89,34 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
           where: { id: existing.id },
           data: { status: "ACCEPTED" },
           include: {
-            requester: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
-            addressee: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+            requester: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+                isOnline: true,
+              },
+            },
+            addressee: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+                isOnline: true,
+              },
+            },
           },
         });
         return accepted;
       }
 
       // We already sent a request to this user
-      throw new AppError(409, "A friend request already exists between you and this user");
+      throw new AppError(
+        409,
+        "A friend request already exists between you and this user",
+      );
     }
 
     // No existing relationship → create the friend request
@@ -109,11 +128,23 @@ export async function createFriendRequest(requesterId: number, addresseeId: numb
         status: "PENDING",
       },
       include: {
-        requester: { 
-          select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } 
+        requester: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            isOnline: true,
+          },
         },
-        addressee: { 
-          select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } 
+        addressee: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            isOnline: true,
+          },
         },
       },
     });
@@ -140,7 +171,10 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
   }
 
   if (friendRequest.status !== "PENDING") {
-    throw new AppError(400, `Friend request is already ${friendRequest.status.toLowerCase()}`);
+    throw new AppError(
+      400,
+      `Friend request is already ${friendRequest.status.toLowerCase()}`,
+    );
   }
 
   const updatedRequest = await prisma.friend.update({
@@ -148,7 +182,15 @@ export async function acceptFriendRequest(requestId: number, currentUserId: numb
     data: { status: "ACCEPTED" },
     include: {
       requester: { select: { id: true, username: true } },
-      addressee: { select: { id: true, username: true, displayName: true, avatarUrl: true, isOnline: true } },
+      addressee: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          isOnline: true,
+        },
+      },
     },
   });
 

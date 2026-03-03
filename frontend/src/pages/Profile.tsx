@@ -98,9 +98,7 @@ export default function Profile() {
         if (!cancelled) setFriends(data);
       } catch (err) {
         if (!cancelled) {
-          setFriendsError(
-            err instanceof Error ? err.message : "Failed to load friends",
-          );
+          setFriendsError(err instanceof Error ? err.message : "Failed to load friends");
         }
       } finally {
         if (!cancelled) setFriendsLoading(false);
@@ -390,7 +388,9 @@ export default function Profile() {
                       // type definitions, so we wire it up natively.
                       fileInputRef.current.addEventListener(
                         "cancel",
-                        () => { avatarSavingRef.current = false; },
+                        () => {
+                          avatarSavingRef.current = false;
+                        },
                         { once: true },
                       );
                       fileInputRef.current.click();
@@ -402,7 +402,9 @@ export default function Profile() {
                     src={avatarSrc}
                     alt="Avatar"
                     className="h-full w-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
+                    onError={(e) => {
+                      e.currentTarget.src = "/default-avatar.png";
+                    }}
                   />
 
                   {isMine && (

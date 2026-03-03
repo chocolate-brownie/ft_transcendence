@@ -30,12 +30,7 @@ export default function TurnIndicator({
 
   return (
     <div
-      className={
-        "text-center py-3 text-lg font-semibold " +
-        colorClass +
-        " " +
-        className
-      }
+      className={"text-center py-3 text-lg font-semibold " + colorClass + " " + className}
     >
       {text}
     </div>

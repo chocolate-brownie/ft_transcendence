@@ -60,19 +60,14 @@ export async function joinTournament(tournamentId: number, userId: number) {
     }
 
     if (tournament.status !== "REGISTERING") {
-      throw new TournamentError(
-        "Tournament is no longer accepting players",
-        409,
-      );
+      throw new TournamentError("Tournament is no longer accepting players", 409);
     }
 
     if (tournament.participants.length >= tournament.maxPlayers) {
       throw new TournamentError("Tournament is full", 409);
     }
 
-    const alreadyJoined = tournament.participants.some(
-      (p) => p.userId === userId,
-    );
+    const alreadyJoined = tournament.participants.some((p) => p.userId === userId);
 
     if (alreadyJoined) {
       throw new TournamentError("Already joined this tournament", 400);
@@ -179,10 +174,7 @@ export async function recordMatchResult(
 
     // 4. Winner must be one of the two players
     if (winnerId !== match.player1Id && winnerId !== match.player2Id) {
-      throw new TournamentError(
-        "Winner must be player1 or player2 of this match",
-        400,
-      );
+      throw new TournamentError("Winner must be player1 or player2 of this match", 400);
     }
 
     // 5. Validate game exists, is finished, and winner matches
@@ -195,20 +187,11 @@ export async function recordMatchResult(
       throw new TournamentError("Game must be finished", 400);
     }
     if (game.winnerId !== winnerId) {
-      throw new TournamentError(
-        "Game winner does not match the specified winner",
-        400,
-      );
+      throw new TournamentError("Game winner does not match the specified winner", 400);
     }
 
     // 6. Record result + advance winner (bracket logic)
-    const result = await advanceWinner(
-      tournamentId,
-      matchId,
-      winnerId,
-      gameId,
-      tx,
-    );
+    const result = await advanceWinner(tournamentId, matchId, winnerId, gameId, tx);
 
     return {
       message: "Match result recorded",

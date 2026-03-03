@@ -129,9 +129,7 @@ export function MessageInput({ receiverId }: MessageInputProps) {
 
   return (
     <div className="border-t border-black/10 px-4 py-3 flex flex-col gap-1">
-      {error && (
-        <p className="text-xs text-red-500 px-1">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500 px-1">{error}</p>}
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}

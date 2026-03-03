@@ -9,7 +9,7 @@
     "emitDeclarationOnly": true,
     "declaration": true,
     "composite": true,
-    "strict": true,
+    "strict": true
   },
-  "include": ["vite.config.ts"],
+  "include": ["vite.config.ts"]
 }

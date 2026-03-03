@@ -78,15 +78,18 @@ Ask this question: **"What is currently blocking the most people?"**
 That thing is the highest priority.
 
 **Early in the project:**
+
 - Auth blocks everything (profiles, friends, chat, game history all need users)
 - Auth is the first priority after infrastructure
 
 **Mid-project:**
+
 - Nothing blocks anyone — features are independent
 - Everyone works on their assigned track
 - Tech lead reviews PRs and catches integration issues early
 
 **Late in the project:**
+
 - Features are done, bugs need fixing
 - Everyone tests features they didn't build
 - Tech lead focuses on the mandatory subject requirements checklist
@@ -154,12 +157,12 @@ The Tech Lead defines these contracts when they're not obvious.
 
 The riskiest parts of the project are where two people's work meets:
 
-| Integration Point | Who's Involved | Risk |
-| :--- | :--- | :--- |
-| Frontend auth ↔ Backend auth API | zamgar + mamahtal, tzizi | Request/response shape mismatch |
-| Chat UI ↔ Socket.io events | zamgar + mgodawat | Event names don't match, messages not received |
-| Game board ↔ Game logic API | zamgar, jayzatov + mamahtal, tzizi | Board state format differs between frontend and backend |
-| Multiplayer ↔ Game logic | mgodawat + mamahtal, tzizi | Server validates moves differently than client expects |
+| Integration Point                | Who's Involved                     | Risk                                                    |
+| :------------------------------- | :--------------------------------- | :------------------------------------------------------ |
+| Frontend auth ↔ Backend auth API | zamgar + mamahtal, tzizi           | Request/response shape mismatch                         |
+| Chat UI ↔ Socket.io events       | zamgar + mgodawat                  | Event names don't match, messages not received          |
+| Game board ↔ Game logic API      | zamgar, jayzatov + mamahtal, tzizi | Board state format differs between frontend and backend |
+| Multiplayer ↔ Game logic         | mgodawat + mamahtal, tzizi         | Server validates moves differently than client expects  |
 
 **How to reduce risk:** Define the contract before building. Test the integration as soon as both sides have a basic version. Don't wait until Day 10 to connect frontend to backend for the first time.
 
@@ -181,17 +184,17 @@ The riskiest parts of the project are where two people's work meets:
 
 ## Timeline Reference
 
-| Days | Focus | Everyone's priority |
-| :--- | :--- | :--- |
-| 1 | Foundation | Get local environment working |
-| 2–3 | Auth + profiles | Make user system solid |
-| 3–4 | Social features + game start | Friends, chat, game board |
-| 5–6 | Game complete + multiplayer | Two players can play remotely |
-| 7 | Tournament system | Bracket play working |
-| 8–9 | Bonus modules | AI, customization, stats |
-| 10 | Integration + first bug pass | Everything connected, initial fixes |
-| 11–13 | Deep testing | Everyone tests everything |
-| 14 | Mandatory checks | Subject requirements verified |
-| 15 | Submission prep | README, evaluation practice |
+| Days  | Focus                        | Everyone's priority                 |
+| :---- | :--------------------------- | :---------------------------------- |
+| 1     | Foundation                   | Get local environment working       |
+| 2–3   | Auth + profiles              | Make user system solid              |
+| 3–4   | Social features + game start | Friends, chat, game board           |
+| 5–6   | Game complete + multiplayer  | Two players can play remotely       |
+| 7     | Tournament system            | Bracket play working                |
+| 8–9   | Bonus modules                | AI, customization, stats            |
+| 10    | Integration + first bug pass | Everything connected, initial fixes |
+| 11–13 | Deep testing                 | Everyone tests everything           |
+| 14    | Mandatory checks             | Subject requirements verified       |
+| 15    | Submission prep              | README, evaluation practice         |
 
 See [implementation_plan.md](implementation_plan.md) for detailed daily breakdowns.

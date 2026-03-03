@@ -152,7 +152,9 @@ test.describe("Protected routes — access control", () => {
       await expect(page).toHaveURL("/login", { timeout: 5000 });
     });
 
-    test("redirects /profile to /login when token is a random string", async ({ page }) => {
+    test("redirects /profile to /login when token is a random string", async ({
+      page,
+    }) => {
       await page.evaluate(() => localStorage.setItem("token", "not-a-valid-jwt"));
 
       await page.goto("/profile");
@@ -161,7 +163,9 @@ test.describe("Protected routes — access control", () => {
       await expect(page).toHaveURL("/login", { timeout: 5000 });
     });
 
-    test("token is removed from localStorage after an invalid token is rejected", async ({ page }) => {
+    test("token is removed from localStorage after an invalid token is rejected", async ({
+      page,
+    }) => {
       await page.evaluate(() => localStorage.setItem("token", "not-a-valid-jwt"));
 
       await page.goto("/profile");
@@ -175,7 +179,9 @@ test.describe("Protected routes — access control", () => {
   // ── Session Refresh ────────────────────────────────────────────────────────
 
   test.describe("Session persistence across navigation", () => {
-    test("stays on /profile after page reload (token survives reload)", async ({ page }) => {
+    test("stays on /profile after page reload (token survives reload)", async ({
+      page,
+    }) => {
       await loginAndGetToken(page);
 
       await page.goto("/profile");
@@ -205,7 +211,9 @@ test.describe("Protected routes — access control", () => {
   // ── Multi-tab: logout ──────────────────────────────────────────────────────
 
   test.describe("Multi-tab logout", () => {
-    test("accessing a protected route after token removal reflects logged-out state", async ({ page }) => {
+    test("accessing a protected route after token removal reflects logged-out state", async ({
+      page,
+    }) => {
       // Login and land on home
       await loginAndGetToken(page);
 

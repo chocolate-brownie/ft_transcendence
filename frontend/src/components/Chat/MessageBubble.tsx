@@ -13,9 +13,11 @@ function formatTimestamp(createdAt: string): string {
   if (isToday) {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString([], { month: "short", day: "numeric" }) +
+  return (
+    date.toLocaleDateString([], { month: "short", day: "numeric" }) +
     " " +
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
 }
 
 export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
@@ -33,11 +35,15 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           src={avatarSrc}
           alt={`${message.sender.username} avatar`}
           className="h-7 w-7 rounded-full object-cover border border-black/10 flex-shrink-0 mb-1"
-          onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
+          onError={(e) => {
+            e.currentTarget.src = "/default-avatar.png";
+          }}
         />
       )}
 
-      <div className={`flex flex-col gap-1 max-w-[70%] min-w-0 ${isOwn ? "items-end" : "items-start"}`}>
+      <div
+        className={`flex flex-col gap-1 max-w-[70%] min-w-0 ${isOwn ? "items-end" : "items-start"}`}
+      >
         <div
           className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
             isOwn

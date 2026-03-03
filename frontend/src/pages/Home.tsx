@@ -13,7 +13,7 @@ export default function Home() {
   const [health, setHealth] = useState<HealthStatus>(null);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const displayLabel = user ? user.displayName ?? user.username : "";
+  const displayLabel = user ? (user.displayName ?? user.username) : "";
 
   useEffect(() => {
     fetch("/api/health")
@@ -51,12 +51,14 @@ export default function Home() {
         </h1>
         {user ? (
           <p className="text-sm md:text-base text-pong-text/70 max-w-2xl mx-auto">
-            Welcome back, <span className="font-semibold text-pong-text/90">{displayLabel}</span>. Ready for another match?
+            Welcome back,{" "}
+            <span className="font-semibold text-pong-text/90">{displayLabel}</span>. Ready
+            for another match?
           </p>
         ) : (
           <p className="text-sm md:text-base text-pong-text/70 max-w-2xl mx-auto">
-            Experience the classic game of Tic-Tac-Toe reimagined with real-time multiplayer,
-            global leaderboards, and advanced AI opponents.
+            Experience the classic game of Tic-Tac-Toe reimagined with real-time
+            multiplayer, global leaderboards, and advanced AI opponents.
           </p>
         )}
 
@@ -105,7 +107,7 @@ export default function Home() {
             { label: "Real-Time", icon: "/realtime.svg", to: "/game" },
             { label: "Minimax AI", icon: "/aibot.svg", to: null },
             { label: "Tournaments", icon: "/tournement.svg", to: "/tournaments" },
-                      ].map(({ label, icon, to }) =>
+          ].map(({ label, icon, to }) =>
             to ? (
               <Link
                 key={label}

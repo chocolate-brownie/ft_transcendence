@@ -35,7 +35,11 @@ const { app } = await import("../src/index.js");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-const asStatus = (requesterId: number, addresseeId: number, status: "PENDING" | "ACCEPTED") => ({
+const asStatus = (
+  requesterId: number,
+  addresseeId: number,
+  status: "PENDING" | "ACCEPTED",
+) => ({
   id: 42,
   requesterId,
   addresseeId,

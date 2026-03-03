@@ -108,7 +108,6 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         yourSymbol: game.player2Symbol,
         room: roomName,
       });
-
     } catch (error: unknown) {
       console.error("[Matchmaking] Error:", error);
       const message = error instanceof Error ? error.message : "Matchmaking failed";

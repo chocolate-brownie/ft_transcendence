@@ -32,6 +32,7 @@ The backend of **ft_transcendence** is organized as a single, containerized serv
 - **ORM**: Prisma Client (auto-generated TypeScript queries)
 
 How data is handled:
+
 - **Schema Migrations**: Prisma Migrate manages versioned migrations in `prisma/migrations`
 - **Connection Pooling**: Managed by Prisma under the hood, with environment-controlled pool sizes
 - **Data Integrity**
@@ -48,6 +49,7 @@ How data is handled:
 Below is a human-readable overview of the main tables and their relationships. A PostgreSQL DDL snippet follows.
 
 Users
+
 - **id**: auto-increment integer primary key
 - **email**: unique string
 - **hashed_password**: string
@@ -58,6 +60,7 @@ Users
 - **statistics**: wins, losses, draws as integers
 
 Games
+
 - **id**: auto-increment integer
 - **mode**: enum (REMOTE, AI, LOCAL)
 - **state**: JSON representing the board
@@ -67,6 +70,7 @@ Games
 - **created_at**, **updated_at**: timestamps
 
 Messages
+
 - **id**: auto-increment integer
 - **sender_id**: FK to Users
 - **target_user_id**: FK to Users (for direct messages) or null
@@ -75,12 +79,14 @@ Messages
 - **sent_at**: timestamp
 
 Friendships
+
 - **id**: auto-increment integer
 - **requester_id**, **receiver_id**: FKs to Users
 - **status**: enum (PENDING, ACCEPTED)
 - **created_at**: timestamp
 
 Tournaments
+
 - **id**: auto-increment integer
 - **name**: string
 - **status**: enum (OPEN, ONGOING, FINISHED)
@@ -88,6 +94,7 @@ Tournaments
 - **created_at**, **updated_at**: timestamps
 
 TournamentMatches (child of Tournaments)
+
 - **id**, **tournament_id**: FK
 - **round**: integer
 - **player1_id**, **player2_id**: FKs to Users
@@ -95,6 +102,7 @@ TournamentMatches (child of Tournaments)
 - **scheduled_at**, **completed_at**: timestamps
 
 SQL Schema Snippet (PostgreSQL)
+
 ```sql
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -171,6 +179,7 @@ CREATE TABLE tournament_matches (
 The backend exposes both RESTful HTTP endpoints and WebSocket events:
 
 ### REST Endpoints (Express)
+
 - **POST /api/auth/signup**  
   Registers a new user. Returns JWT on success.
 - **POST /api/auth/login**  
@@ -205,6 +214,7 @@ The backend exposes both RESTful HTTP endpoints and WebSocket events:
   Returns paginated ranking by win rate.
 
 ### WebSocket Events (Socket.io)
+
 - **`join_queue`**  
   Client requests matchmaking for online game.
 - **`start_game`**  
@@ -237,7 +247,7 @@ The backend exposes both RESTful HTTP endpoints and WebSocket events:
 - **Load Balancer / Reverse Proxy**
   - NGINX, Traefik, or cloud-managed LB for SSL termination and routing HTTP/WebSocket to containers
 - **Caching**
-  - *Optional:* Redis for Socket.io adapter (scaling real-time events across instances) and session caching
+  - _Optional:_ Redis for Socket.io adapter (scaling real-time events across instances) and session caching
   - HTTP caching headers for static assets served via CDN
 - **Content Delivery Network (CDN)**
   - Host static files (frontend build) on Cloudflare/AWS CloudFront for global speed

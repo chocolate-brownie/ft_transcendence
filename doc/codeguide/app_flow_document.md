@@ -13,26 +13,33 @@ Immediately after logging in, the user sees the main dashboard. A fixed sidebar 
 ## Detailed Feature Flows and Page Transitions
 
 ### Online Multiplayer Matchmaking
+
 When the user clicks Play Online, the sidebar highlight moves to that section and the main pane changes to a matchmaking view. Here the user sees a message indicating they are waiting for an opponent and a cancel button. The client uses Socket.io to emit a join request into the matchmaking queue. Once another player is found, the server creates a private match room and emits a “start game” event. Both clients receive this event and automatically transition to the game board page.
 
 On the game board page, the Tic-Tac-Toe grid appears in the center with the two players’ names at the top. A chat panel sits to the right, showing past messages, a typing indicator, and a text box for new messages. When it is a player’s turn, their interface highlights the board and waits for a click on an empty cell. The client sends a move event to the server, which validates the move, updates the shared game state in the database, and broadcasts the new board to both players. This loop continues until a win or draw is detected. The server then updates each player’s win/loss/draw statistics, closes the room, and sends an end-of-game event. The clients display the result and offer buttons to return to the dashboard or play again.
 
 ### AI Opponent Mode
+
 Selecting Play vs AI opens a difficulty selection panel on the main area. The user picks Easy, Medium, or Hard. Easy mode chooses random empty cells, Medium mixes random and limited-depth Minimax, and Hard runs full Minimax with pruning. After choosing, the user clicks "Start" and the page transitions to a layout similar to the multiplayer board, but with no chat panel. The same move events occur, now validated by the server’s AI engine. When the game finishes, the user sees a summary of the match outcome and can choose to retry or go back to the dashboard.
 
 ### Local Hot-Seat Match
+
 Clicking Local Match immediately loads a board view that prompts Player X to make the first move. On each turn, the screen clearly displays which player’s turn it is below the grid. There is no network communication since the game runs entirely in the browser. Once the game ends, the result appears, and the user can restart or return to the dashboard.
 
 ### Friend Management and Chat
+
 When the user clicks Friends, the central area lists current friends with their status icons indicating online, offline, or in-game. At the top there is a search field to enter another user’s display name or email and send a friend request. Incoming requests trigger a badge on the Friends link and appear as cards in the sidebar widget on the dashboard. Accepting or rejecting updates the friend list and sends a real-time notification to the other user via WebSockets. Within any game or the main dashboard, the user can open a chat window with a friend, view message history loaded from the database, compose new messages, and see when the friend is typing.
 
 ### Tournament Bracket System
+
 Navigating to Tournaments shows a list of open tournaments with Join buttons. Clicking Join reserves a spot and updates the bracket view once the tournament starts. The bracket displays all match pairings and the user’s position. As matches progress, results auto-populate. Clicking on an active match entry transitions to the same game board layout used for multiplayer, with the addition of tournament round labels. After each match, the bracket updates and the user can see who they will face next or return to the dashboard.
 
 ### Leaderboard and Statistics
+
 The Leaderboard page presents a ranked table of players sorted by win rate. Above it, a user-specific statistics panel shows total games played, wins, losses, and draws. This page uses pagination or infinite scroll to manage large data sets. Clicking a username transitions to that player’s public profile view, showing their match history and avatar.
 
 ### Profile Editing
+
 Choosing Profile opens a page with fields for display name, avatar upload, and optional bio. Users can also view their personal match history with links to replay games. After making changes, clicking Save sends a request to update the user record in the database. A success message appears, and the new avatar and name immediately update in the header and sidebar. A link on this page also leads to Password Settings for changing the account password.
 
 ## Settings and Account Management
@@ -78,24 +85,25 @@ From the moment a new visitor arrives at the landing page to the point where the
              +------------------+------------------+
              |                  |                  |
              v                  v                  v
-   +---------------+   +---------------+   +---------------+
-   | Online Match  |   | AI Match      |   | Local Match   |
-   +-------+-------+   +-------+-------+   +-------+-------+
-           |                   |                   |
-           v                   v                   v
-   +---------------+   +---------------+   +---------------+
-   | Game Board    |   | Game Board    |   | Game Board    |
-   | + Chat Panel  |   | (AI Engine)   |   | (Hot Seat)    |
-   +-------+-------+   +---------------+   +---------------+
-           |                                          |
-           v                                          v
-   +---------------+                         +----------------+
-   | Show Result & |                         | Show Result & |
-   | Update Stats  |                         | Restart option|
-   +-------+-------+                         +----------------+
-           |
-           v
-   +---------------+
-   | Return to     |
-   | Dashboard     |
-   +---------------+
+
++---------------+ +---------------+ +---------------+
+| Online Match | | AI Match | | Local Match |
++-------+-------+ +-------+-------+ +-------+-------+
+| | |
+v v v
++---------------+ +---------------+ +---------------+
+| Game Board | | Game Board | | Game Board |
+| + Chat Panel | | (AI Engine) | | (Hot Seat) |
++-------+-------+ +---------------+ +---------------+
+| |
+v v
++---------------+ +----------------+
+| Show Result & | | Show Result & |
+| Update Stats | | Restart option|
++-------+-------+ +----------------+
+|
+v
++---------------+
+| Return to |
+| Dashboard |
++---------------+

@@ -73,12 +73,10 @@ export default function GameModeCard({
         </span>
       ) : null}
 
-      <div className={`mx-auto flex h-44 w-full items-center justify-center rounded-2xl ${imageBgMap[color]}`}>
-        <img
-          src={imageSrc}
-          alt={imageAlt}
-          className="h-full w-full object-contain p-3"
-        />
+      <div
+        className={`mx-auto flex h-44 w-full items-center justify-center rounded-2xl ${imageBgMap[color]}`}
+      >
+        <img src={imageSrc} alt={imageAlt} className="h-full w-full object-contain p-3" />
       </div>
 
       <div className="space-y-2">

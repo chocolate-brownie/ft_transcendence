@@ -44,19 +44,11 @@ export default function Game() {
         className="-mb-6"
       />
       {/* Board */}
-      <GameBoard
-      board={board}
-      onCellClick={handleCellClick}
-      winningLine={winningLine}
-      />
+      <GameBoard board={board} onCellClick={handleCellClick} winningLine={winningLine} />
       {/* New / Quit button (placeholders Phase 4) */}
       <div className="mt-7 flex gap-5">
-        <Button variant="primary">
-          New Game
-        </Button>
-        <Button variant="danger">
-          Quit Game
-        </Button>
+        <Button variant="primary">New Game</Button>
+        <Button variant="danger">Quit Game</Button>
       </div>
       {/* Scoreboard / Player vs Player */}
       <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
