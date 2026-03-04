@@ -4,13 +4,11 @@ import Button from "../Button";
 type SearchingScreenProps = {
   queuePosition: number | null;
   onCancel: () => void;
-  isCancelling?: boolean;
 };
 
 export default function SearchingScreen({
   queuePosition,
   onCancel,
-  isCancelling = false,
 }: SearchingScreenProps) {
   return (
     <div className="w-full max-w-lg">
@@ -39,9 +37,8 @@ export default function SearchingScreen({
               variant="danger"
               className="w-full py-3"
               onClick={onCancel}
-              disabled={isCancelling}
             >
-              {isCancelling ? "Cancelling…" : "Cancel Search"}
+              Cancel Search
             </Button>
           </div>
 

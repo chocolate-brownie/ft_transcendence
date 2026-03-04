@@ -6,33 +6,20 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import SearchingScreen from "../components/Matchmaking/SearchingScreen";
 
-type MatchmakingStatus = "idle" | "searching" | "found";
-type PlayerSymbol = "X" | "O";
-type Opponent = {
-  id: number;
-  username: string;
-  avatarUrl: string | null;
-};
-
 type MatchFound = {
   gameId: number;
-  opponent: Opponent;
-  yourSymbol: PlayerSymbol;
-  room?: string;
+  opponent: { username: string };
+  yourSymbol: "X" | "O";
 };
 
 export default function Matchmaking() {
   const navigate = useNavigate();
   const { socket } = useSocket();
 
-  const [status, setStatus] = useState<MatchmakingStatus>("idle");
+  const [status, setStatus] = useState<'idle' | 'searching' | 'found' | 'cancelled'>('idle');
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
-  const [matchData, setMatchData] = useState<MatchFound | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const startedRef = useRef(false);
+  const [matchData, setMatchData] = useState<MatchFound | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -45,38 +32,25 @@ export default function Matchmaking() {
     function onMatchFound(payload: MatchFound) {
       setStatus("found");
       setMatchData(payload);
-      setIsCancelling(false);
-
-      window.setTimeout(() => {
+      setTimeout(() => {
         void navigate(`/game/${payload.gameId}`);
       }, 1500);
     }
 
     function onSearchCancelled() {
-      setIsCancelling(false);
+      setStatus('cancelled');
       void navigate("/lobby");
     }
 
     function onError(payload: { message?: string }) {
       setError(payload?.message ?? "Something went wrong.");
       setStatus("idle");
-      setIsCancelling(false);
     }
 
     socket.on("searching", onSearching);
     socket.on("match_found", onMatchFound);
     socket.on("search_cancelled", onSearchCancelled);
     socket.on("error", onError);
-
-    if (!startedRef.current) {
-      startedRef.current = true;
-      setQueuePosition(null);
-      setMatchData(null);
-      setError(null);
-      setIsCancelling(false);
-      setStatus("searching");
-      socket.emit("find_game");
-    }
 
     return () => {
       socket.off("searching", onSearching);
@@ -86,22 +60,27 @@ export default function Matchmaking() {
     };
   }, [socket, navigate]);
 
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (!socket) return;
+    if (startedRef.current) return;
+
+    startedRef.current = true;
+    setQueuePosition(null);
+    setMatchData(null);
+    setError(null);
+    setStatus("searching");
+    socket.emit("find_game");
+  }, [socket]);
+
   useEffect(() => {
     return () => {
       if (socket && status === "searching") socket.emit("cancel_search");
     };
   }, [socket, status]);
 
-  function handleCancel() {
-    if (!socket) return;
-    if (status !== "searching") return;
-
-    setIsCancelling(true);
-    socket.emit("cancel_search");
-  }
-
-  function handleBackToLobby() {
-    if (socket && status === "searching") socket.emit("cancel_search");
+  function leaveMatchmaking() {
+    if (socket) socket.emit("cancel_search");
     void navigate("/lobby");
   }
 
@@ -113,8 +92,6 @@ export default function Matchmaking() {
     setQueuePosition(null);
     setMatchData(null);
     setError(null);  
-    setIsCancelling(false);
-    startedRef.current = false;
     setStatus("searching");
     socket.emit("find_game");
   }
@@ -126,7 +103,7 @@ export default function Matchmaking() {
 
     return (
     <div className="w-full max-w-lg space-y-6">
-      <button type="button" className={backButtonClass} onClick={handleBackToLobby}>
+      <button type="button" className={backButtonClass} onClick={leaveMatchmaking}>
         ← Back to Lobby
       </button>
 
@@ -139,7 +116,7 @@ export default function Matchmaking() {
           </Button>
         </Card>
       ) : status === "searching" ? (
-        <SearchingScreen queuePosition={queuePosition} onCancel={handleCancel} isCancelling={isCancelling} />
+        <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
       ) : status === "found" ? (
         <Card variant="elevated" className="text-center">
           <div className="space-y-3" role="status" aria-live="polite">
