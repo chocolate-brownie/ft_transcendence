@@ -209,32 +209,42 @@ describe("Game Over Logic - Complete Suite", () => {
     client.disconnect();
   });
 
-  // --- TEST 6: SECURITY / AUTHORIZATION (Issue #176) ---
   it("Test 6: should deny access to a non-participant user", async () => {
-    // 1. Création d'un "Hacker" (User C) qui n'est pas dans la partie
-    const userC = await prisma.user.create({
-      data: { email: "hacker@test.com", username: "Charlie", passwordHash: "h" }
-    });
-    const userCToken = jwt.sign({ id: userC.id, username: userC.username }, JWT_SECRET);
+      const randomId = Math.random().toString(36).substring(7); // Create a random string
 
-    const clientC = Client(`http://localhost:${PORT}`, {
-      auth: { token: `Bearer ${userCToken}` }
-    });
+      // 1. Create a "Hacker" user with a unique username
+      const userC = await prisma.user.create({
+        data: {
+          email: `hacker_${randomId}@test.com`,
+          username: `Charlie_${randomId}`, // Now unique!
+          passwordHash: "h"
+        }
+      });
 
-    const error: any = await new Promise((resolve) => {
-      clientC.on("connect", () => {
-        // Tentative de rejoindre la room d'Alice et Bob
-        clientC.emit("join_game_room", { gameId: game.id }, (response: any) => {
-          resolve(response); // On attend la réponse du serveur (callback)
+      const charlieToken = jwt.sign({ id: userC.id, username: userC.username }, JWT_SECRET);
+
+      const charlieSocket = Client(`http://localhost:${PORT}`, {
+        auth: { token: `Bearer ${charlieToken}` },
+        transports: ['websocket']
+      });
+
+      await new Promise<void>((res) => charlieSocket.on("connect", () => res()));
+
+      // 2. We expect the server to emit "unauthorized"
+      const authErrorPromise = new Promise((resolve) => {
+        charlieSocket.on("unauthorized", (data) => {
+          resolve(data);
         });
       });
-    });
 
-    // VERIFICATION : Le serveur doit refuser
-    expect(error.error).toBeDefined();
-    expect(error.error).toMatch(/unauthorized|not a participant/i);
+      // 3. Charlie tries to join
+      charlieSocket.emit("join_game_room", { gameId: game.id });
 
-    clientC.disconnect();
-  });
+      // 4. Wait for the error
+      const errorData: any = await authErrorPromise;
+      expect(errorData.error).toBe("You are not a participant in this game");
+
+      charlieSocket.disconnect();
+    }, 10000);
 
 });
