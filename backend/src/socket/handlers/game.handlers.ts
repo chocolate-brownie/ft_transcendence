@@ -3,8 +3,39 @@ import { makeMoveInDb, checkGameOver } from "../../services/games.service";
 import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import { processGameOver } from "../../services/gameOver.service";
 import type { Board } from "../../types/game";
+import prisma from "../../lib/prisma";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
+
+  // --- HANDLER: JOIN GAME (Essentiel pour Test 4 & 5) ---
+  socket.on("join_game_room", ({ gameId }) => {
+    try {
+      const roomName = getGameRoomName(assertGameId(gameId));
+      socket.join(roomName);
+      console.log(`[Socket ${socket.id}] joined room ${roomName}`);
+    } catch (e) {
+      console.error("Join room error:", e);
+    }
+  });
+
+  socket.on("get_game_state", async ({ gameId }, callback) => {
+    try {
+      const id = assertGameId(gameId);
+      const game = await prisma.game.findUnique({
+        where: { id },
+      });
+
+      if (!game) {
+        return callback?.({ error: "Game not found" });
+      }
+
+      // On renvoie l'état pour que le client se synchronise
+      callback?.(game);
+    } catch (error) {
+      callback?.({ error: "Failed to fetch game state" });
+    }
+  });
+
   socket.on("make_move", async (payload: unknown) => {
     const rawGameId = (payload as any)?.gameId;
     const rawCellIndex = (payload as any)?.cellIndex;
