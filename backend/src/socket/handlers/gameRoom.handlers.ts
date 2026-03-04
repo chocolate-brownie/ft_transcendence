@@ -62,73 +62,75 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
   socket.on(
     "join_game_room",
     async (payload: JoinGameRoomPayload, callback?: AckCallback) => {
-    try {
-      const user = getSocketUser(socket);
-      const gameId = assertGameId(payload?.gameId);
+      try {
+        const user = getSocketUser(socket);
+        const gameId = assertGameId(payload?.gameId);
 
-      const game = await prisma.game.findUnique({
-        where: { id: gameId },
-        include: gamePlayersSelect,
-      });
-
-      if (!game) {
-        socket.emit("error", { message: "Game not found" });
-        return;
-      }
-
-      const isPlayer = game.player1Id === user.id || game.player2Id === user.id;
-      if (!isPlayer) {
-        const response = { error: "Unauthorized: You are not a participant in this game" };
-        socket.emit("error", { message: response.error });
-        callback?.(response);
-        return;
-      }
-
-      const roomName = getGameRoomName(gameId);
-
-      const cancelled = disconnectionService.cancelForfeitTimer(gameId, user.id);
-      if (cancelled) {
-        socket.to(roomName).emit("opponent_reconnected", {
-          userId: user.id,
-          username: user.username,
-          message: "Opponent reconnected",
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          include: gamePlayersSelect,
         });
-      }
 
-      await socket.join(roomName);
+        if (!game) {
+          socket.emit("error", { message: "Game not found" });
+          return;
+        }
 
-      gameRoomService.addPlayerToRoom(gameId, {
-        userId: user.id,
-        socketId: socket.id,
-        username: user.username,
-        joinedAt: new Date(),
-      });
+        const isPlayer = game.player1Id === user.id || game.player2Id === user.id;
+        if (!isPlayer) {
+          const response = {
+            error: "Unauthorized: You are not a participant in this game",
+          };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
 
-      const yourSymbol =
-        game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
-      const payloadForClient = buildJoinedPayload(game);
+        const roomName = getGameRoomName(gameId);
 
-      socket.emit("room_joined", {
-        ...payloadForClient,
-        game: {
-          ...(payloadForClient.game as Record<string, unknown>),
-          yourSymbol,
-        },
-      });
+        const cancelled = disconnectionService.cancelForfeitTimer(gameId, user.id);
+        if (cancelled) {
+          socket.to(roomName).emit("opponent_reconnected", {
+            userId: user.id,
+            username: user.username,
+            message: "Opponent reconnected",
+          });
+        }
 
-      socket.to(roomName).emit("opponent_joined", {
-        opponent: {
-          id: user.id,
+        await socket.join(roomName);
+
+        gameRoomService.addPlayerToRoom(gameId, {
+          userId: user.id,
+          socketId: socket.id,
           username: user.username,
-          avatarUrl: user.avatarUrl,
-        },
-      });
-      callback?.({ success: true });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to join room";
-      socket.emit("error", { message });
-      callback?.({ error: message });
-    }
+          joinedAt: new Date(),
+        });
+
+        const yourSymbol =
+          game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
+        const payloadForClient = buildJoinedPayload(game);
+
+        socket.emit("room_joined", {
+          ...payloadForClient,
+          game: {
+            ...(payloadForClient.game as Record<string, unknown>),
+            yourSymbol,
+          },
+        });
+
+        socket.to(roomName).emit("opponent_joined", {
+          opponent: {
+            id: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+          },
+        });
+        callback?.({ success: true });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to join room";
+        socket.emit("error", { message });
+        callback?.({ error: message });
+      }
     },
   );
 

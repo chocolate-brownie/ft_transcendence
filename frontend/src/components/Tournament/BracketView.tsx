@@ -13,7 +13,11 @@ const HEADER_H = 28; // round label text (16px) + gap-3 (12px)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function matchRoundLabel(round: number, totalRounds: number, matchNumber: number): string {
+function matchRoundLabel(
+  round: number,
+  totalRounds: number,
+  matchNumber: number,
+): string {
   const fromEnd = totalRounds - round;
   if (fromEnd === 0) return "Final";
   if (fromEnd === 1) return `Semifinal ${matchNumber}`;

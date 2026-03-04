@@ -7,8 +7,7 @@ const db = process.env.POSTGRES_DB || "transcendence";
 const host = process.env.POSTGRES_HOST || "localhost";
 
 process.env.NODE_ENV = "test";
-process.env.JWT_SECRET =
-  process.env.JWT_SECRET || "test-secret";
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 
 // Allow explicit DATABASE_URL from CI/Docker; otherwise build one from env vars.
 if (!process.env.DATABASE_URL) {

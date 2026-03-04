@@ -43,7 +43,7 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
         game.id,
         { id: user.id, username: user.username },
         { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
-        roomName
+        roomName,
       );
     }
   } catch (error) {

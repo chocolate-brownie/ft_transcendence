@@ -174,11 +174,13 @@ export default function TournamentDetail() {
           <h2 className="text-sm font-semibold uppercase tracking-widest text-pong-text/40">
             Bracket
           </h2>
-          {bracket && bracket.currentRound !== null && bracket.status === "IN_PROGRESS" && (
-            <span className="text-xs font-medium text-pong-accent">
-              Round {bracket.currentRound} of {bracket.totalRounds}
-            </span>
-          )}
+          {bracket &&
+            bracket.currentRound !== null &&
+            bracket.status === "IN_PROGRESS" && (
+              <span className="text-xs font-medium text-pong-accent">
+                Round {bracket.currentRound} of {bracket.totalRounds}
+              </span>
+            )}
         </div>
 
         {isRegistering ? (

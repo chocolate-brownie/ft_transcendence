@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import BracketView from "../../src/components/Tournament/BracketView";
-import type { BracketResponse, TournamentParticipant } from "../../src/services/tournament.service";
+import type {
+  BracketResponse,
+  TournamentParticipant,
+} from "../../src/services/tournament.service";
 
 const navigateMock = vi.fn();
 

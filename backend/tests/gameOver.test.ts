@@ -249,10 +249,7 @@ describeDb("Game Over Logic - Complete Suite", () => {
     const userC = await prisma.user.create({
       data: { email: "hacker@test.com", username: "Charlie", passwordHash: "h" },
     });
-    const userCToken = jwt.sign(
-      { id: userC.id, username: userC.username },
-      JWT_SECRET,
-    );
+    const userCToken = jwt.sign({ id: userC.id, username: userC.username }, JWT_SECRET);
 
     const clientC = Client(`http://localhost:${PORT}`, {
       auth: { token: `Bearer ${userCToken}` },

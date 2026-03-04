@@ -17,7 +17,12 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       gameId = assertGameId(rawGameId);
 
       // 1. Validation de l'index
-      if (cellIndex === null || cellIndex < 0 || cellIndex > 8 || !Number.isInteger(cellIndex)) {
+      if (
+        cellIndex === null ||
+        cellIndex < 0 ||
+        cellIndex > 8 ||
+        !Number.isInteger(cellIndex)
+      ) {
         socket.emit("move_error", { error: "Invalid cell index", cellIndex });
         return;
       }
@@ -27,16 +32,14 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       const updatedGame = await makeMoveInDb(gameId, cellIndex, user.id);
 
       // 3. Détermination du symbole du joueur pour le log/payload
-      const playerSymbol = updatedGame.player1Id === user.id
-        ? updatedGame.player1Symbol
-        : updatedGame.player2Symbol;
+      const playerSymbol =
+        updatedGame.player1Id === user.id
+          ? updatedGame.player1Symbol
+          : updatedGame.player2Symbol;
 
       // 4. Vérification de la ligne gagnante (pour le frontend)
       const boardData = updatedGame.boardState as Board; // Cast pour s'assurer que c'est bien un Board
-      const gameOverResult = checkGameOver(
-        boardData,
-        updatedGame.boardSize
-      );
+      const gameOverResult = checkGameOver(boardData, updatedGame.boardSize);
 
       // 5. Construction du payload de mise à jour standard
       const gameUpdate = {
@@ -52,7 +55,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
           cellIndex,
           timestamp: new Date().toISOString(),
         },
-        ...(gameOverResult.line && { winningLine: gameOverResult.line })
+        ...(gameOverResult.line && { winningLine: gameOverResult.line }),
       };
 
       // 6. Broadcast de l'update (toujours envoyé pour mettre à jour le plateau)
@@ -67,7 +70,6 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
         await processGameOver(io, updatedGame, gameOverResult);
       }
-
     } catch (error: unknown) {
       const rawMessage = error instanceof Error ? error.message : "Failed to make move";
       const errorMessage = rawMessage.replace(/^Invalid move:\s*/i, "");
