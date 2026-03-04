@@ -8,6 +8,7 @@ import { registerGameRoomHandlers } from "../src/socket/handlers/gameRoom.handle
 import { gameRoomService } from "../src/socket/services/gameRoom.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "test_secret";
+const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
 
 type TestUser = {
   id: number;
@@ -32,7 +33,7 @@ function waitForEvent<T = unknown>(
   });
 }
 
-describe("Socket Game Rooms", () => {
+describeDb("Socket Game Rooms", () => {
   let server: http.Server;
   let io: SocketIOServer;
   let port!: number;

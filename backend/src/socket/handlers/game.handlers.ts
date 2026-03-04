@@ -3,66 +3,9 @@ import { makeMoveInDb, checkGameOver } from "../../services/games.service";
 import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import { processGameOver } from "../../services/gameOver.service";
 import type { Board } from "../../types/game";
-import prisma from "../../lib/prisma";
 import { disconnectionService } from "../../services/disconnection.service";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
-
-  // --- HANDLER: JOIN GAME (Essentiel pour Test 4 & 5) ---
-  socket.on("join_game_room", async ({ gameId }, callback) => {
-    const user = getSocketUser(socket);
-    const id = assertGameId(gameId);
-
-    try {
-      const user = getSocketUser(socket);
-      const id = assertGameId(gameId);
-
-      const game = await prisma.game.findUnique({
-        where: { id },
-        select: { player1Id: true, player2Id: true }
-      });
-
-      // VERIFICATION D'AUTORISATION
-      if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) {
-        console.warn(`[Auth] User ${user.id} tried to join game ${id} without permission`);
-        return callback?.({ error: "Unauthorized: You are not a participant in this game" });
-      }
-
-      // ANNULLER LE FORFAIT SI RECONNEXION
-      const cancelled = disconnectionService.cancelForfeitTimer(id, user.id);
-      if (cancelled) {
-        socket.to(getGameRoomName(id)).emit("opponent_reconnected", {
-          userId: user.id,
-          username: user.username,
-          message: "Opponent reconnected"
-        });
-      }
-
-      await socket.join(getGameRoomName(id));
-      callback?.({ success: true });
-    } catch (e) {
-      callback?.({ error: "Internal error", e });
-    }
-  });
-
-  socket.on("get_game_state", async ({ gameId }, callback) => {
-    try {
-      const id = assertGameId(gameId);
-      const game = await prisma.game.findUnique({
-        where: { id },
-      });
-
-      if (!game) {
-        return callback?.({ error: "Game not found" });
-      }
-
-      // On renvoie l'état pour que le client se synchronise
-      callback?.(game);
-    } catch (e) {
-      callback?.({ error: "Failed to fetch game state", e });
-    }
-  });
-
   socket.on("make_move", async (payload: unknown) => {
     const rawGameId = (payload as any)?.gameId;
     const rawCellIndex = (payload as any)?.cellIndex;
