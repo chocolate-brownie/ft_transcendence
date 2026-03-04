@@ -33,11 +33,7 @@ export default function SearchingScreen({
           )}
 
           <div className="pt-2">
-            <Button
-              variant="danger"
-              className="w-full py-3"
-              onClick={onCancel}
-            >
+            <Button variant="danger" className="w-full py-3" onClick={onCancel}>
               Cancel Search
             </Button>
           </div>

@@ -16,7 +16,9 @@ export default function Matchmaking() {
   const navigate = useNavigate();
   const { socket } = useSocket();
 
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'searching' | 'found' | 'cancelled'>('idle');
+  const [status, setStatus] = useState<
+    "idle" | "connecting" | "searching" | "found" | "cancelled"
+  >("idle");
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchFound | null>(null);
@@ -48,7 +50,7 @@ export default function Matchmaking() {
 
     function onSearchCancelled() {
       clearRedirectTimer();
-      setStatus('cancelled');
+      setStatus("cancelled");
       void navigate("/lobby");
     }
 
@@ -169,7 +171,11 @@ export default function Matchmaking() {
         <Card variant="elevated">
           <p className="text-sm font-semibold text-red-400">Matchmaking error</p>
           <p className="mt-2 text-sm text-pong-text/70">{error}</p>
-          <Button variant="primary" className="w-full mt-4 py-3 text-base" onClick={handleRetry}>
+          <Button
+            variant="primary"
+            className="w-full mt-4 py-3 text-base"
+            onClick={handleRetry}
+          >
             Try again
           </Button>
         </Card>
@@ -177,11 +183,17 @@ export default function Matchmaking() {
         <Card variant="elevated" className="text-center">
           <div className="space-y-4">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-pong-secondary border-t-transparent" />
-            <h1 className="text-2xl font-bold text-pong-text">Connecting to matchmaking…</h1>
+            <h1 className="text-2xl font-bold text-pong-text">
+              Connecting to matchmaking…
+            </h1>
             <p className="text-sm text-pong-text/60">
               We are establishing a live connection before joining the queue.
             </p>
-            <Button variant="secondary" className="w-full py-3 text-base" onClick={handleRetry}>
+            <Button
+              variant="secondary"
+              className="w-full py-3 text-base"
+              onClick={handleRetry}
+            >
               Retry Connection
             </Button>
           </div>
@@ -197,8 +209,8 @@ export default function Matchmaking() {
 
             {matchData ? (
               <p className="text-xs text-pong-text/40">
-                vs <span className="font-semibold">{matchData.opponent.username}</span> — you are{" "}
-                <span className="font-semibold">{matchData.yourSymbol}</span>
+                vs <span className="font-semibold">{matchData.opponent.username}</span> —
+                you are <span className="font-semibold">{matchData.yourSymbol}</span>
               </p>
             ) : null}
           </div>
@@ -210,7 +222,11 @@ export default function Matchmaking() {
             <p className="text-sm text-pong-text/60">
               Start matchmaking when your connection is available.
             </p>
-            <Button variant="primary" className="w-full py-3 text-base" onClick={handleRetry}>
+            <Button
+              variant="primary"
+              className="w-full py-3 text-base"
+              onClick={handleRetry}
+            >
               Start Matchmaking
             </Button>
           </div>
