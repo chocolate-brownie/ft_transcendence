@@ -51,10 +51,11 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   console.log(`[Game Over] ID: ${id} | Result: ${payload.result}`);
 
   // Post-Game Cleanup : Garder la room 5 minutes pour le chat
-  setTimeout(() => {
+  const cleanupTimer = setTimeout(() => {
     console.log(`[Room Cleanup] Closing post-game window for ${roomName}`);
     // Ici, on pourrait forcer le départ des sockets si nécessaire
   }, 5 * 60 * 1000);
+  cleanupTimer.unref?.();
 
   return payload;
 }
