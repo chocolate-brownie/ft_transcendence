@@ -1,5 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import type { BracketMatch, BracketResponse } from "../../services/tournament.service";
+import type {
+  BracketMatch,
+  BracketResponse,
+  TournamentParticipant,
+} from "../../services/tournament.service";
 
 // ─── Layout constants (must match Tailwind values + card dimensions) ──────────
 const CARD_W = 208; // w-52 = 13rem
@@ -87,9 +91,10 @@ function buildConnectorPaths(
 interface MatchCardProps {
   match: BracketMatch;
   currentRound: number | null;
+  seedMap: Map<number, number>; // userId → seed
 }
 
-function MatchCard({ match, currentRound }: MatchCardProps) {
+function MatchCard({ match, currentRound, seedMap }: MatchCardProps) {
   const navigate = useNavigate();
   const player1 = match.player1;
   const player2 = match.player2;
@@ -102,6 +107,7 @@ function MatchCard({ match, currentRound }: MatchCardProps) {
   function playerRow(player: BracketMatch["player1"], isWinner: boolean) {
     const name = player?.username ?? "TBD";
     const isEmpty = !player;
+    const seed = player ? seedMap.get(player.id) : undefined;
     return (
       <div
         className={`flex items-center gap-2 px-3 py-2 text-sm ${
@@ -115,6 +121,9 @@ function MatchCard({ match, currentRound }: MatchCardProps) {
         }`}
       >
         {isWinner ? <span className="text-xs">🏆</span> : <span className="w-3" />}
+        {seed !== undefined && (
+          <span className="shrink-0 text-xs text-pong-text/40">#{seed}</span>
+        )}
         <span className="truncate">{name}</span>
       </div>
     );
@@ -129,6 +138,8 @@ function MatchCard({ match, currentRound }: MatchCardProps) {
       <span className="text-[10px] text-pong-text/30 uppercase tracking-wide">
         Upcoming
       </span>
+    ) : status === "pending" ? (
+      <span className="text-[10px] text-pong-text/20 italic">Waiting</span>
     ) : null;
 
   return (
@@ -168,10 +179,14 @@ function MatchCard({ match, currentRound }: MatchCardProps) {
 
 interface BracketViewProps {
   bracket: BracketResponse;
+  participants?: TournamentParticipant[];
 }
 
-export default function BracketView({ bracket }: BracketViewProps) {
+export default function BracketView({ bracket, participants = [] }: BracketViewProps) {
   const { matches, totalRounds, currentRound } = bracket;
+
+  // Build userId → seed lookup from the participant list
+  const seedMap = new Map<number, number>(participants.map((p) => [p.userId, p.seed]));
 
   // Group matches by round (sorted by matchNumber)
   const rounds: Map<number, BracketMatch[]> = new Map();
@@ -248,6 +263,7 @@ export default function BracketView({ bracket }: BracketViewProps) {
                   key={match.id}
                   match={match}
                   currentRound={currentRound}
+                  seedMap={seedMap}
                 />
               ))}
             </div>

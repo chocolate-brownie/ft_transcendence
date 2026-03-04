@@ -24,6 +24,7 @@ export interface TournamentParticipant {
   id: number;
   userId: number;
   seed: number;
+  eliminatedInRound: number | null;
   user: {
     id: number;
     username: string;
