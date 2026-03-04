@@ -27,6 +27,7 @@ class DisconnectionService {
       void this.handleForfeit(io, gameId, disconnectedUser, opponent, roomName);
       this.forfeitTimers.delete(key);
     }, this.FORFEIT_DELAY);
+    timeout.unref?.();
 
     this.forfeitTimers.set(key, {
       gameId,
@@ -92,6 +93,14 @@ class DisconnectionService {
 
       console.log(`[Game Over] Game ${gameId} forfeited. Winner: ${winner.username}`);
     } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2025"
+      ) {
+        return;
+      }
       console.error(`[Error] Failed to forfeit game ${gameId}:`, error);
     }
   }
