@@ -24,8 +24,8 @@ describe("Game Over Logic - Complete Suite", () => {
       await prisma.game.deleteMany({});
       await prisma.user.deleteMany({ where: { email: { in: ["x@test.com", "o@test.com"] } } });
 
-      user1 = await prisma.user.create({ data: { email: "x@test.com", username: "PlayerX", passwordHash: "h" } });
-      user2 = await prisma.user.create({ data: { email: "o@test.com", username: "PlayerO", passwordHash: "h" } });
+      user1 = await prisma.user.create({ data: { email: "x@test.com", username: "player1", passwordHash: "h" } });
+      user2 = await prisma.user.create({ data: { email: "o@test.com", username: "player2", passwordHash: "h" } });
 
       user1Token = jwt.sign({ id: user1.id, username: user1.username }, JWT_SECRET);
       user2Token = jwt.sign({ id: user2.id, username: user2.username }, JWT_SECRET);

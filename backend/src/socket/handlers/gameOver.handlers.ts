@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { checkWinnerWithLine } from "../../services/games.service";
 import { processGameOver } from "../../services/gameOver.service";
+import { Board } from "../../types/game";
 
 export const handleMakeMove = (io: Server, socket: Socket) => {
   socket.on("make_move", async (data: { gameId: number; cellIndex: number }) => {
@@ -10,13 +11,13 @@ export const handleMakeMove = (io: Server, socket: Socket) => {
 
     const game = await prisma.game.findUnique({
         where: { id: data.gameId },
-        include: { playerX: true, playerO: true }
+        include: { player1: true, player2: true }
     });
 
     if (!game) return;
 
-    const winInfo = checkWinnerWithLine(game.board); // Retourne { winner: 'X', line: [0,1,2] } ou null
-    const moveCount = game.board.filter(cell => cell !== null).length;
+    const winInfo = checkWinnerWithLine(game.boardState as Board, game.boardSize); // Retourne { winner: 'X', line: [0,1,2] } ou null
+    const moveCount = (game.boardState as Board)?.filter(cell => cell !== null).length || 0;
     const isDraw = !winInfo && moveCount === 9;
 
     if (winInfo || isDraw) {
@@ -27,16 +28,16 @@ export const handleMakeMove = (io: Server, socket: Socket) => {
         gameId: game.id,
         result: winInfo ? ("win" as const) : ("draw" as const),
         winner: winInfo ? {
-          id: winInfo.winner === "X" ? game.playerX.id : game.playerO.id,
-          username: winInfo.winner === "X" ? game.playerX.username : game.playerO.username,
+          id: winInfo.winner === "X" ? game.player1Id : game.player2Id,
+          username: winInfo.winner === "X" ? game.player1.username : game.player2?.username,
           symbol: winInfo.winner
         } : null,
         loser: winInfo ? {
-          id: winInfo.winner === "X" ? game.playerO.id : game.playerX.id,
-          username: winInfo.winner === "X" ? game.playerO.username : game.playerX.username,
+          id: winInfo.winner === "X" ? game.player2Id : game.player1Id,
+          username: winInfo.winner === "X" ? game.player2?.username : game.player1.username,
           symbol: winInfo.winner === "X" ? "O" : ("X" as "X" | "O")
         } : null,
-        finalBoard: game.board,
+        finalBoard: game.boardState,
         totalMoves: moveCount,
         duration: duration,
         winningLine: winInfo ? winInfo.line : null,
@@ -44,12 +45,12 @@ export const handleMakeMove = (io: Server, socket: Socket) => {
       };
 
       // Déclenchement de l'événement de fin de match
-      await processGameOver(io, payload);
+      await processGameOver(io, payload, winInfo);
 
       // Mettre à jour le statut dans la DB si pas déjà fait par l'Issue #100
       await prisma.game.update({
         where: { id: game.id },
-        data: { status: "COMPLETED", winnerId: payload.winner?.id }
+        data: { status: "FINISHED", winnerId: payload.winner?.id }
       });
 
     } else {

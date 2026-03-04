@@ -10,9 +10,6 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
   // --- HANDLER: JOIN GAME (Essentiel pour Test 4 & 5) ---
   socket.on("join_game_room", async ({ gameId }, callback) => {
-    const user = getSocketUser(socket);
-    const id = assertGameId(gameId);
-
     try {
       const user = getSocketUser(socket);
       const id = assertGameId(gameId);
