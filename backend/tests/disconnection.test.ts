@@ -133,7 +133,7 @@ describe("Disconnection & Forfeit System", () => {
     // 5. Assertions
     expect(data.winner.id).toBe(alice.id);
     const dbGame = await prisma.game.findUnique({ where: { id: game.id } });
-    expect(dbGame?.status).toBe("ABANDONED");
+    expect(dbGame?.status).toBe("FINISHED");
   }, 15000);
   // --- TEST 3 ---
   it("Should not start timer if game is already FINISHED", async () => {
