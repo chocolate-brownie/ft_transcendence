@@ -258,7 +258,7 @@ The subject requires a minimum of 14 points. We target 18 points to provide a sa
 | 9   | AI        | AI Opponent                                  | Major     | 2      | mamahtal, tzizi                   | Minimax algorithm with human-like imperfection         |
 | 10  | Gaming    | Game customization                           | Minor     | 1      | zamgar, jayzatov                  | Board themes, custom symbols, grid size options        |
 | 11  | User Mgmt | Game statistics & match history              | Minor     | 1      | zamgar, jayzatov, mamahtal, tzizi | Win/loss tracking, leaderboard, match history page     |
-|     |           |                                              | **Total** | **18** |                        |                                                        |
+|     |           |                                              | **Total** | **18** |                                   |                                                        |
 
 **Point Breakdown:** 7 Major modules (14 pts) + 4 Minor modules (4 pts) = **18 points**
 

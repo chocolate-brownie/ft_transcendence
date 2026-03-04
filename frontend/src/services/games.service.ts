@@ -11,4 +11,3 @@ export const gamesService = {
     return apiClient.post<Game>("/api/games", payload);
   },
 };
-

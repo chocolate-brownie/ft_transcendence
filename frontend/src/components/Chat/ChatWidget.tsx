@@ -6,7 +6,8 @@ import { MessageInput } from "./MessageInput";
 
 export function ChatWidget() {
   const { user } = useAuth();
-  const { isOpen, active, totalUnread, openWidget, openChat, closeWidget, setActive } = useChat();
+  const { isOpen, active, totalUnread, openWidget, openChat, closeWidget, setActive } =
+    useChat();
 
   if (!user) return null;
 
@@ -22,10 +23,23 @@ export function ChatWidget() {
                 onClick={() => setActive(null)}
                 className="flex items-center gap-1.5 text-pong-text/60 hover:text-pong-text transition text-sm"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
-                <span className="font-semibold text-pong-text truncate">{active.username}</span>
+                <span className="font-semibold text-pong-text truncate">
+                  {active.username}
+                </span>
               </button>
             ) : (
               <span className="text-sm font-semibold text-pong-text">Messages</span>
@@ -35,8 +49,19 @@ export function ChatWidget() {
               className="text-pong-text/40 hover:text-pong-text transition"
               aria-label="Close chat"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -45,7 +70,10 @@ export function ChatWidget() {
           <div className="flex flex-col flex-1 min-h-0">
             {active ? (
               <>
-                <MessageThread otherUserId={active.userId} otherUsername={active.username} />
+                <MessageThread
+                  otherUserId={active.userId}
+                  otherUsername={active.username}
+                />
                 <MessageInput receiverId={active.userId} />
               </>
             ) : (
@@ -73,12 +101,30 @@ export function ChatWidget() {
           </span>
         )}
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16c0 1.1-.9 2-2 2H7l-4 4V6a2 2 0 012-2h14a2 2 0 012 2v10z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 10h.01M12 10h.01M16 10h.01M21 16c0 1.1-.9 2-2 2H7l-4 4V6a2 2 0 012-2h14a2 2 0 012 2v10z"
+            />
           </svg>
         )}
       </button>

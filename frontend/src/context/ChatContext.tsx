@@ -80,7 +80,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ChatContext.Provider value={{ isOpen, active, totalUnread, openWidget, openChat, closeWidget, setActive }}>
+    <ChatContext.Provider
+      value={{
+        isOpen,
+        active,
+        totalUnread,
+        openWidget,
+        openChat,
+        closeWidget,
+        setActive,
+      }}
+    >
       {children}
     </ChatContext.Provider>
   );

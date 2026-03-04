@@ -8,15 +8,15 @@
 
 ## Summary
 
-| Category               | Count |
-|------------------------|-------|
-| Total test cases       | 70    |
-| Passed                 | 70    |
-| Failed                 | 0     |
-| Bugs found             | 0     |
-| Critical bugs          | 0     |
-| Major bugs             | 0     |
-| Minor bugs             | 0     |
+| Category         | Count |
+| ---------------- | ----- |
+| Total test cases | 70    |
+| Passed           | 70    |
+| Failed           | 0     |
+| Bugs found       | 0     |
+| Critical bugs    | 0     |
+| Major bugs       | 0     |
+| Minor bugs       | 0     |
 
 ---
 
@@ -154,6 +154,6 @@ _None found._
 
 ## Retest Log
 
-| Date       | Scope              | Result    | Notes                          |
-|------------|--------------------|-----------|--------------------------------|
-| 2026-02-23 | All (Issues #26, #27) | 56/56 ✓ | First automated test run       |
+| Date       | Scope                 | Result  | Notes                    |
+| ---------- | --------------------- | ------- | ------------------------ |
+| 2026-02-23 | All (Issues #26, #27) | 56/56 ✓ | First automated test run |

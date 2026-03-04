@@ -200,9 +200,7 @@ describe("POST /api/auth/login", () => {
     });
 
     it("returns 400 when email is missing", async () => {
-      const res = await request(app)
-        .post("/api/auth/login")
-        .send({ password: PASSWORD });
+      const res = await request(app).post("/api/auth/login").send({ password: PASSWORD });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty("message");
@@ -234,7 +232,8 @@ describe("POST /api/auth/login", () => {
       const fakeUser = buildFakeUser();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockFindUnique.mockImplementation((args: any) => {
-        if (args.where.email?.toLowerCase() === "alice@example.com") return Promise.resolve(fakeUser);
+        if (args.where.email?.toLowerCase() === "alice@example.com")
+          return Promise.resolve(fakeUser);
         return Promise.resolve(null);
       });
       mockUpdate.mockResolvedValue({ ...fakeUser, isOnline: true });
@@ -251,7 +250,8 @@ describe("POST /api/auth/login", () => {
       const fakeUser = buildFakeUser();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockFindUnique.mockImplementation((args: any) => {
-        if (args.where.email?.trim() === "alice@example.com") return Promise.resolve(fakeUser);
+        if (args.where.email?.trim() === "alice@example.com")
+          return Promise.resolve(fakeUser);
         return Promise.resolve(null);
       });
       mockUpdate.mockResolvedValue({ ...fakeUser, isOnline: true });

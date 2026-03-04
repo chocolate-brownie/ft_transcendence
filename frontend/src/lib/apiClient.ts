@@ -19,8 +19,7 @@ async function request<T>(
   const token = localStorage.getItem("token");
   const hasBody = body !== undefined;
 
-  const isFormData =
-    typeof FormData !== "undefined" && body instanceof FormData;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const res = await fetch(url, {
     method,
@@ -29,9 +28,7 @@ async function request<T>(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-    ...(hasBody
-      ? { body: isFormData ? body : JSON.stringify(body) }
-      : {}),
+    ...(hasBody ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   if (!res.ok) {

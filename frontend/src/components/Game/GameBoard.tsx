@@ -26,8 +26,8 @@ export default function GameBoard({
               (disabled
                 ? "cursor-not-allowed opacity-60"
                 : cell === null
-                ? "cursor-pointer hover:bg-transparent"
-                : "cursor-default") +
+                  ? "cursor-pointer hover:bg-transparent"
+                  : "cursor-default") +
               " " +
               (winningLine && winningLine.includes(index)
                 ? "bg-transparent winner-cell"
@@ -39,8 +39,9 @@ export default function GameBoard({
                 (cell === "X"
                   ? "text-pong-accent"
                   : cell === "O"
-                  ? "text-pong-secondary"
-                  : "") + " font-sans font-bold" +
+                    ? "text-pong-secondary"
+                    : "") +
+                " font-sans font-bold" +
                 (cell ? " cell-piece" : "")
               }
             >

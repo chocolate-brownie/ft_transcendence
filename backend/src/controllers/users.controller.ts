@@ -6,7 +6,12 @@
 import { Request, Response } from "express";
 import multer from "multer";
 import { AuthRequest } from "../middleware/auth";
-import { getUserById, updateUserById, updateUserAvatar, searchUsers } from "../services/users.service";
+import {
+  getUserById,
+  updateUserById,
+  updateUserAvatar,
+  searchUsers,
+} from "../services/users.service";
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const id = Number(req.params.id);
@@ -118,7 +123,10 @@ export const handleMulterError = (
   next(err);
 };
 
-export const searchUsersController = async (req: AuthRequest, res: Response): Promise<void> => {
+export const searchUsersController = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
   try {
     const currentUserId = req.user?.id;
     if (!currentUserId || typeof currentUserId !== "number") {
@@ -137,7 +145,7 @@ export const searchUsersController = async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-     if (q.length > 50) {
+    if (q.length > 50) {
       res.status(400).json({ error: "Query too long" });
       return;
     }
@@ -148,4 +156,4 @@ export const searchUsersController = async (req: AuthRequest, res: Response): Pr
     console.error("[searchUsersController] Error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-}
+};

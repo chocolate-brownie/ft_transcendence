@@ -123,4 +123,4 @@ export const searchUsers = async (currentUserId: number, query: string) => {
   });
 
   return users;
-}
+};

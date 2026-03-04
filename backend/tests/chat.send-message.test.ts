@@ -96,46 +96,61 @@ describe("Chat - Send Message", () => {
       const userId = socket.data.user.id;
       socket.join(`user:${userId}`);
 
-      socket.on("send_message", async (payload: { receiverId: number; content: string }) => {
-        try {
-          const senderId = socket.data.user.id;
+      socket.on(
+        "send_message",
+        async (payload: { receiverId: number; content: string }) => {
+          try {
+            const senderId = socket.data.user.id;
 
-          if (!payload.receiverId || typeof payload.receiverId !== "number") {
-            return socket.emit("message_error", { message: "Invalid receiverId" });
+            if (!payload.receiverId || typeof payload.receiverId !== "number") {
+              return socket.emit("message_error", { message: "Invalid receiverId" });
+            }
+            if (!payload.content || typeof payload.content !== "string") {
+              return socket.emit("message_error", { message: "Invalid content" });
+            }
+
+            if (!validateMessageContent(payload.content)) {
+              return socket.emit("message_error", {
+                message: "Content must be 1-2000 characters",
+              });
+            }
+
+            const receiverExists = await userExists(payload.receiverId);
+            if (!receiverExists) {
+              return socket.emit("message_error", { message: "Receiver does not exist" });
+            }
+
+            const friends = await areFriends(senderId, payload.receiverId);
+            if (!friends) {
+              return socket.emit("message_error", {
+                message: "You can only send messages to friends",
+              });
+            }
+
+            const message = await saveMessage(
+              senderId,
+              payload.receiverId,
+              payload.content,
+            );
+
+            const messageWithSender = await getMessageWithSender(message.id);
+            if (!messageWithSender) {
+              return socket.emit("message_error", {
+                message: "Failed to retrieve message",
+              });
+            }
+
+            io.to(`user:${payload.receiverId}`).emit(
+              "receive_message",
+              messageWithSender,
+            );
+            socket.emit("receive_message", messageWithSender);
+          } catch (error) {
+            console.error("Error in send_message:", error);
+            socket.emit("message_error", { message: "Internal server error" });
           }
-          if (!payload.content || typeof payload.content !== "string") {
-            return socket.emit("message_error", { message: "Invalid content" });
-          }
-
-          if (!validateMessageContent(payload.content)) {
-            return socket.emit("message_error", { message: "Content must be 1-2000 characters" });
-          }
-
-          const receiverExists = await userExists(payload.receiverId);
-          if (!receiverExists) {
-            return socket.emit("message_error", { message: "Receiver does not exist" });
-          }
-
-          const friends = await areFriends(senderId, payload.receiverId);
-          if (!friends) {
-            return socket.emit("message_error", { message: "You can only send messages to friends" });
-          }
-
-          const message = await saveMessage(senderId, payload.receiverId, payload.content);
-
-          const messageWithSender = await getMessageWithSender(message.id);
-          if (!messageWithSender) {
-            return socket.emit("message_error", { message: "Failed to retrieve message" });
-          }
-
-          io.to(`user:${payload.receiverId}`).emit("receive_message", messageWithSender);
-          socket.emit("receive_message", messageWithSender);
-
-        } catch (error) {
-          console.error("Error in send_message:", error);
-          socket.emit("message_error", { message: "Internal server error" });
-        }
-      });
+        },
+      );
     });
 
     // Start server
@@ -186,7 +201,10 @@ describe("Chat - Send Message", () => {
     });
 
     clientSocket.on("connect", () => {
-      clientSocket.emit("send_message", { receiverId: user2.id, content: "Test message" });
+      clientSocket.emit("send_message", {
+        receiverId: user2.id,
+        content: "Test message",
+      });
     });
 
     clientSocket.on("receive_message", (data: any) => {

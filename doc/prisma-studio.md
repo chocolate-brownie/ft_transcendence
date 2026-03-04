@@ -5,12 +5,14 @@ This guide explains how to use **Prisma Studio**, a visual editor for our Postgr
 ## 🚀 Quick Start
 
 1.  **Ensure the app is running:**
+
     ```bash
     make up
     ```
 
 2.  **Start the Studio:**
     Run this command in a separate terminal window:
+
     ```bash
     make db-studio
     ```
@@ -26,6 +28,7 @@ This guide explains how to use **Prisma Studio**, a visual editor for our Postgr
 ## 🛠 What is Prisma Studio?
 
 Prisma Studio is a GUI (Graphical User Interface) that lets you:
+
 - **View all data** in the database (Users, Games, Messages, etc.).
 - **Create, edit, and delete** records manually (like a spreadsheet).
 - **Visualize relationships** between tables.

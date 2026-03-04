@@ -30,15 +30,15 @@
   }
   15% {
     transform: scale(1.04);
-    background-color: rgba(196, 193, 199, 0.25)
+    background-color: rgba(196, 193, 199, 0.25);
   }
   40% {
     transform: scale(1.13);
-    background-color: rgba(196, 193, 199, 0.25)
+    background-color: rgba(196, 193, 199, 0.25);
   }
   70% {
     transform: scale(1.04);
-    background-color: rgba(196, 193, 199, 0.25)
+    background-color: rgba(196, 193, 199, 0.25);
   }
   100% {
     transform: scale(1);

@@ -9,15 +9,14 @@ import {
   joinTournament,
   getTournaments,
   getTournamentById,
+  recordMatchResult,
+  getTournamentBracket,
   TournamentError,
 } from "../services/tournaments.service";
 
 // ─── POST /api/tournaments ─────────────────────────────────────────────────
 
-export async function createTournamentController(
-  req: AuthRequest,
-  res: Response,
-) {
+export async function createTournamentController(req: AuthRequest, res: Response) {
   try {
     const { name, maxPlayers } = req.body;
 
@@ -34,19 +33,13 @@ export async function createTournamentController(
         .json({ message: "Name must be between 3 and 50 characters" });
     }
 
-    const mp = Number(maxPlayers); // Validates that maxPlayers is a number
+    const mp = Number(maxPlayers);
 
     if (![4, 8].includes(mp)) {
-      return res
-        .status(400)
-        .json({ message: "maxPlayers must be 4 or 8" });
+      return res.status(400).json({ message: "maxPlayers must be 4 or 8" });
     }
 
-    const tournament = await createTournament(
-      trimmedName,
-      mp as 4 | 8,
-      req.user.id,
-    );
+    const tournament = await createTournament(trimmedName, mp as 4 | 8, req.user.id);
 
     return res.status(201).json(tournament);
   } catch (error) {
@@ -57,10 +50,7 @@ export async function createTournamentController(
 
 // ─── POST /api/tournaments/:id/join ────────────────────────────────────────
 
-export async function joinTournamentController(
-  req: AuthRequest,
-  res: Response,
-) {
+export async function joinTournamentController(req: AuthRequest, res: Response) {
   try {
     const tournamentId = parseInt(req.params.id as string, 10);
 
@@ -77,9 +67,7 @@ export async function joinTournamentController(
     });
   } catch (error) {
     if (error instanceof TournamentError) {
-      return res
-        .status(error.statusCode)
-        .json({ message: error.message });
+      return res.status(error.statusCode).json({ message: error.message });
     }
     console.error("[JoinTournament]", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -88,10 +76,7 @@ export async function joinTournamentController(
 
 // ─── GET /api/tournaments ──────────────────────────────────────────────────
 
-export async function getTournamentsController(
-  req: AuthRequest,
-  res: Response,
-) {
+export async function getTournamentsController(req: AuthRequest, res: Response) {
   try {
     const status = req.query.status as string | undefined;
 
@@ -105,9 +90,7 @@ export async function getTournamentsController(
       }
     }
 
-    const tournaments = await getTournaments(
-      status as TournamentStatus | undefined,
-    );
+    const tournaments = await getTournaments(status as TournamentStatus | undefined);
 
     return res.status(200).json({ tournaments });
   } catch (error) {
@@ -118,10 +101,7 @@ export async function getTournamentsController(
 
 // ─── GET /api/tournaments/:id ──────────────────────────────────────────────
 
-export async function getTournamentByIdController(
-  req: AuthRequest,
-  res: Response,
-) {
+export async function getTournamentByIdController(req: AuthRequest, res: Response) {
   try {
     const id = parseInt(req.params.id as string, 10);
 
@@ -134,11 +114,75 @@ export async function getTournamentByIdController(
     return res.status(200).json(tournament);
   } catch (error) {
     if (error instanceof TournamentError) {
-      return res
-        .status(error.statusCode)
-        .json({ message: error.message });
+      return res.status(error.statusCode).json({ message: error.message });
     }
     console.error("[GetTournamentById]", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// ─── POST /api/tournaments/:id/matches/:matchId/result ─────────────────────
+// Records a match result and advances the winner (Issue #156)
+
+export async function recordMatchResultController(req: AuthRequest, res: Response) {
+  try {
+    const tournamentId = parseInt(req.params.id as string, 10);
+    const matchId = parseInt(req.params.matchId as string, 10);
+
+    if (isNaN(tournamentId) || isNaN(matchId)) {
+      return res.status(400).json({ message: "Invalid tournament ID or match ID" });
+    }
+
+    const { winnerId, gameId } = req.body;
+
+    // ── Validation ──
+    if (!winnerId || typeof winnerId !== "number") {
+      return res
+        .status(400)
+        .json({ message: "winnerId is required and must be a number" });
+    }
+
+    if (!gameId || typeof gameId !== "number") {
+      return res.status(400).json({ message: "gameId is required and must be a number" });
+    }
+
+    const result = await recordMatchResult(
+      tournamentId,
+      matchId,
+      winnerId,
+      gameId,
+      req.user.id,
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof TournamentError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+    console.error("[RecordMatchResult]", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// ─── GET /api/tournaments/:id/bracket ──────────────────────────────────────
+// Returns the full bracket with all matches (Issue #156)
+
+export async function getTournamentBracketController(req: AuthRequest, res: Response) {
+  try {
+    const tournamentId = parseInt(req.params.id as string, 10);
+
+    if (isNaN(tournamentId)) {
+      return res.status(400).json({ message: "Invalid tournament ID" });
+    }
+
+    const bracket = await getTournamentBracket(tournamentId);
+
+    return res.status(200).json(bracket);
+  } catch (error) {
+    if (error instanceof TournamentError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+    console.error("[GetTournamentBracket]", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

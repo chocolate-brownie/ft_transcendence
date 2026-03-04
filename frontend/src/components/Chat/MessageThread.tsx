@@ -81,7 +81,8 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
   useLayoutEffect(() => {
     if (prevScrollHeightRef.current !== null && scrollContainerRef.current) {
       const newScrollHeight = scrollContainerRef.current.scrollHeight;
-      scrollContainerRef.current.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+      scrollContainerRef.current.scrollTop =
+        newScrollHeight - prevScrollHeightRef.current;
       prevScrollHeightRef.current = null;
     }
   }, [messages]);
@@ -179,7 +180,11 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
   useEffect(() => {
     if (!socket) return;
 
-    const handleUserTyping = (payload: { userId: number; username: string; isTyping: boolean }) => {
+    const handleUserTyping = (payload: {
+      userId: number;
+      username: string;
+      isTyping: boolean;
+    }) => {
       if (payload.userId !== otherUserId) return;
 
       if (payload.isTyping) {
@@ -256,11 +261,7 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
           </div>
         ) : (
           messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOwn={msg.senderId === user?.id}
-            />
+            <MessageBubble key={msg.id} message={msg} isOwn={msg.senderId === user?.id} />
           ))
         )}
 

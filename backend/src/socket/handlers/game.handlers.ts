@@ -4,11 +4,10 @@ import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import type { Board } from "../../types/game";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
-
   socket.on("make_move", async (payload: unknown) => {
-    const rawGameId    = (payload as any)?.gameId;
+    const rawGameId = (payload as any)?.gameId;
     const rawCellIndex = (payload as any)?.cellIndex;
-    const cellIndex    = typeof rawCellIndex === "number" ? rawCellIndex : null;
+    const cellIndex = typeof rawCellIndex === "number" ? rawCellIndex : null;
     let gameId: number | null = null;
 
     try {
@@ -35,9 +34,10 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       const updatedGame = await makeMoveInDb(gameId, rawCellIndex, user.id);
 
       // Check Player Symbol
-      const playerSymbol = updatedGame.player1Id === user.id
-        ? updatedGame.player1Symbol
-        : updatedGame.player2Symbol;
+      const playerSymbol =
+        updatedGame.player1Id === user.id
+          ? updatedGame.player1Symbol
+          : updatedGame.player2Symbol;
 
       // Won line for Frontend
       const gameOverResult = checkGameOver(
@@ -47,19 +47,19 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
       // Build game_update payload
       const gameUpdate: Record<string, unknown> = {
-        gameId:        updatedGame.id,
-        board:         updatedGame.boardState,
-        currentTurn:   updatedGame.currentTurn,
-        status:        updatedGame.status,
-        winner:        updatedGame.winner  ?? null,
-        winnerId:      updatedGame.winnerId ?? null,
-        player1:       updatedGame.player1,
-        player2:       updatedGame.player2,
+        gameId: updatedGame.id,
+        board: updatedGame.boardState,
+        currentTurn: updatedGame.currentTurn,
+        status: updatedGame.status,
+        winner: updatedGame.winner ?? null,
+        winnerId: updatedGame.winnerId ?? null,
+        player1: updatedGame.player1,
+        player2: updatedGame.player2,
         player1Symbol: updatedGame.player1Symbol,
         player2Symbol: updatedGame.player2Symbol,
         lastMove: {
-          player:    playerSymbol,
-          userId:    user.id,
+          player: playerSymbol,
+          userId: user.id,
           cellIndex: rawCellIndex,
           timestamp: new Date().toISOString(),
         },
@@ -80,11 +80,11 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       // If GameOver Send game_over
       if (updatedGame.status === "FINISHED" || updatedGame.status === "DRAW") {
         const gameOver: Record<string, unknown> = {
-          gameId:   updatedGame.id,
-          status:   updatedGame.status,
-          winner:   updatedGame.winner  ?? null,
+          gameId: updatedGame.id,
+          status: updatedGame.status,
+          winner: updatedGame.winner ?? null,
           winnerId: updatedGame.winnerId ?? null,
-          board:    updatedGame.boardState,
+          board: updatedGame.boardState,
         };
 
         if (gameOverResult.line) {
@@ -93,13 +93,13 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
         io.to(roomName).emit("game_over", gameOver);
 
-        const outcome = updatedGame.status === "DRAW"
-          ? "Draw"
-          : `Winner: ${updatedGame.winner?.username ?? updatedGame.winnerId}`;
+        const outcome =
+          updatedGame.status === "DRAW"
+            ? "Draw"
+            : `Winner: ${updatedGame.winner?.username ?? updatedGame.winnerId}`;
 
         console.log(`[Game ${gameId}] Game over — ${outcome}`);
       }
-
     } catch (error: unknown) {
       const rawMessage = error instanceof Error ? error.message : "Failed to make move";
       const errorMessage = rawMessage.replace(/^Invalid move:\s*/i, "");

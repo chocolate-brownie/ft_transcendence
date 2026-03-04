@@ -47,12 +47,12 @@ export default {
 
         // === Semantic Theme ===
         pong: {
-          background: "#ffffff",   // pure white — page background
-          surface:    "#f2f2f3",   // shadow-grey-50 — cards / panels
-          text:       "#333135",   // shadow-grey-800 — primary text
-          accent:     "#f08b0f",   // carrot-orange-500 — buttons / highlights
-          accentDark: "#c06f0c",   // carrot-orange-600 — hover state
-          secondary:  "#759933",   // lime-moss-600 — secondary actions
+          background: "#ffffff", // pure white — page background
+          surface: "#f2f2f3", // shadow-grey-50 — cards / panels
+          text: "#333135", // shadow-grey-800 — primary text
+          accent: "#f08b0f", // carrot-orange-500 — buttons / highlights
+          accentDark: "#c06f0c", // carrot-orange-600 — hover state
+          secondary: "#759933", // lime-moss-600 — secondary actions
         },
       },
     },
