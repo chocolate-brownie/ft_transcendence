@@ -61,6 +61,7 @@ export interface BracketMatch {
   player1: BracketPlayer | null;
   player2: BracketPlayer | null;
   winner: { id: number; username: string } | null;
+  gameId: number | null;
   completedAt: string | null;
 }
 
