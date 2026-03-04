@@ -9,14 +9,14 @@ import jwt from "jsonwebtoken";
 // ─── Mock Prisma (must be hoisted before any import of prisma) ───────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockFindUnique = jest.fn<any>();
+const mockUpdate = jest.fn<any>();
 const mockQueryRaw = jest.fn();
 const mockDisconnect = jest.fn();
 
 jest.unstable_mockModule("../src/lib/prisma.js", () => ({
   default: {
     user: {
-      findUnique: mockFindUnique,
+      update: mockUpdate,
     },
     $queryRaw: mockQueryRaw,
     $disconnect: mockDisconnect,
@@ -65,7 +65,7 @@ describe("GET /api/auth/me", () => {
   describe("Valid token (happy path)", () => {
     it("returns 200 with user data for a valid token", async () => {
       const token = makeToken(VALID_PAYLOAD);
-      mockFindUnique.mockResolvedValue(buildFakeUser());
+      mockUpdate.mockResolvedValue(buildFakeUser());
 
       const res = await request(app)
         .get("/api/auth/me")
@@ -77,7 +77,7 @@ describe("GET /api/auth/me", () => {
 
     it("returns correct user fields (no passwordHash)", async () => {
       const token = makeToken(VALID_PAYLOAD);
-      mockFindUnique.mockResolvedValue(buildFakeUser());
+      mockUpdate.mockResolvedValue(buildFakeUser());
 
       const res = await request(app)
         .get("/api/auth/me")
@@ -99,12 +99,15 @@ describe("GET /api/auth/me", () => {
 
     it("queries the database by the userId from the JWT (fresh data)", async () => {
       const token = makeToken(VALID_PAYLOAD);
-      mockFindUnique.mockResolvedValue(buildFakeUser());
+      mockUpdate.mockResolvedValue(buildFakeUser());
 
       await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
 
-      expect(mockFindUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 1 } }),
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: { isOnline: true },
+        }),
       );
     });
   });
@@ -122,7 +125,7 @@ describe("GET /api/auth/me", () => {
     it("does not call the database when no token is provided", async () => {
       await request(app).get("/api/auth/me");
 
-      expect(mockFindUnique).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 
@@ -169,7 +172,7 @@ describe("GET /api/auth/me", () => {
     it("does not call the database for an invalid token", async () => {
       await request(app).get("/api/auth/me").set("Authorization", "Bearer invalid-token");
 
-      expect(mockFindUnique).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 
@@ -207,7 +210,7 @@ describe("GET /api/auth/me", () => {
   describe("User deleted after token was issued", () => {
     it("returns 404 when the user no longer exists in the database", async () => {
       const token = makeToken(VALID_PAYLOAD);
-      mockFindUnique.mockResolvedValue(null);
+      mockUpdate.mockRejectedValue({ code: "P2025" });
 
       const res = await request(app)
         .get("/api/auth/me")
@@ -223,7 +226,7 @@ describe("GET /api/auth/me", () => {
   describe("Database error", () => {
     it("returns 500 when the database throws", async () => {
       const token = makeToken(VALID_PAYLOAD);
-      mockFindUnique.mockRejectedValue(new Error("DB connection lost"));
+      mockUpdate.mockRejectedValue(new Error("DB connection lost"));
 
       const res = await request(app)
         .get("/api/auth/me")

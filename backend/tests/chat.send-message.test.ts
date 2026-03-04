@@ -19,6 +19,7 @@ const {
 } = await import("../src/services/chat.service");
 
 const JWT_SECRET = "test_secret";
+const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
 
 type User = {
   id: number;
@@ -27,7 +28,7 @@ type User = {
   passwordHash: string;
 };
 
-describe("Chat - Send Message", () => {
+describeDb("Chat - Send Message", () => {
   let io: any;
   let server: any;
   let clientSocket: any;

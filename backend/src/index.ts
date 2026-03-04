@@ -94,8 +94,12 @@ const certPath = path.join(__dirname, "..", "certs", "cert.pem");
 const keyPath = path.join(__dirname, "..", "certs", "key.pem");
 
 let server: https.Server | http.Server;
+const isTestEnv = process.env.NODE_ENV === "test";
 
-if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+// In tests, avoid touching local cert files entirely.
+if (isTestEnv) {
+  server = http.createServer(app);
+} else if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
   const httpsOptions = {
     cert: fs.readFileSync(certPath),
     key: fs.readFileSync(keyPath),
