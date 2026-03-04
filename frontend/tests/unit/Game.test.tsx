@@ -91,6 +91,11 @@ describe("Game page socket wiring", () => {
           currentTurn: "X",
           status: "IN_PROGRESS",
           yourSymbol: "X",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: { id: 2, username: "bob", avatarUrl: null },
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
         },
       });
     });
@@ -290,6 +295,95 @@ describe("Game page socket wiring", () => {
     });
   });
 
+  it("shows waiting state UI with animated indicator and cancel button, board disabled", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "WAITING",
+          yourSymbol: "X",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: null,
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    // "Waiting for second player" text is unique to the animated indicator in the waiting block
+    expect(screen.getByText(/waiting for second player/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel game/i })).toBeInTheDocument();
+    expect(screen.getByText("Waiting...")).toBeInTheDocument();
+
+    const cellButtons = screen
+      .getAllByRole("button")
+      .filter((btn) => btn.getAttribute("aria-label")?.startsWith("Cell"));
+    expect(cellButtons).toHaveLength(9);
+    expect(cellButtons.every((cell) => cell.hasAttribute("disabled"))).toBe(true);
+  });
+
+  it("rejoins the room when Try again is clicked while socket is still connected", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    const initialJoinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+    expect(initialJoinCalls).toBe(1);
+
+    act(() => {
+      socket.trigger("disconnect");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+
+    await waitFor(() => {
+      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+      expect(joinCalls).toBe(2);
+    });
+  });
+
+  it("rejoins the room after reconnect when Try again is clicked while disconnected", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    socket.connect = vi.fn(() => {
+      socket.connected = true;
+    });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    const initialJoinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+    expect(initialJoinCalls).toBe(1);
+
+    socket.connected = false;
+    act(() => {
+      socket.trigger("disconnect");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(socket.connect).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      socket.trigger("connect");
+    });
+
+    await waitFor(() => {
+      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+      expect(joinCalls).toBe(2);
+    });
+  });
+
   it("navigates to lobby and home from modal actions", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
@@ -326,5 +420,31 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /back to home/i }));
     expect(navigateMock).toHaveBeenCalledWith("/");
+  });
+
+  it("emits leave_game_room only once when navigating away", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/lobby");
+
+    const leaveCalls = socket.emit.mock.calls.filter((call) => call[0] === "leave_game_room");
+    expect(leaveCalls).toHaveLength(1);
   });
 });

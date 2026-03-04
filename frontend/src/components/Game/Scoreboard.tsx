@@ -33,6 +33,7 @@ function Avatar({
         src={player.avatarUrl}
         alt={`${player.username} avatar`}
         className="h-11 w-11 rounded-full border border-black/10 object-cover"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/default-avatar.png"; }}
         data-testid={`${testId}-image`}
       />
     );

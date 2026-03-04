@@ -18,6 +18,7 @@ interface GameOverModalProps {
   mySymbol: Symbol;
   totalMoves: number;
   durationSeconds?: number;
+  opponentAvatarUrl?: string | null;
   rematchLoading?: boolean;
   rematchError?: string | null;
   onPlayAgain: () => void;
@@ -43,6 +44,7 @@ export default function GameOverModal({
   mySymbol,
   totalMoves,
   durationSeconds,
+  opponentAvatarUrl = null,
   rematchLoading = false,
   rematchError = null,
   onPlayAgain,
@@ -147,9 +149,27 @@ export default function GameOverModal({
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-pong-text/60">Opponent</p>
-            <p className="text-lg font-semibold text-pong-text">
-              {opponent ? `${opponent.username} (${opponent.symbol})` : "N/A"}
-            </p>
+            <div className="mt-1 flex items-center gap-2">
+              {opponent ? (
+                opponentAvatarUrl ? (
+                  <img
+                    src={opponentAvatarUrl}
+                    alt={`${opponent.username} avatar`}
+                    className="h-7 w-7 flex-shrink-0 rounded-full border border-black/10 object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/40 text-xs font-bold text-pong-text/70">
+                    {opponent.username[0]?.toUpperCase() ?? "?"}
+                  </div>
+                )
+              ) : null}
+              <p className="truncate text-base font-semibold text-pong-text">
+                {opponent ? `${opponent.username} (${opponent.symbol})` : "N/A"}
+              </p>
+            </div>
           </div>
         </div>
 

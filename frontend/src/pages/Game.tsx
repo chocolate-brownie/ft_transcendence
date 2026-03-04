@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import type { Board } from "../types/game";
@@ -90,6 +90,7 @@ export default function Game() {
   const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [isCreatingRematch, setIsCreatingRematch] = useState(false);
   const [rematchError, setRematchError] = useState<string | null>(null);
+  const [joinRevision, setJoinRevision] = useState(0);
   const [player1, setPlayer1] = useState<PlayerSummary | null>(null);
   const [player2, setPlayer2] = useState<PlayerSummary | null>(null);
   const [player1Symbol, setPlayer1Symbol] = useState<Symbol>("X");
@@ -98,6 +99,15 @@ export default function Game() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const joinedRef = useRef(false);
+  const leftRoomRef = useRef(false);
+
+  const emitLeaveRoomOnce = useCallback(() => {
+    if (!socket) return;
+    if (!gameId) return;
+    if (leftRoomRef.current) return;
+    leftRoomRef.current = true;
+    socket.emit("leave_game_room", { gameId });
+  }, [socket, gameId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -257,6 +267,7 @@ export default function Game() {
     function startJoin() {
       if (!socket || joinedRef.current) return;
       joinedRef.current = true;
+      leftRoomRef.current = false;
 
       setError(null);
       setMoveError(null);
@@ -289,16 +300,14 @@ export default function Game() {
     }
 
     startJoin();
-  }, [socket, gameId]);
+  }, [socket, gameId, joinRevision]);
 
 
   useEffect(() => {
     return () => {
-      if (!socket) return;
-      if (!gameId) return;
-      socket.emit("leave_game_room", { gameId });
+      emitLeaveRoomOnce();
     };
-  }, [socket, gameId]);
+  }, [emitLeaveRoomOnce]);
 
   function handleCellClick(index: number) {
     if (board[index] !== null) return;
@@ -315,12 +324,12 @@ export default function Game() {
   }
 
   function backToLobby() {
-    if (socket && gameId) socket.emit("leave_game_room", { gameId });
+    emitLeaveRoomOnce();
     void navigate("/lobby");
   }
 
   function goHome() {
-    if (socket && gameId) socket.emit("leave_game_room", { gameId });
+    emitLeaveRoomOnce();
     void navigate("/");
   }
 
@@ -342,7 +351,7 @@ export default function Game() {
 
     try {
       const newGame = await gamesService.createGame({ player2Id: opponentId });
-      if (socket && gameId) socket.emit("leave_game_room", { gameId });
+      emitLeaveRoomOnce();
       void navigate(`/game/${newGame.id}`);
     } catch (err: unknown) {
       const message =
@@ -362,19 +371,33 @@ export default function Game() {
       setError("Still connecting to server. Please try again in a moment.");
       return;
     }
-    if (!socket.connected) {
-      socket.connect();
-      setStatus("connecting");
-      setError("Reconnecting to server. Please try again in a moment.");
-      return;
-    }
 
+    // Reset join state so the effect re-runs regardless of connection state.
     joinedRef.current = false;
     setError(null);
     setMoveError(null);
     setIsSendingMove(false);
-    setStatus("idle");
+    setJoinRevision((n) => n + 1);
+
+    if (!socket.connected) {
+      setStatus("connecting");
+      socket.connect();
+    } else {
+      setStatus("idle");
+    }
   }
+
+  const opponentAvatarUrl = (() => {
+    if (!gameOverPayload) return null;
+    const opponentId =
+      gameOverPayload.winner?.symbol === yourSymbol
+        ? gameOverPayload.loser?.id
+        : gameOverPayload.winner?.id;
+    if (!opponentId) return null;
+    if (player1?.id === opponentId) return player1.avatarUrl;
+    if (player2?.id === opponentId) return player2.avatarUrl;
+    return null;
+  })();
 
   const isYourTurn = status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
   const boardDisabled = !isYourTurn || isSendingMove;
@@ -507,6 +530,7 @@ export default function Game() {
         mySymbol={yourSymbol}
         totalMoves={gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length}
         durationSeconds={gameOverPayload?.duration}
+        opponentAvatarUrl={opponentAvatarUrl}
         rematchLoading={isCreatingRematch}
         rematchError={rematchError}
         onPlayAgain={() => {
