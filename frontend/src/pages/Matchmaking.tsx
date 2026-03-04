@@ -16,11 +16,12 @@ export default function Matchmaking() {
   const navigate = useNavigate();
   const { socket } = useSocket();
 
-  const [status, setStatus] = useState<'idle' | 'searching' | 'found' | 'cancelled'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'searching' | 'found' | 'cancelled'>('idle');
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchFound | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startedRef = useRef(false);
 
   function clearRedirectTimer() {
     if (!redirectTimerRef.current) return;
@@ -81,17 +82,33 @@ export default function Matchmaking() {
     };
   }, [socket, navigate]);
 
-  const startedRef = useRef(false);
   useEffect(() => {
-    if (!socket) return;
-    if (startedRef.current) return;
+    function startSearch() {
+      if (!socket || startedRef.current) return;
+      startedRef.current = true;
+      setQueuePosition(null);
+      setMatchData(null);
+      setError(null);
+      setStatus("searching");
+      socket.emit("find_game");
+    }
 
-    startedRef.current = true;
-    setQueuePosition(null);
-    setMatchData(null);
-    setError(null);
-    setStatus("searching");
-    socket.emit("find_game");
+    if (startedRef.current) return;
+    if (!socket) {
+      setStatus("connecting");
+      return;
+    }
+
+    if (!socket.connected) {
+      setStatus("connecting");
+      socket.once("connect", startSearch);
+      socket.connect();
+      return () => {
+        socket.off("connect", startSearch);
+      };
+    }
+
+    startSearch();
   }, [socket]);
 
   useEffect(() => {
@@ -113,9 +130,17 @@ export default function Matchmaking() {
       return;
     }
     if (!socket) {
-      setError("Not connected. Please refresh the page.");
+      setStatus("connecting");
+      setError("Still connecting to server. Please try again in a moment.");
       return;
     }
+    if (!socket.connected) {
+      socket.connect();
+      setStatus("connecting");
+      setError("Reconnecting to server. Please try again in a moment.");
+      return;
+    }
+    startedRef.current = true;
     setQueuePosition(null);
     setMatchData(null);
     setError(null);
@@ -148,6 +173,19 @@ export default function Matchmaking() {
             Try again
           </Button>
         </Card>
+      ) : status === "connecting" ? (
+        <Card variant="elevated" className="text-center">
+          <div className="space-y-4">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-pong-secondary border-t-transparent" />
+            <h1 className="text-2xl font-bold text-pong-text">Connecting to matchmaking…</h1>
+            <p className="text-sm text-pong-text/60">
+              We are establishing a live connection before joining the queue.
+            </p>
+            <Button variant="secondary" className="w-full py-3 text-base" onClick={handleRetry}>
+              Retry Connection
+            </Button>
+          </div>
+        </Card>
       ) : status === "searching" ? (
         <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
       ) : status === "found" ? (
@@ -165,7 +203,19 @@ export default function Matchmaking() {
             ) : null}
           </div>
         </Card>
-      ) : null}
+      ) : (
+        <Card variant="elevated" className="text-center">
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-pong-text">Ready to search</h1>
+            <p className="text-sm text-pong-text/60">
+              Start matchmaking when your connection is available.
+            </p>
+            <Button variant="primary" className="w-full py-3 text-base" onClick={handleRetry}>
+              Start Matchmaking
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
