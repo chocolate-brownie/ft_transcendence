@@ -1,0 +1,91 @@
+name: backend-ci
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  push:
+    branches: [main, feature-game-over-event]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  backend-core:
+    name: backend-core (build/lint/tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run backend tests (default, DB suites skipped)
+        run: npm test -- --runInBand
+
+  backend-db:
+    name: backend-db (RUN_DB_TESTS=1)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: transcendence_user
+          POSTGRES_PASSWORD: tr4nsc3nd3nc3_s3cur3
+          POSTGRES_DB: transcendence
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U transcendence_user -d transcendence"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: transcendence_user
+      POSTGRES_PASSWORD: tr4nsc3nd3nc3_s3cur3
+      POSTGRES_DB: transcendence
+      DATABASE_URL: postgresql://transcendence_user:tr4nsc3nd3nc3_s3cur3@localhost:5432/transcendence?schema=public
+      RUN_DB_TESTS: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply Prisma schema
+        run: npx prisma db push
+
+      - name: Run backend tests with DB enabled
+        run: npm test -- --runInBand

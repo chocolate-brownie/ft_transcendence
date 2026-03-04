@@ -114,6 +114,10 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
   const isInProgress = status === "in_progress";
   const isClickable = isComplete && match.gameId !== null;
   const isNotStarted = isPending || isScheduled;
+  const goToGame = () => {
+    if (!isClickable) return;
+    void navigate(`/game/${match.gameId}`);
+  };
 
   function playerRow(player: BracketMatch["player1"], isWinner: boolean) {
     const isEmpty = !player;
@@ -165,7 +169,17 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
               ? "border-black/10 bg-gray-100/60"
               : "border-black/10 bg-white/40" // completed
       } ${isClickable ? "cursor-pointer transition-shadow hover:shadow-md" : ""}`}
-      onClick={isClickable ? () => void navigate(`/game/${match.gameId}`) : undefined}
+      onClick={isClickable ? goToGame : undefined}
+      onKeyDown={
+        isClickable
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                goToGame();
+              }
+            }
+          : undefined
+      }
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >

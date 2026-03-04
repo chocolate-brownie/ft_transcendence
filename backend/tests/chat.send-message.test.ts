@@ -210,10 +210,11 @@ describeDb("Chat - Send Message", () => {
 
     clientSocket.on("receive_message", (data: any) => {
       expect(data.senderId).toBe(user1.id);
+      expect(data.sender).toBeDefined();
+      expect(data.sender.username).toBe("testuser1");
+      expect(typeof data.sender.avatarUrl).toBe("string");
       expect(data.receiverId).toBe(user2.id);
       expect(data.content).toBe("Test message");
-      expect(data.sender.username).toBe("testuser1");
-      expect(data.sender.avatarUrl).toBeNull();
       expect(data.createdAt).toBeDefined();
       done();
     });

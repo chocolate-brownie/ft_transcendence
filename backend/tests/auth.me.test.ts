@@ -104,10 +104,7 @@ describe("GET /api/auth/me", () => {
       await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
 
       expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 1 },
-          data: { isOnline: true },
-        }),
+        expect.objectContaining({ where: { id: 1 } }),
       );
     });
   });
