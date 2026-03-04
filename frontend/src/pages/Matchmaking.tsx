@@ -20,6 +20,13 @@ export default function Matchmaking() {
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchFound | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearRedirectTimer() {
+    if (!redirectTimerRef.current) return;
+    clearTimeout(redirectTimerRef.current);
+    redirectTimerRef.current = null;
+  }
 
   useEffect(() => {
     if (!socket) return;
@@ -30,24 +37,28 @@ export default function Matchmaking() {
     }
 
     function onMatchFound({ gameId, opponent, yourSymbol }: MatchFound) {
+      clearRedirectTimer();
       setStatus("found");
       setMatchData({ gameId, opponent, yourSymbol });
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         void navigate(`/game/${gameId}`);
       }, 1500);
     }
 
     function onSearchCancelled() {
+      clearRedirectTimer();
       setStatus('cancelled');
       void navigate("/lobby");
     }
 
     function onError({ message }: { message?: string }) {
+      clearRedirectTimer();
       setError(message || "Something went wrong.");
       setStatus("idle");
     }
 
     function onDisconnect() {
+      clearRedirectTimer();
       setError("Connection lost. Please check your network and try again.");
       setStatus("idle");
     }
@@ -60,6 +71,7 @@ export default function Matchmaking() {
     socket.on("disconnect", onDisconnect);
 
     return () => {
+      clearRedirectTimer();
       socket.off("searching", onSearching);
       socket.off("match_found", onMatchFound);
       socket.off("search_cancelled", onSearchCancelled);
@@ -89,6 +101,8 @@ export default function Matchmaking() {
   }, [socket, status]);
 
   function leaveMatchmaking() {
+    if (status === "found") return;
+    clearRedirectTimer();
     if (socket) socket.emit("cancel_search");
     void navigate("/lobby");
   }
@@ -104,7 +118,8 @@ export default function Matchmaking() {
     }
     setQueuePosition(null);
     setMatchData(null);
-    setError(null);  
+    setError(null);
+    clearRedirectTimer();
     setStatus("searching");
     socket.emit("find_game");
   }
@@ -112,11 +127,16 @@ export default function Matchmaking() {
   const backButtonClass =
     "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
     "transition-colors bg-pong-surface text-pong-text/70 " +
-    "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none";
+    "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
 
-    return (
+  return (
     <div className="w-full max-w-lg space-y-6">
-      <button type="button" className={backButtonClass} onClick={leaveMatchmaking}>
+      <button
+        type="button"
+        className={backButtonClass}
+        onClick={leaveMatchmaking}
+        disabled={status === "found"}
+      >
         ← Back to Lobby
       </button>
 
