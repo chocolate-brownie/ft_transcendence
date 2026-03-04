@@ -25,7 +25,7 @@ export default function TurnIndicator({
         ? "text-pong-accent"
         : "text-pong-secondary"
       : isYourTurn
-        ? "text-pong-secondary animate-pulse"
+        ? "text-pong-accent animate-pulse"
         : "text-pong-text/50";
 
   return (

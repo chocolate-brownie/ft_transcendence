@@ -367,7 +367,6 @@ export default function Profile() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4">
       <h1 className="mb-6 text-center text-4xl font-bold text-pong-accent">Profile</h1>
-
       <div className="grid gap-4 md:grid-cols-[260px_1fr]">
         {/* LEFT */}
         <div className="space-y-4">
@@ -404,7 +403,6 @@ export default function Profile() {
                     className="h-full w-full object-cover"
                     onError={(e) => { e.currentTarget.src = "/default-avatar.png"; }}
                   />
-
                   {isMine && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                       <span className="text-xs font-semibold text-white">

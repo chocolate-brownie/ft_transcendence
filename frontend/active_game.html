@@ -1,0 +1,145 @@
+
+
+<div class="h-screen flex flex-col gap-8 ">
+
+  <div class="flex flex-col gap-4 ">
+    <h2 class="font-bold ">game.status === 'active'</h2>
+    <h2>-> <b>The issue #93 means another new React component can be implemented</b>:<br>
+        The Scoreboard (bottom). The play time is optional.<br>
+        Because of the Scoreboard, I've created a new sub-issue #168.
+    </h2>
+
+  </div>
+
+ 
+  <p class="flex justify-left ml-36 text-xl font-bold text-pong-accent "> It is your turn (X)... </p>
+
+  <div class=" flex justify-center mx-auto shadow-[0_0_20px_3px_rgba(252,232,207,1)]">
+
+    <div class='inline-block rounded-lg bg-gray-200 p-2.5'>
+
+      <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+          <button
+            class=
+              "aspect-square rounded-lg bg-white bg-opacity-40 text-6xl transition-colors duration-200 cursor-pointer bg-transparent winner-cell "
+              >
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white bg-opacity-40 text-6xl transition-colors duration-200 cursor-pointer bg-transparent winner-cell"
+              >
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-40 cursor-pointer bg-transparent winner-cell">
+          </button>
+          <span
+              className="text-pong-accent font-sans font-bold cell-piece">
+          </span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+              >
+              <span class="text-6xl font-bold text-pong-accent">X</span>
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+              >
+              <span class="text-6xl font-sans font-semibold text-pong-secondary">O</span>
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-40 cursor-pointer bg-transparent winner-cell">
+          </button>
+          <span
+              className="text-pong-accent font-sans font-bold cell-piece">
+          </span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-40 cursor-pointer bg-transparent winner-cell"
+              >
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-40 cursor-pointer bg-transparent winner-cell"
+              >
+          </button>
+          <button
+            class=
+              "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell">
+              <span class="text-6xl font-semibold text-pong-secondary">O</span>
+          </button>
+
+      </div>
+
+    </div>
+  </div>
+
+    <!-- <div class="text-center bg-gray-100 bg-opacity-20 backdrop-blur-md  rounded-lg flex justify-self-center flex-col relative p-20 w-screen">
+
+      <p class= "text-xl font-semibold text-gray-600 mb-2">
+        Waiting for opponent to join...
+      </p>
+      <div class="animate-spin">
+        ⏳
+      </div>
+      <div class="animate-pulse text-gray-500">
+        Please wait
+      </div>
+    -->
+
+
+  <div class="flex justify-center gap-8 bg-slate-200 rounded-lg px-44 py-3  max-w-md mx-auto">
+
+    <div class="flex flex-col items-center w-28 ">
+      <span class="font-semibold text-lg tracking-wide text-pong-accent pb-2">
+        Plays
+      </span>
+      <img class="w-20 h-20 rounded-full object-cover shadow-[0_0_20px_5px_rgba(246,185,111,1)]
+      " src="https://static.wikia.nocookie.net/jamescameronsavatar/images/9/91/Jake_Avatar_3.png/revision/latest/scale-to-width-down/1000?cb=20250724174740" alt="your_avatar">
+
+      <div class="flex flex-row text-sm w-40 justify-center"> 
+        <span>
+          Your_nickname
+          <span class="text-pong-accent">(X)</span>
+        </span>
+      </div>
+      <span class="text-3xl font-sans font-bold text-pong-accent">0  
+      </span>
+    </div>
+
+    <div class="my-auto ">
+      <span class="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
+        VS
+      </span>
+    </div>
+
+    <div class="flex flex-col items-center w-28 ">
+      <span class="font-semibold text-lg tracking-wide text-pong-text/50 pb-2">
+        Waits...
+      </span>
+      <img class="w-20 h-20 rounded-full object-cover opacity-70" src="https://www.ecranlarge.com/content/uploads/2025/12/avatar-4-et-5-james-cameron-a-trouve-la-solution-pour-terminer-la-saga-si-avatar-3-est-un-echec.jpg.webp" alt="opponents_avatar">
+      <div class="flex flex-row text-sm w-40 justify-center "> 
+        <span class="text-sm">
+          Opponents_ni... 
+        <span class="text-pong-secondary">(O)</span>
+      </div>
+      </span>
+      <span class="text-3xl font-sans font-bold text-pong-secondary">0</span>
+    </div>
+
+
+  </div>
+  <h2 class="bg-slate-400 p-2 px-6 m-1">If the nickname is too long we should show only <i>n</i> first chars of it...</h2>
+</div>
+
+
+
+

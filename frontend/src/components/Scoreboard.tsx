@@ -5,9 +5,10 @@ import { User } from "../types/index"
 /* Displays players' information under the Game board  */
 type ScoreboardProps = {
   isMyTurn: boolean;
+  waitForNewGame: boolean;
 };
 
-export const Scoreboard = ({isMyTurn}: ScoreboardProps): JSX.Element | null => {
+export const Scoreboard = ({isMyTurn, waitForNewGame}: ScoreboardProps): JSX.Element | null => {
 
   const { user } = useAuth();
   const myAvatar = user.avatarUrl ?? "/default-avatar.png";
@@ -21,7 +22,9 @@ export const Scoreboard = ({isMyTurn}: ScoreboardProps): JSX.Element | null => {
   if (!user) return (<span></span>);
   
   return (
-      <div className="rounded-lg bg-pong-surface py-2 shadow-sm">
+      <div className={`
+        rounded-lg bg-pong-surface py-2 shadow-sm
+        ${waitForNewGame ? 'opacity-20' : ''}`}>
         <div className="flex items-center gap-8 text-pong-text/80">
 
           {/* Player 1 */}

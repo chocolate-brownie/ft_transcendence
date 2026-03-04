@@ -16,20 +16,20 @@ export interface User {
   createdAt: string;
 }
 
-export interface Game {
-  id: number;
-  player1Id: number;
-  player2Id: number | null;
-  winnerId: number | null;
-  boardState: (string | null)[];
-  boardSize: number;
-  currentTurn: string;
-  gameType: "CLASSIC" | "CUSTOM" | "TOURNAMENT" | "AI";
-  status: "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
-  settings: Record<string, unknown> | null;
-  createdAt: string;
-  finishedAt: string | null;
-}
+// export interface Game {
+//   id: number;
+//   player1Id: number;
+//   player2Id: number | null;
+//   winnerId: number | null;
+//   boardState: (string | null)[];
+//   boardSize: number;
+//   currentTurn: string;
+//   gameType: "CLASSIC" | "CUSTOM" | "TOURNAMENT" | "AI";
+//   status: <"WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED">("WAITING");
+//   settings: Record<string, unknown> | null;
+//   createdAt: string;
+//   finishedAt: string | null;
+// }
 
 export interface Message {
   id: number;
