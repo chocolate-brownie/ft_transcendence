@@ -7,16 +7,21 @@ on:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"
   push:
-    branches: [main, feature-game-over-event]
+    branches: [main]
     paths:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend-core:
     name: backend-core (build/lint/tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend
@@ -41,11 +46,22 @@ jobs:
         run: npm run lint
 
       - name: Run backend tests (default, DB suites skipped)
-        run: npm test -- --runInBand
+        run: |
+          set -o pipefail
+          npm test -- --runInBand 2>&1 | tee backend-core-test.log
+
+      - name: Upload backend-core test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-core-test-log
+          path: backend/backend-core-test.log
+          if-no-files-found: warn
 
   backend-db:
     name: backend-db (RUN_DB_TESTS=1)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16
@@ -88,4 +104,14 @@ jobs:
         run: npx prisma db push
 
       - name: Run backend tests with DB enabled
-        run: npm test -- --runInBand
+        run: |
+          set -o pipefail
+          npm test -- --runInBand 2>&1 | tee backend-db-test.log
+
+      - name: Upload backend-db test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-db-test-log
+          path: backend/backend-db-test.log
+          if-no-files-found: warn
