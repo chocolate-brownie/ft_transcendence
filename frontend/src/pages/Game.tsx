@@ -9,6 +9,7 @@ import { gamesService } from "../services/games.service";
 import Button from "../components/Button";
 import GameOverModal from "../components/Game/GameOverModal";
 import GameBoard from "../components/Game/GameBoard";
+import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 
@@ -384,11 +385,11 @@ export default function Game() {
   const winnerSymbol =
     gameOverPayload?.winner?.symbol ??
     (isGameOver && winningLine ? board[winningLine[0]] : null);
-  const player1CardHighlight = serverStatus === "IN_PROGRESS" && currentTurn === player1Symbol;
-  const player2CardHighlight = serverStatus === "IN_PROGRESS" && currentTurn === player2Symbol;
   const waitingText =
     gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
   const gameOverText = gameResultText ? `Game over: ${gameResultText}` : "Game over";
+  const player1Score = gameOverPayload?.winner?.symbol === player1Symbol ? 1 : 0;
+  const player2Score = gameOverPayload?.winner?.symbol === player2Symbol ? 1 : 0;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -448,32 +449,16 @@ export default function Game() {
         }
       />
 
-      <div className="grid w-full max-w-xl grid-cols-2 gap-3">
-        <div
-          className={`rounded-lg border px-4 py-3 text-center transition ${
-            player1CardHighlight
-              ? "border-pong-accent/70 bg-pong-accent/15 shadow"
-              : "border-black/10 bg-pong-surface"
-          }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 1</p>
-          <p className="text-sm font-semibold text-pong-text">
-            {player1?.username ?? "Waiting..."} ({player1Symbol})
-          </p>
-        </div>
-        <div
-          className={`rounded-lg border px-4 py-3 text-center transition ${
-            player2CardHighlight
-              ? "border-pong-secondary/70 bg-pong-secondary/15 shadow"
-              : "border-black/10 bg-pong-surface"
-          }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 2</p>
-          <p className="text-sm font-semibold text-pong-text">
-            {player2 ? `${player2.username} (${player2Symbol})` : "Waiting..."}
-          </p>
-        </div>
-      </div>
+      <Scoreboard
+        player1={player1}
+        player2={player2}
+        player1Symbol={player1Symbol}
+        player2Symbol={player2Symbol}
+        currentTurn={currentTurn}
+        serverStatus={serverStatus}
+        player1Score={player1Score}
+        player2Score={player2Score}
+      />
 
       <div className="flex items-center gap-4 text-xs text-pong-text/60">
         <span>Move {moveCount} of 9</span>
@@ -513,46 +498,6 @@ export default function Game() {
         gameOver={isGameOver}
         disabled={boardDisabled}
       />
-
-      {/* Scoreboard / Player vs Player (unchanged look) */}
-      <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
-        <div className="flex items-center gap-8 text-pong-text/80">
-          {/* Player 1 */}
-          <div className="flex flex-col items-center px-3">
-            <span className="font-semibold uppercase tracking-wide text-pong-text/50">
-              Player 1
-            </span>
-            <span className="text-sm">
-              {player1?.username ?? "Waiting..."}{" "}
-              <span className="text-pong-accent">({player1Symbol})</span>
-            </span>
-            <span className="text-3xl font-sans font-bold text-pong-accent">
-              {gameOverPayload?.winner?.symbol === player1Symbol ? 1 : 0}
-            </span>
-          </div>
-
-          {/* VS */}
-          <div className="flex flex-col items-center px-7">
-            <span className="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
-              VS
-            </span>
-          </div>
-
-          {/* Player 2 */}
-          <div className="flex flex-col items-center">
-            <span className="font-semibold uppercase tracking-wide text-pong-text/50">
-              Player 2
-            </span>
-            <span className="text-sm">
-              {player2?.username ?? "Waiting..."}{" "}
-              <span className="text-pong-secondary">({player2 ? player2Symbol : "?"})</span>
-            </span>
-            <span className="text-3xl font-sans font-bold text-pong-secondary">
-              {gameOverPayload?.winner?.symbol === player2Symbol ? 1 : 0}
-            </span>
-          </div>
-        </div>
-      </div>
 
       <GameOverModal
         open={showGameOverModal && !!gameOverPayload}
