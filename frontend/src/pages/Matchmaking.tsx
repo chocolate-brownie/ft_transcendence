@@ -47,16 +47,25 @@ export default function Matchmaking() {
       setStatus("idle");
     }
 
+    function onDisconnect() {
+      setError("Connection lost. Please check your network and try again.");
+      setStatus("idle");
+    }
+
     socket.on("searching", onSearching);
     socket.on("match_found", onMatchFound);
     socket.on("search_cancelled", onSearchCancelled);
     socket.on("error", onError);
+
+    socket.on("disconnect", onDisconnect);
 
     return () => {
       socket.off("searching", onSearching);
       socket.off("match_found", onMatchFound);
       socket.off("search_cancelled", onSearchCancelled);
       socket.off("error", onError);
+
+      socket.off("disconnect", onDisconnect);
     };
   }, [socket, navigate]);
 
@@ -85,6 +94,10 @@ export default function Matchmaking() {
   }
 
   function handleRetry() {
+    if (!navigator.onLine) {
+      setError("You are offline. Reconnect to the internet then try again.");
+      return;
+    }
     if (!socket) {
       setError("Not connected. Please refresh the page.");
       return;
