@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Board } from "../types/game";
 import { useSocket } from "../context/SocketContext";
 
-import Card from "../components/Card";
 import Button from "../components/Button";
 import GameBoard from "../components/Game/GameBoard";
 import TurnIndicator from "../components/Game/TurnIndicator";
@@ -33,14 +32,18 @@ type GameUpdate = {
 
 type GameOver = {
   gameId: number;
-  board: Board;
-  status: ServerStatus;
-  winningLine?: number[];
+  finalBoard: Board;
+  result: "win" | "draw";
+  winner?: {
+    id: number;
+    username: string;
+    symbol: Symbol;
+  } | null;
+  winningLine?: number[] | null;
 };
 
 type MoveError = {
   error: string;
-  cellIndex: number | null;
 };
 
 export default function Game() {
@@ -61,6 +64,7 @@ export default function Game() {
   const [serverWinningLine, setServerWinningLine] = useState<number[] | null>(null);
   const [isSendingMove, setIsSendingMove] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [gameResultText, setGameResultText] = useState<string | null>(null);
 
   const joinedRef = useRef(false);
 
@@ -78,6 +82,7 @@ export default function Game() {
       setServerWinningLine(null);
       setIsSendingMove(false);
       setMoveError(null);
+      setGameResultText(null);
       setError(null);
       setStatus("ready");
     }
@@ -94,8 +99,7 @@ export default function Game() {
       setBoard(board);
       setCurrentTurn(currentTurn);
       setServerStatus(status);
-
-      if (winningLine) setServerWinningLine(winningLine);
+      setServerWinningLine(winningLine ?? null);
 
       setIsSendingMove(false);
       setMoveError(null);
@@ -103,18 +107,26 @@ export default function Game() {
 
     function onGameOver({
       gameId: overId,
-      board,
-      status,
+      finalBoard,
+      result,
+      winner,
       winningLine,
     }: GameOver) {
       if (overId !== gameId) return;
 
-      setBoard(board);
-      setServerStatus(status);
-
-      if (winningLine) setServerWinningLine(winningLine);
+      setBoard(finalBoard);
+      setServerStatus(result === "draw" ? "DRAW" : "FINISHED");
+      setGameResultText(
+        result === "draw"
+          ? "Draw game"
+          : winner?.symbol === yourSymbol
+            ? "You won"
+            : "You lost",
+      );
+      setServerWinningLine(winningLine ?? null);
 
       setIsSendingMove(false);
+      setMoveError(null);
     }
 
     function onMoveError({ error }: MoveError) {
@@ -122,10 +134,18 @@ export default function Game() {
       setMoveError(error);
     }
 
-    function onError({ message }: { message?: string }) {
+    function onError({ gameId: eventGameId, message }: { gameId?: number; message?: string }) {
+      if (typeof eventGameId === "number" && eventGameId !== gameId) return;
+
+      const userMessage = message || "Something went wrong.";
       setIsSendingMove(false);
+      if (status === "ready") {
+        setMoveError(userMessage);
+        return;
+      }
+
       setMoveError(null);
-      setError(message || "Something went wrong.");
+      setError(userMessage);
       setStatus("idle");
     }
 
@@ -151,7 +171,7 @@ export default function Game() {
       socket.off("error", onError);
       socket.off("disconnect", onDisconnect);
     };
-  }, [socket, gameId]);
+  }, [socket, gameId, status, yourSymbol]);
 
 
   useEffect(() => {
@@ -213,8 +233,6 @@ export default function Game() {
     setMoveError(null);
 
     socket.emit("make_move", { gameId, cellIndex: index });
-
-    console.log(`[Game] make_move -> gameId=${gameId}, cellIndex=${index}`);
   }
 
   function backToLobby() {
@@ -249,11 +267,9 @@ export default function Game() {
   const isYourTurn = status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
   const boardDisabled = !isYourTurn || isSendingMove;
   const winningLine = serverWinningLine || findWinningLine(board);
-
-  const backButtonClass =
-    "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
-    "transition-colors bg-pong-surface text-pong-text/70 " +
-    "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none"; // back to lobby to add like every page
+  const waitingText =
+    gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
+  const gameOverText = gameResultText ? `Game over: ${gameResultText}` : "Game over";
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -289,9 +305,9 @@ export default function Game() {
         className="-mb-6"
         textOverride={
           serverStatus === "WAITING"
-            ? "Waiting for opponent…"
+            ? waitingText
             : serverStatus === "FINISHED" || serverStatus === "DRAW"
-            ? "Game over"
+            ? gameOverText
             : undefined
         }
       />
