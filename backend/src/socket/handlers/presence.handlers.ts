@@ -22,6 +22,11 @@ async function notifyFriends(
 }
 
 export function registerPresenceHandlers(io: Server, socket: Socket) {
+  const user = socket.data.user;
+  if (!user) {
+    console.warn(`[Presence] Connection ignored: No user data for socket ${socket.id}`);
+    return; // On sort proprement au lieu de lire .id sur undefined
+  }
   const userId: number = socket.data.user.id;
 
   void socket.join(`user:${userId}`);

@@ -21,6 +21,9 @@ export function getSocketUser(socket: Socket): SocketUser {
 }
 
 export function getGameRoomName(gameId: number): string {
+  if (!gameId || isNaN(gameId)) {
+    throw new Error("Attempted to get room name for invalid gameId");
+  }
   return `game-${gameId}`;
 }
 
