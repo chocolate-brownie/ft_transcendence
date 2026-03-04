@@ -32,7 +32,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
         : updatedGame.player2Symbol;
 
       // 4. Vérification de la ligne gagnante (pour le frontend)
-      const boardData = updatedGame.boardState as unknown as Board; // Cast pour s'assurer que c'est bien un Board
+      const boardData = updatedGame.boardState as Board; // Cast pour s'assurer que c'est bien un Board
       const gameOverResult = checkGameOver(
         boardData,
         updatedGame.boardSize

@@ -140,36 +140,27 @@ describeDb("Disconnection & Forfeit System", () => {
   }, 10000);
 
   it("Should forfeit the game if Bob stays away", async () => {
+    const service = disconnectionService as any;
+    const originalDelay = service.FORFEIT_DELAY;
+    service.FORFEIT_DELAY = 100;
+
     const forfeitPromise = new Promise((res) => {
       aliceSocket.on("game_forfeited", (data) => res(data));
     });
 
-    bobSocket.disconnect();
-    await new Promise<void>((r) => setTimeout(r, 200));
+    try {
+      bobSocket.disconnect();
 
-    const serverAliceSocket = (await io.fetchSockets()).find(
-      (s) => s.data.user.id === alice.id,
-    );
+      const data: any = await forfeitPromise;
+      expect(data.winner.id).toBe(alice.id);
+      expect(data.forfeitedBy.id).toBe(bob.id);
 
-    const actualRoom =
-      Array.from(serverAliceSocket?.rooms || []).find((r) => r.startsWith("game")) ||
-      `game-${game.id}`;
-
-    const service = disconnectionService as any;
-
-    await service.handleForfeit(
-      io,
-      game.id,
-      { id: bob.id, username: "Bob" },
-      { id: alice.id, username: "Alice", symbol: "X" },
-      actualRoom,
-    );
-
-    const data: any = await forfeitPromise;
-    expect(data.winner.id).toBe(alice.id);
-
-    const dbGame = await prisma.game.findUnique({ where: { id: game.id } });
-    expect(dbGame?.status).toBe("FINISHED");
+      const dbGame = await prisma.game.findUnique({ where: { id: game.id } });
+      expect(dbGame?.status).toBe("ABANDONED");
+      expect(dbGame?.winnerId).toBe(alice.id);
+    } finally {
+      service.FORFEIT_DELAY = originalDelay;
+    }
   }, 15000);
 
   it("Should not start timer if game is already FINISHED", async () => {

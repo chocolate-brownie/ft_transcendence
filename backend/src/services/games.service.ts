@@ -146,9 +146,7 @@ export type GameOverResult =
   | { gameOver: true; winner: null; isDraw: true; line: null }
   | { gameOver: false; winner: null; isDraw: false; line: null };
 
-export const checkGameOver = (boardData: Board, boardSize: number = 3): GameOverResult => {
-  const board = boardData as unknown as Board; // Cast pour s'assurer que c'est bien un Board
-
+export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResult => {
   const winResult = checkWinnerWithLine(board, boardSize);
 
   if (winResult) {

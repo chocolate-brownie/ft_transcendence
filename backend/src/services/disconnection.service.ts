@@ -76,7 +76,7 @@ class DisconnectionService {
       await prisma.game.update({
         where: { id: gameId },
         data: {
-          status: "FINISHED",
+          status: "ABANDONED",
           winnerId: winner.id,
           finishedAt: new Date(),
         },
