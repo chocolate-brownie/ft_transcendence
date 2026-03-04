@@ -1,7 +1,8 @@
-import { act, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Game from "../../src/pages/Game";
+import { gamesService } from "../../src/services/games.service";
 
 type Handler = (...args: unknown[]) => void;
 
@@ -64,10 +65,21 @@ vi.mock("../../src/context/SocketContext", () => ({
   useSocket: () => useSocketMock(),
 }));
 
+vi.mock("../../src/services/games.service", () => ({
+  gamesService: {
+    createGame: vi.fn(),
+  },
+}));
+
 describe("Game page socket wiring", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     navigateMock.mockReset();
     useSocketMock.mockReset();
+    vi.mocked(gamesService.createGame).mockReset();
   });
 
   function joinRoom(socket: MockSocket) {
@@ -118,5 +130,123 @@ describe("Game page socket wiring", () => {
 
     expect(screen.queryByText("Game error")).not.toBeInTheDocument();
     expect(screen.getByText("Already searching for a game")).toBeInTheDocument();
+  });
+
+  it("shows game over modal and closes when user clicks close button", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "draw",
+        winner: null,
+        loser: null,
+        totalMoves: 9,
+        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
+        winningLine: null,
+      });
+    });
+
+    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
+    expect(screen.getByText("It's a Draw! 🤝")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
+    expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+  });
+
+  it("renders lose-state message and closes on Escape key", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 9, username: "opponent", symbol: "O" },
+        loser: { id: 1, username: "you", symbol: "X" },
+        totalMoves: 8,
+        finalBoard: ["X", "O", "X", "O", "O", "X", "O", "X", null],
+        winningLine: [1, 4, 7],
+      });
+    });
+
+    expect(screen.getByText("You Lost 😢")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+  });
+
+  it("creates rematch and navigates to new game when Play Again is clicked", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+    vi.mocked(gamesService.createGame).mockResolvedValue({
+      id: 77,
+    } as never);
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /play again/i }));
+
+    await waitFor(() => {
+      expect(gamesService.createGame).toHaveBeenCalledWith({ player2Id: 2 });
+      expect(navigateMock).toHaveBeenCalledWith("/game/77");
+    });
+  });
+
+  it("navigates to lobby and home from modal actions", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 9, username: "opponent", symbol: "O" },
+        loser: { id: 1, username: "you", symbol: "X" },
+        totalMoves: 6,
+        finalBoard: ["X", "O", "X", null, "O", null, null, "O", "X"],
+        winningLine: [1, 4, 7],
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/lobby");
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "draw",
+        winner: null,
+        loser: null,
+        totalMoves: 9,
+        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
+        winningLine: null,
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /back to home/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/");
   });
 });

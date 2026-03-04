@@ -3,8 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import type { Board } from "../types/game";
 import { useSocket } from "../context/SocketContext";
+import { ApiError } from "../lib/apiClient";
+import { gamesService } from "../services/games.service";
 
 import Button from "../components/Button";
+import GameOverModal from "../components/Game/GameOverModal";
 import GameBoard from "../components/Game/GameBoard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
@@ -39,6 +42,13 @@ type GameOver = {
     username: string;
     symbol: Symbol;
   } | null;
+  loser?: {
+    id: number;
+    username: string;
+    symbol: Symbol;
+  } | null;
+  totalMoves?: number;
+  duration?: number;
   winningLine?: number[] | null;
 };
 
@@ -65,6 +75,10 @@ export default function Game() {
   const [isSendingMove, setIsSendingMove] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [gameResultText, setGameResultText] = useState<string | null>(null);
+  const [gameOverPayload, setGameOverPayload] = useState<GameOver | null>(null);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [isCreatingRematch, setIsCreatingRematch] = useState(false);
+  const [rematchError, setRematchError] = useState<string | null>(null);
 
   const joinedRef = useRef(false);
 
@@ -83,6 +97,10 @@ export default function Game() {
       setIsSendingMove(false);
       setMoveError(null);
       setGameResultText(null);
+      setGameOverPayload(null);
+      setShowGameOverModal(false);
+      setIsCreatingRematch(false);
+      setRematchError(null);
       setError(null);
       setStatus("ready");
     }
@@ -110,6 +128,9 @@ export default function Game() {
       finalBoard,
       result,
       winner,
+      loser,
+      totalMoves,
+      duration,
       winningLine,
     }: GameOver) {
       if (overId !== gameId) return;
@@ -124,6 +145,18 @@ export default function Game() {
             : "You lost",
       );
       setServerWinningLine(winningLine ?? null);
+      setGameOverPayload({
+        gameId: overId,
+        finalBoard,
+        result,
+        winner,
+        loser,
+        totalMoves,
+        duration,
+        winningLine,
+      });
+      setShowGameOverModal(true);
+      setRematchError(null);
 
       setIsSendingMove(false);
       setMoveError(null);
@@ -238,6 +271,39 @@ export default function Game() {
   function backToLobby() {
     if (socket && gameId) socket.emit("leave_game_room", { gameId });
     void navigate("/lobby");
+  }
+
+  function goHome() {
+    if (socket && gameId) socket.emit("leave_game_room", { gameId });
+    void navigate("/");
+  }
+
+  async function handlePlayAgain() {
+    if (!gameOverPayload || isCreatingRematch) return;
+
+    const opponentId =
+      gameOverPayload.winner?.symbol === yourSymbol
+        ? gameOverPayload.loser?.id
+        : gameOverPayload.winner?.id;
+
+    if (!opponentId) {
+      setRematchError("Unable to identify opponent for rematch.");
+      return;
+    }
+
+    setIsCreatingRematch(true);
+    setRematchError(null);
+
+    try {
+      const newGame = await gamesService.createGame({ player2Id: opponentId });
+      if (socket && gameId) socket.emit("leave_game_room", { gameId });
+      void navigate(`/game/${newGame.id}`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
+      setRematchError(message);
+      setIsCreatingRematch(false);
+    }
   }
 
   function handleRetry() {
@@ -366,6 +432,24 @@ export default function Game() {
           </div>
         </div>
       </div>
+
+      <GameOverModal
+        open={showGameOverModal && !!gameOverPayload}
+        result={gameOverPayload?.result ?? "draw"}
+        winner={gameOverPayload?.winner ?? null}
+        loser={gameOverPayload?.loser ?? null}
+        mySymbol={yourSymbol}
+        totalMoves={gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length}
+        durationSeconds={gameOverPayload?.duration}
+        rematchLoading={isCreatingRematch}
+        rematchError={rematchError}
+        onPlayAgain={() => {
+          void handlePlayAgain();
+        }}
+        onGoLobby={backToLobby}
+        onGoHome={goHome}
+        onClose={() => setShowGameOverModal(false)}
+      />
     </div>
   );
 }
