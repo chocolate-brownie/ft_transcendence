@@ -74,6 +74,12 @@ export default function GameOverModal({
       ? "Well played by both players."
       : `${winner?.username ?? "Unknown"} wins with ${winner?.symbol ?? "?"}.`;
   const opponent = didIWin ? loser : winner;
+  const headerToneClass =
+    result === "draw"
+      ? "from-slate-500/20 to-slate-300/10 border-slate-300/30"
+      : didIWin
+        ? "from-emerald-500/20 to-emerald-300/10 border-emerald-300/30"
+        : "from-red-500/20 to-red-300/10 border-red-300/30";
 
   return (
     <div
@@ -84,7 +90,14 @@ export default function GameOverModal({
       onClick={(event) => event.stopPropagation()}
       data-testid="game-over-modal"
     >
-      <div className="w-full max-w-md rounded-xl bg-pong-surface p-6 shadow-xl">
+      <div
+        className={`relative w-full max-w-md rounded-xl border bg-gradient-to-b ${headerToneClass} bg-pong-surface p-6 shadow-xl`}
+      >
+        {didIWin ? (
+          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-lg opacity-80">
+            ✨ 🎉 ✨
+          </div>
+        ) : null}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="game-over-title" className="text-3xl font-bold text-pong-text">
@@ -114,7 +127,22 @@ export default function GameOverModal({
           <div>
             <p className="text-xs uppercase tracking-wide text-pong-text/60">Winner</p>
             <p className="text-lg font-semibold text-pong-text">
-              {result === "draw" ? "Draw" : `${winner?.username ?? "Unknown"} (${winner?.symbol ?? "?"})`}
+              {result === "draw" ? (
+                "Draw"
+              ) : (
+                <>
+                  {winner?.username ?? "Unknown"}{" "}
+                  <span
+                    className={
+                      winner?.symbol === "X"
+                        ? "font-bold text-pong-accent"
+                        : "font-bold text-pong-secondary"
+                    }
+                  >
+                    ({winner?.symbol ?? "?"})
+                  </span>
+                </>
+              )}
             </p>
           </div>
           <div>

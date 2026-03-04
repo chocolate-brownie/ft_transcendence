@@ -14,6 +14,11 @@ import { findWinningLine } from "../utils/gameUtils";
 
 type Symbol = "X" | "O";
 type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
+type PlayerSummary = {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+};
 
 type RoomJoined = {
   gameId: number;
@@ -22,6 +27,11 @@ type RoomJoined = {
     currentTurn: Symbol;
     status: ServerStatus;
     yourSymbol: Symbol;
+    player1: PlayerSummary;
+    player2: PlayerSummary | null;
+    player1Symbol: Symbol;
+    player2Symbol: Symbol;
+    startedAt: string | null;
   };
 };
 
@@ -79,6 +89,12 @@ export default function Game() {
   const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [isCreatingRematch, setIsCreatingRematch] = useState(false);
   const [rematchError, setRematchError] = useState<string | null>(null);
+  const [player1, setPlayer1] = useState<PlayerSummary | null>(null);
+  const [player2, setPlayer2] = useState<PlayerSummary | null>(null);
+  const [player1Symbol, setPlayer1Symbol] = useState<Symbol>("X");
+  const [player2Symbol, setPlayer2Symbol] = useState<Symbol>("O");
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const joinedRef = useRef(false);
 
@@ -92,6 +108,11 @@ export default function Game() {
       setCurrentTurn(game.currentTurn);
       setServerStatus(game.status);
       setYourSymbol(game.yourSymbol);
+      setPlayer1(game.player1);
+      setPlayer2(game.player2);
+      setPlayer1Symbol(game.player1Symbol);
+      setPlayer2Symbol(game.player2Symbol);
+      setStartedAtMs(game.startedAt ? new Date(game.startedAt).getTime() : null);
 
       setServerWinningLine(null);
       setIsSendingMove(false);
@@ -102,6 +123,15 @@ export default function Game() {
       setIsCreatingRematch(false);
       setRematchError(null);
       setError(null);
+      if (game.status === "DRAW") {
+        setGameResultText("Draw game");
+      }
+      if (game.status === "FINISHED") {
+        const line = findWinningLine(game.boardState);
+        const winnerSymbol = line ? game.boardState[line[0]] : null;
+        if (winnerSymbol === game.yourSymbol) setGameResultText("You won");
+        else if (winnerSymbol === "X" || winnerSymbol === "O") setGameResultText("You lost");
+      }
       setStatus("ready");
     }
 
@@ -205,6 +235,21 @@ export default function Game() {
       socket.off("disconnect", onDisconnect);
     };
   }, [socket, gameId, status, yourSymbol]);
+
+  useEffect(() => {
+    if (startedAtMs === null || serverStatus === "WAITING") {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const tick = () => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)));
+    };
+
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [startedAtMs, serverStatus]);
 
 
   useEffect(() => {
@@ -333,6 +378,14 @@ export default function Game() {
   const isYourTurn = status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
   const boardDisabled = !isYourTurn || isSendingMove;
   const winningLine = serverWinningLine || findWinningLine(board);
+  const moveCount = board.filter((cell) => cell !== null).length;
+  const gameClock = gameOverPayload?.duration ?? elapsedSeconds;
+  const isGameOver = serverStatus === "FINISHED" || serverStatus === "DRAW";
+  const winnerSymbol =
+    gameOverPayload?.winner?.symbol ??
+    (isGameOver && winningLine ? board[winningLine[0]] : null);
+  const player1CardHighlight = serverStatus === "IN_PROGRESS" && currentTurn === player1Symbol;
+  const player2CardHighlight = serverStatus === "IN_PROGRESS" && currentTurn === player2Symbol;
   const waitingText =
     gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
   const gameOverText = gameResultText ? `Game over: ${gameResultText}` : "Game over";
@@ -363,6 +416,23 @@ export default function Game() {
         <p className="text-sm text-pong-text/60">Loading game…</p>
       ) : null}
 
+      {serverStatus === "WAITING" ? (
+        <div className="w-full max-w-xl rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
+          <p className="text-base font-semibold text-pong-text">{waitingText}</p>
+          <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-secondary [animation-delay:180ms]" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent [animation-delay:360ms]" />
+            <span>Waiting for second player</span>
+          </div>
+          <div className="mt-4">
+            <Button variant="secondary" onClick={backToLobby}>
+              Cancel Game
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {/* Turn indicator */}
       <TurnIndicator
         currentPlayer={currentTurn}
@@ -378,6 +448,58 @@ export default function Game() {
         }
       />
 
+      <div className="grid w-full max-w-xl grid-cols-2 gap-3">
+        <div
+          className={`rounded-lg border px-4 py-3 text-center transition ${
+            player1CardHighlight
+              ? "border-pong-accent/70 bg-pong-accent/15 shadow"
+              : "border-black/10 bg-pong-surface"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 1</p>
+          <p className="text-sm font-semibold text-pong-text">
+            {player1?.username ?? "Waiting..."} ({player1Symbol})
+          </p>
+        </div>
+        <div
+          className={`rounded-lg border px-4 py-3 text-center transition ${
+            player2CardHighlight
+              ? "border-pong-secondary/70 bg-pong-secondary/15 shadow"
+              : "border-black/10 bg-pong-surface"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 2</p>
+          <p className="text-sm font-semibold text-pong-text">
+            {player2 ? `${player2.username} (${player2Symbol})` : "Waiting..."}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-xs text-pong-text/60">
+        <span>Move {moveCount} of 9</span>
+        <span>Clock {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}</span>
+      </div>
+
+      {isGameOver ? (
+        <div
+          className={`rounded-lg border px-5 py-3 text-center ${
+            serverStatus === "DRAW"
+              ? "border-slate-300/40 bg-slate-300/10 text-pong-text/90"
+              : gameResultText === "You won"
+                ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
+                : "border-red-300/50 bg-red-400/10 text-red-300"
+          }`}
+        >
+          <p className="text-2xl font-bold">
+            {serverStatus === "DRAW"
+              ? "It's a Draw! 🤝"
+              : gameResultText === "You won"
+                ? "You Won! 🎉"
+                : "You Lost 😢"}
+          </p>
+        </div>
+      ) : null}
+
       {/* Move error (non-blocking) */}
       {moveError ? <p className="-mt-4 text-xs text-red-400">{moveError}</p> : null}
 
@@ -386,18 +508,11 @@ export default function Game() {
         board={board}
         onCellClick={handleCellClick}
         winningLine={winningLine}
+        winnerSymbol={winnerSymbol === "X" || winnerSymbol === "O" ? winnerSymbol : null}
+        playerSymbol={yourSymbol}
+        gameOver={isGameOver}
         disabled={boardDisabled}
       />
-
-      {/* New / Quit button (placeholders) */}
-      <div className="mt-7 flex gap-5">
-        <Button variant="primary" disabled>
-          New Game (soon)
-        </Button>
-        <Button variant="danger" onClick={backToLobby}>
-          Quit Game
-        </Button>
-      </div>
 
       {/* Scoreboard / Player vs Player (unchanged look) */}
       <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
@@ -408,9 +523,12 @@ export default function Game() {
               Player 1
             </span>
             <span className="text-sm">
-              You <span className="text-pong-accent">({yourSymbol})</span>
+              {player1?.username ?? "Waiting..."}{" "}
+              <span className="text-pong-accent">({player1Symbol})</span>
             </span>
-            <span className="text-3xl font-sans font-bold text-pong-accent">0</span>
+            <span className="text-3xl font-sans font-bold text-pong-accent">
+              {gameOverPayload?.winner?.symbol === player1Symbol ? 1 : 0}
+            </span>
           </div>
 
           {/* VS */}
@@ -426,9 +544,12 @@ export default function Game() {
               Player 2
             </span>
             <span className="text-sm">
-              Opponent <span className="text-pong-secondary">(?)</span>
+              {player2?.username ?? "Waiting..."}{" "}
+              <span className="text-pong-secondary">({player2 ? player2Symbol : "?"})</span>
             </span>
-            <span className="text-3xl font-sans font-bold text-pong-secondary">0</span>
+            <span className="text-3xl font-sans font-bold text-pong-secondary">
+              {gameOverPayload?.winner?.symbol === player2Symbol ? 1 : 0}
+            </span>
           </div>
         </div>
       </div>

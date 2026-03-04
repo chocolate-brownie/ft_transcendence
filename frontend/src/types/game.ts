@@ -8,4 +8,7 @@ export interface GameBoardProps {
   disabled?: boolean;
   className?: string;
   winningLine?: number[] | null;
+  winnerSymbol?: "X" | "O" | null;
+  playerSymbol?: "X" | "O" | null;
+  gameOver?: boolean;
 }

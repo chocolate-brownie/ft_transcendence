@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Game from "../../src/pages/Game";
@@ -114,7 +114,9 @@ describe("Game page socket wiring", () => {
     });
 
     expect(screen.getByText("Game over: You won")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "X" }).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Cell 1, winning cell")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cell 2, winning cell")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cell 3, winning cell")).toBeInTheDocument();
   });
 
   it("treats generic socket error as non-fatal while game is ready", () => {
@@ -151,8 +153,9 @@ describe("Game page socket wiring", () => {
       });
     });
 
-    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
-    expect(screen.getByText("It's a Draw! 🤝")).toBeInTheDocument();
+    const modal = screen.getByTestId("game-over-modal");
+    expect(modal).toBeInTheDocument();
+    expect(within(modal).getByText("It's a Draw! 🤝")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
@@ -177,7 +180,8 @@ describe("Game page socket wiring", () => {
       });
     });
 
-    expect(screen.getByText("You Lost 😢")).toBeInTheDocument();
+    const modal = screen.getByTestId("game-over-modal");
+    expect(within(modal).getByText("You Lost 😢")).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
   });
@@ -209,6 +213,80 @@ describe("Game page socket wiring", () => {
     await waitFor(() => {
       expect(gamesService.createGame).toHaveBeenCalledWith({ player2Id: 2 });
       expect(navigateMock).toHaveBeenCalledWith("/game/77");
+    });
+  });
+
+  it("reopens modal after closing when another game_over event arrives", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "draw",
+        winner: null,
+        loser: null,
+        totalMoves: 9,
+        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
+        winningLine: null,
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
+    expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
+  });
+
+  it("prevents duplicate rematch requests on rapid Play Again clicks", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    let resolveCreateGame: ((value: { id: number }) => void) | null = null;
+    const createGamePromise = new Promise<{ id: number }>((resolve) => {
+      resolveCreateGame = resolve;
+    });
+    vi.mocked(gamesService.createGame).mockReturnValue(createGamePromise as never);
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    const playAgainButton = screen.getByRole("button", { name: /play again/i });
+    fireEvent.click(playAgainButton);
+    fireEvent.click(playAgainButton);
+
+    expect(gamesService.createGame).toHaveBeenCalledTimes(1);
+
+    resolveCreateGame?.({ id: 88 });
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith("/game/88");
     });
   });
 

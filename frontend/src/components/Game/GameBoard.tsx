@@ -7,7 +7,12 @@ export default function GameBoard({
   disabled = false,
   className = "",
   winningLine = null,
+  winnerSymbol = null,
+  playerSymbol = null,
+  gameOver = false,
 }: GameBoardProps) {
+  const didPlayerWin = winnerSymbol !== null && playerSymbol !== null && winnerSymbol === playerSymbol;
+
   const handleCellClick = (index: number) => {
     if (disabled || board[index] !== null) return;
     onCellClick(index);
@@ -21,6 +26,7 @@ export default function GameBoard({
             key={index}
             disabled={disabled}
             onClick={() => handleCellClick(index)}
+            aria-label={`Cell ${index + 1}${winningLine?.includes(index) ? ", winning cell" : ""}`}
             className={
               "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200 " +
               (disabled
@@ -29,8 +35,14 @@ export default function GameBoard({
                   ? "cursor-pointer hover:bg-transparent"
                   : "cursor-default") +
               " " +
+              (gameOver && winningLine && !winningLine.includes(index)
+                ? "opacity-35 saturate-50"
+                : "") +
+              " " +
               (winningLine && winningLine.includes(index)
-                ? "bg-transparent winner-cell"
+                ? didPlayerWin
+                  ? "winner-cell winner-cell-win"
+                  : "winner-cell winner-cell-loss"
                 : "")
             }
           >
