@@ -11,14 +11,13 @@ class DisconnectionService {
   private forfeitTimers: Map<string, ForfeitTimer> = new Map();
   private readonly FORFEIT_DELAY = 30000; // 30 seconds
 
-
   // Démarre le compte à rebours avant forfait
   async startForfeitTimer(
     io: Server,
     gameId: number,
     disconnectedUser: { id: number; username: string },
     opponent: { id: number; username: string; symbol: string },
-    roomName: string
+    roomName: string,
   ) {
     const key = `${gameId}-${disconnectedUser.id}`;
     this.cancelForfeitTimer(gameId, disconnectedUser.id);
@@ -35,7 +34,9 @@ class DisconnectionService {
       timeout,
     });
 
-    console.log(`[Timer] Forfeit started for ${disconnectedUser.username} in game ${gameId}`);
+    console.log(
+      `[Timer] Forfeit started for ${disconnectedUser.username} in game ${gameId}`,
+    );
   }
 
   // Annule le timer (Reconnexion réussie)
@@ -54,14 +55,14 @@ class DisconnectionService {
 
   // Annule tous les timers liés à une partie spécifique (quand elle se termine normalement)
   cancelAllTimersForGame(gameId: number) {
-      for (const [key, timer] of this.forfeitTimers.entries()) {
-        if (key.startsWith(`${gameId}-`)) {
-          clearTimeout(timer.timeout);
-          this.forfeitTimers.delete(key);
-          console.log(`[Timer] Cleared forfeit timer for game ${gameId}`);
-        }
+    for (const [key, timer] of this.forfeitTimers.entries()) {
+      if (key.startsWith(`${gameId}-`)) {
+        clearTimeout(timer.timeout);
+        this.forfeitTimers.delete(key);
+        console.log(`[Timer] Cleared forfeit timer for game ${gameId}`);
       }
     }
+  }
 
   // Exécute la logique de forfait en DB et prévient les clients
   private async handleForfeit(
@@ -69,7 +70,7 @@ class DisconnectionService {
     gameId: number,
     loser: { id: number; username: string },
     winner: { id: number; username: string; symbol: string },
-    roomName: string
+    roomName: string,
   ) {
     try {
       // 1. Mise à jour de la base de données

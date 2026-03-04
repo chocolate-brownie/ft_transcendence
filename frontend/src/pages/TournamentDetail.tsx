@@ -112,7 +112,7 @@ export default function TournamentDetail() {
           <h1 className="text-4xl font-bold text-pong-text">{tournament.name}</h1>
           <p className="mt-1 text-sm text-pong-text/50">
             Created by {tournament.creator.username} • {tournament.maxPlayers} player
-            bracket
+            bracket • {new Date(tournament.createdAt).toLocaleDateString()}
           </p>
         </div>
         <span
@@ -147,10 +147,19 @@ export default function TournamentDetail() {
             tournament.participants.map((p) => (
               <span
                 key={p.id}
-                className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white/40 px-3 py-1 text-sm text-pong-text backdrop-blur-sm"
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm backdrop-blur-sm ${
+                  p.eliminatedInRound !== null
+                    ? "border-black/5 bg-white/20 text-pong-text/40"
+                    : "border-black/10 bg-white/40 text-pong-text"
+                }`}
               >
                 <span className="text-xs text-pong-text/40">#{p.seed}</span>
                 {p.user.username}
+                {p.eliminatedInRound !== null && (
+                  <span className="text-xs text-pong-text/30">
+                    · out R{p.eliminatedInRound}
+                  </span>
+                )}
               </span>
             ))
           ) : (
@@ -161,9 +170,18 @@ export default function TournamentDetail() {
 
       {/* Bracket */}
       <section>
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-pong-text/40">
-          Bracket
-        </h2>
+        <div className="mb-4 flex items-baseline gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-pong-text/40">
+            Bracket
+          </h2>
+          {bracket &&
+            bracket.currentRound !== null &&
+            bracket.status === "IN_PROGRESS" && (
+              <span className="text-xs font-medium text-pong-accent">
+                Round {bracket.currentRound} of {bracket.totalRounds}
+              </span>
+            )}
+        </div>
 
         {isRegistering ? (
           <div className="rounded-xl border border-dashed border-black/15 bg-white/20 p-12 text-center">
@@ -180,7 +198,7 @@ export default function TournamentDetail() {
             </p>
           </div>
         ) : bracket ? (
-          <BracketView bracket={bracket} />
+          <BracketView bracket={bracket} participants={tournament.participants} />
         ) : (
           <p className="text-sm text-pong-text/40">Bracket data unavailable.</p>
         )}

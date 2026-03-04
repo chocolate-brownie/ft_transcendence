@@ -94,7 +94,6 @@ const certPath = path.join(__dirname, "..", "certs", "cert.pem");
 const keyPath = path.join(__dirname, "..", "certs", "key.pem");
 
 let server: https.Server | http.Server;
-
 if (
   process.env.NODE_ENV !== "test" &&
   fs.existsSync(certPath) &&
