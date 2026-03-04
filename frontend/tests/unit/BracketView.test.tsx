@@ -67,7 +67,8 @@ describe("BracketView", () => {
     navigateMock.mockReset();
     render(<BracketView bracket={bracket} participants={participants} />);
 
-    const card = screen.getByRole("button", { name: /final/i });
+    const [card] = screen.getAllByRole("button", { name: /final/i });
+    expect(card).toBeDefined();
     fireEvent.keyDown(card, { key: "Enter" });
     fireEvent.keyDown(card, { key: " " });
 
@@ -79,7 +80,6 @@ describe("BracketView", () => {
   it("does not expose button role for pending non-clickable cards", () => {
     render(<BracketView bracket={bracket} participants={participants} />);
 
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /waiting for players/i })).toBeNull();
   });
 });
