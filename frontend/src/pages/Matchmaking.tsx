@@ -24,16 +24,16 @@ export default function Matchmaking() {
   useEffect(() => {
     if (!socket) return;
 
-    function onSearching(payload: { position?: number }) {
+    function onSearching({ position }: { position?: number }) {
       setStatus("searching");
-      if (typeof payload.position === "number") setQueuePosition(payload.position);
+      if (position != null) setQueuePosition(position);
     }
 
-    function onMatchFound(payload: MatchFound) {
+    function onMatchFound({ gameId, opponent, yourSymbol }: MatchFound) {
       setStatus("found");
-      setMatchData(payload);
+      setMatchData({ gameId, opponent, yourSymbol });
       setTimeout(() => {
-        void navigate(`/game/${payload.gameId}`);
+        void navigate(`/game/${gameId}`);
       }, 1500);
     }
 
@@ -42,8 +42,8 @@ export default function Matchmaking() {
       void navigate("/lobby");
     }
 
-    function onError(payload: { message?: string }) {
-      setError(payload?.message ?? "Something went wrong.");
+    function onError({ message }: { message?: string }) {
+      setError(message || "Something went wrong.");
       setStatus("idle");
     }
 
