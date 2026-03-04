@@ -70,7 +70,7 @@ export default function Scoreboard({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div
           data-testid="scoreboard-player1-card"
-          className={`rounded-lg border px-3 py-3 transition ${
+          className={`rounded-lg border px-3 py-3 transition-all duration-200 ${
             player1Active
               ? "border-pong-accent/70 bg-pong-accent/15 ring-2 ring-pong-accent/40"
               : "border-black/10 bg-white/40"
@@ -97,7 +97,7 @@ export default function Scoreboard({
 
         <div
           data-testid="scoreboard-player2-card"
-          className={`rounded-lg border px-3 py-3 transition ${
+          className={`rounded-lg border px-3 py-3 transition-all duration-200 ${
             player2Active
               ? "border-pong-secondary/70 bg-pong-secondary/15 ring-2 ring-pong-secondary/40"
               : "border-black/10 bg-white/40"

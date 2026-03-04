@@ -110,7 +110,7 @@ export default function GameOverModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-pong-text/60 hover:bg-pong-accent/10 hover:text-pong-text"
+            className="rounded-md px-2 py-1 text-pong-text/60 hover:bg-pong-accent/10 hover:text-pong-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pong-accent/50"
             aria-label="Close game over modal"
           >
             ✕

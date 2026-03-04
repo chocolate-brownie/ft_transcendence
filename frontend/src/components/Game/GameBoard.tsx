@@ -20,7 +20,9 @@ export default function GameBoard({
   };
 
   return (
-    <div className={`inline-block rounded-lg bg-pong-surface p-2.5 ${className}`}>
+    <div
+      className={`inline-block rounded-lg bg-pong-surface p-2.5 shadow-sm ${className}`}
+    >
       <div className="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
         {board.map((cell, index) => (
           <button
@@ -33,7 +35,7 @@ export default function GameBoard({
               (disabled
                 ? "cursor-not-allowed opacity-60"
                 : cell === null
-                  ? "cursor-pointer hover:bg-transparent"
+                  ? "cursor-pointer hover:bg-orange-50"
                   : "cursor-default") +
               " " +
               (gameOver && winningLine && !winningLine.includes(index)

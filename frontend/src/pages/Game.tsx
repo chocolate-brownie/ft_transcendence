@@ -424,7 +424,9 @@ export default function Game() {
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <h1 className="text-2xl font-bold text-pong-text -mb-4">Game</h1>
+      <h1 className="text-2xl font-bold text-pong-text -mb-4">
+        {gameId > 0 ? `Game #${gameId}` : "Game"}
+      </h1>
 
       {/* Simple status / error (no new layout) */}
       {error ? (
@@ -441,11 +443,11 @@ export default function Game() {
           </div>
         </div>
       ) : status === "connecting" ? (
-        <p className="text-sm text-pong-text/60">Connecting…</p>
+        <p className="animate-pulse text-sm text-pong-text/60">Connecting…</p>
       ) : status === "joining" ? (
-        <p className="text-sm text-pong-text/60">Joining game…</p>
+        <p className="animate-pulse text-sm text-pong-text/60">Joining game…</p>
       ) : status !== "ready" ? (
-        <p className="text-sm text-pong-text/60">Loading game…</p>
+        <p className="animate-pulse text-sm text-pong-text/60">Loading game…</p>
       ) : null}
 
       {serverStatus === "WAITING" ? (
@@ -491,10 +493,11 @@ export default function Game() {
         player2Score={player2Score}
       />
 
-      <div className="flex items-center gap-4 text-xs text-pong-text/60">
-        <span>Move {moveCount} of 9</span>
+      <div className="flex items-center gap-3 text-xs text-pong-text/60">
+        <span>Move {moveCount} / 9</span>
+        <span className="opacity-40">·</span>
         <span>
-          Clock {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}
+          ⏱ {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}
         </span>
       </div>
 
