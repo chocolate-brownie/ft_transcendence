@@ -200,15 +200,9 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
 export function handleGameRoomDisconnect(_io: Server, socket: Socket) {
   try {
     const user = getSocketUser(socket);
-    const removedEntries = gameRoomService.removePlayerFromAllRooms(user.id);
-
-    for (const { gameId } of removedEntries) {
-      const roomName = getGameRoomName(gameId);
-      socket.to(roomName).emit("opponent_disconnected", {
-        userId: user.id,
-        username: user.username,
-      });
-    }
+    // Only clean up room membership here. The disconnect notification for
+    // active games is emitted by disconnection.handlers.ts to avoid duplicates.
+    gameRoomService.removePlayerFromAllRooms(user.id);
   } catch {
     // Ignore disconnect cleanup errors
   }

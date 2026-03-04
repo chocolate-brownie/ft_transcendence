@@ -116,17 +116,27 @@ describeDb("Disconnection & Forfeit System", () => {
     jest.restoreAllMocks();
   });
 
-  it("Should notify Bob when Alice disconnects", (done) => {
+  it("Should notify Bob once when Alice disconnects", (done) => {
+    let events = 0;
     bobSocket.on("opponent_disconnected", (data: any) => {
+      events += 1;
       try {
         expect(data.username).toBe("Alice");
-        done();
       } catch (e: any) {
         done(e);
       }
     });
 
     process.nextTick(() => aliceSocket.disconnect());
+
+    setTimeout(() => {
+      try {
+        expect(events).toBe(1);
+        done();
+      } catch (e: any) {
+        done(e);
+      }
+    }, 250);
   }, 10000);
 
   it("Should forfeit the game if Bob stays away", async () => {
