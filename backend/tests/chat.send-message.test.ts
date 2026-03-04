@@ -19,6 +19,7 @@ const {
 } = await import("../src/services/chat.service");
 
 const JWT_SECRET = "test_secret";
+const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
 
 type User = {
   id: number;
@@ -27,7 +28,7 @@ type User = {
   passwordHash: string;
 };
 
-describe("Chat - Send Message", () => {
+describeDb("Chat - Send Message", () => {
   let io: any;
   let server: any;
   let clientSocket: any;
@@ -209,11 +210,12 @@ describe("Chat - Send Message", () => {
 
     clientSocket.on("receive_message", (data: any) => {
       expect(data.senderId).toBe(user1.id);
-      expect(data.senderUsername).toBe("testuser1");
-      expect(data.senderAvatar).toBeNull();
-      expect(data.receiverId).toBeUndefined(); // Not in payload
+      expect(data.sender).toBeDefined();
+      expect(data.sender.username).toBe("testuser1");
+      expect(typeof data.sender.avatarUrl).toBe("string");
+      expect(data.receiverId).toBe(user2.id);
       expect(data.content).toBe("Test message");
-      expect(data.timestamp).toBeDefined();
+      expect(data.createdAt).toBeDefined();
       done();
     });
 

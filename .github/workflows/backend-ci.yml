@@ -1,0 +1,117 @@
+name: backend-ci
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-core:
+    name: backend-core (build/lint/tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run backend tests (default, DB suites skipped)
+        run: |
+          set -o pipefail
+          npm test -- --runInBand 2>&1 | tee backend-core-test.log
+
+      - name: Upload backend-core test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-core-test-log
+          path: backend/backend-core-test.log
+          if-no-files-found: warn
+
+  backend-db:
+    name: backend-db (RUN_DB_TESTS=1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: transcendence_user
+          POSTGRES_PASSWORD: tr4nsc3nd3nc3_s3cur3
+          POSTGRES_DB: transcendence
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U transcendence_user -d transcendence"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: transcendence_user
+      POSTGRES_PASSWORD: tr4nsc3nd3nc3_s3cur3
+      POSTGRES_DB: transcendence
+      DATABASE_URL: postgresql://transcendence_user:tr4nsc3nd3nc3_s3cur3@localhost:5432/transcendence?schema=public
+      RUN_DB_TESTS: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply Prisma schema
+        run: npx prisma db push
+
+      - name: Run backend tests with DB enabled
+        run: |
+          set -o pipefail
+          npm test -- --runInBand 2>&1 | tee backend-db-test.log
+
+      - name: Upload backend-db test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-db-test-log
+          path: backend/backend-db-test.log
+          if-no-files-found: warn

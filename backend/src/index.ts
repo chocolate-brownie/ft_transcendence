@@ -94,8 +94,11 @@ const certPath = path.join(__dirname, "..", "certs", "cert.pem");
 const keyPath = path.join(__dirname, "..", "certs", "key.pem");
 
 let server: https.Server | http.Server;
-
-if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+if (
+  process.env.NODE_ENV !== "test" &&
+  fs.existsSync(certPath) &&
+  fs.existsSync(keyPath)
+) {
   const httpsOptions = {
     cert: fs.readFileSync(certPath),
     key: fs.readFileSync(keyPath),

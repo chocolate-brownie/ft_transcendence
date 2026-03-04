@@ -9,8 +9,9 @@ import prisma from "../src/lib/prisma";
 import { saveMessage, getMessageWithSender } from "../src/services/chat.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "test_secret";
+const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
 
-describe("Chat Flow - Socket.io & History API", () => {
+describeDb("Chat Flow - Socket.io & History API", () => {
   let io: SocketIOServer;
   let server: http.Server;
   let clientSocket: any;

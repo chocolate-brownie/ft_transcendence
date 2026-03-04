@@ -24,6 +24,7 @@ export interface TournamentParticipant {
   id: number;
   userId: number;
   seed: number;
+  eliminatedInRound: number | null;
   user: {
     id: number;
     username: string;
@@ -61,6 +62,7 @@ export interface BracketMatch {
   player1: BracketPlayer | null;
   player2: BracketPlayer | null;
   winner: { id: number; username: string } | null;
+  gameId: number | null;
   completedAt: string | null;
 }
 

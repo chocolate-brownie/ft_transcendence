@@ -10,6 +10,7 @@ import {
   handleGameRoomDisconnect,
 } from "./handlers/gameRoom.handlers";
 import { registerGameHandlers } from "./handlers/game.handlers";
+import { handleGameDisconnection } from "./handlers/disconnection.handlers";
 
 export function registerSocketHandlers(io: Server, socket: Socket) {
   registerPresenceHandlers(io, socket);
@@ -21,5 +22,6 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
   socket.on("disconnect", () => {
     handlePresenceDisconnect(io, socket);
     handleGameRoomDisconnect(io, socket);
+    void handleGameDisconnection(io, socket);
   });
 }
