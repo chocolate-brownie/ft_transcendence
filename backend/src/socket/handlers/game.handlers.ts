@@ -9,37 +9,34 @@ import { disconnectionService } from "../../services/disconnection.service";
 export function registerGameHandlers(io: Server, socket: Socket) {
 
   // --- HANDLER: JOIN GAME (Essentiel pour Test 4 & 5) ---
-  socket.on("join_game_room", async ({ gameId }, callback) => {
-    try {
-      const user = getSocketUser(socket);
-      const id = assertGameId(gameId);
+  socket.on("join_game_room", async ({ gameId }) => {
+    const user = getSocketUser(socket);
+    const id = assertGameId(gameId);
 
-      const game = await prisma.game.findUnique({
-        where: { id },
-        select: { player1Id: true, player2Id: true }
-      });
+    const game = await prisma.game.findUnique({
+      where: { id },
+      select: { player1Id: true, player2Id: true }
+    });
 
-      // VERIFICATION D'AUTORISATION
-      if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) {
-        console.warn(`[Auth] User ${user.id} tried to join game ${id} without permission`);
-        return callback?.({ error: "Unauthorized: You are not a participant in this game" });
-      }
+    // VERIFICATION D'AUTORISATION
+    if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) {
+      console.warn(`[Auth] User ${user.id} tried to join game ${id} without permission`);
+      socket.emit("unauthorized", { error: "You are not a participant in this game" });
+      return;
+    }
 
       // ANNULLER LE FORFAIT SI RECONNEXION
-      const cancelled = disconnectionService.cancelForfeitTimer(id, user.id);
-      if (cancelled) {
-        socket.to(getGameRoomName(id)).emit("opponent_reconnected", {
-          userId: user.id,
-          username: user.username,
-          message: "Opponent reconnected"
-        });
-      }
-
-      await socket.join(getGameRoomName(id));
-      callback?.({ success: true });
-    } catch (e) {
-      callback?.({ error: "Internal error", e });
+    const cancelled = disconnectionService.cancelForfeitTimer(id, user.id);
+    if (cancelled) {
+       socket.to(getGameRoomName(id)).emit("opponent_reconnected", {
+        userId: user.id,
+        username: user.username,
+        message: "Opponent reconnected"
+      });
     }
+
+    await socket.join(getGameRoomName(id));
+    console.log(`[Game ${id}] User ${user.username} joined the room`);
   });
 
   socket.on("get_game_state", async ({ gameId }, callback) => {
