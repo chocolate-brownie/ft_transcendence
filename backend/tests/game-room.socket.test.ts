@@ -4,7 +4,10 @@ import { io as Client, Socket as ClientSocket } from "socket.io-client";
 import http from "http";
 import jwt from "jsonwebtoken";
 import prisma from "../src/lib/prisma";
-import { registerGameRoomHandlers } from "../src/socket/handlers/gameRoom.handlers";
+import {
+  registerGameRoomHandlers,
+  handleGameRoomDisconnect,
+} from "../src/socket/handlers/gameRoom.handlers";
 import { gameRoomService } from "../src/socket/services/gameRoom.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "test_secret";
@@ -73,6 +76,9 @@ describeDb("Socket Game Rooms", () => {
 
     io.on("connection", (socket) => {
       registerGameRoomHandlers(io, socket);
+      socket.on("disconnect", () => {
+        handleGameRoomDisconnect(io, socket);
+      });
     });
 
     await new Promise<void>((resolve) => {
