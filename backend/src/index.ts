@@ -13,8 +13,6 @@ import { Server as SocketIOServer } from "socket.io";
 import prisma from "./lib/prisma";
 import { socketAuthMiddleware } from "./socket/auth";
 import { registerSocketHandlers } from "./socket";
-import { processGameOver } from "./services/gameOver.service";
-import { checkWinnerWithLine } from "./services/games.service";
 
 // Route imports
 import authRoutes from "./routes/auth.routes";

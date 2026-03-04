@@ -4,17 +4,44 @@ import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import { processGameOver } from "../../services/gameOver.service";
 import type { Board } from "../../types/game";
 import prisma from "../../lib/prisma";
+import { disconnectionService } from "../../services/disconnection.service";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
 
   // --- HANDLER: JOIN GAME (Essentiel pour Test 4 & 5) ---
-  socket.on("join_game_room", ({ gameId }) => {
+  socket.on("join_game_room", async ({ gameId }, callback) => {
+    const user = getSocketUser(socket);
+    const id = assertGameId(gameId);
+
     try {
-      const roomName = getGameRoomName(assertGameId(gameId));
-      socket.join(roomName);
-      console.log(`[Socket ${socket.id}] joined room ${roomName}`);
+      const user = getSocketUser(socket);
+      const id = assertGameId(gameId);
+
+      const game = await prisma.game.findUnique({
+        where: { id },
+        select: { player1Id: true, player2Id: true }
+      });
+
+      // VERIFICATION D'AUTORISATION
+      if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) {
+        console.warn(`[Auth] User ${user.id} tried to join game ${id} without permission`);
+        return callback?.({ error: "Unauthorized: You are not a participant in this game" });
+      }
+
+      // ANNULLER LE FORFAIT SI RECONNEXION
+      const cancelled = disconnectionService.cancelForfeitTimer(id, user.id);
+      if (cancelled) {
+        socket.to(getGameRoomName(id)).emit("opponent_reconnected", {
+          userId: user.id,
+          username: user.username,
+          message: "Opponent reconnected"
+        });
+      }
+
+      await socket.join(getGameRoomName(id));
+      callback?.({ success: true });
     } catch (e) {
-      console.error("Join room error:", e);
+      callback?.({ error: "Internal error", e });
     }
   });
 
@@ -31,8 +58,8 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
       // On renvoie l'état pour que le client se synchronise
       callback?.(game);
-    } catch (error) {
-      callback?.({ error: "Failed to fetch game state" });
+    } catch (e) {
+      callback?.({ error: "Failed to fetch game state", e });
     }
   });
 
@@ -62,8 +89,9 @@ export function registerGameHandlers(io: Server, socket: Socket) {
         : updatedGame.player2Symbol;
 
       // 4. Vérification de la ligne gagnante (pour le frontend)
+      const boardData = updatedGame.boardState as unknown as Board; // Cast pour s'assurer que c'est bien un Board
       const gameOverResult = checkGameOver(
-        updatedGame.boardState as Board,
+        boardData,
         updatedGame.boardSize
       );
 
@@ -92,6 +120,8 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
       // 7. Gestion de la fin de partie via le service dédié
       if (updatedGame.status === "FINISHED" || updatedGame.status === "DRAW") {
+        disconnectionService.cancelAllTimersForGame(updatedGame.id);
+
         await processGameOver(io, updatedGame, gameOverResult);
       }
 

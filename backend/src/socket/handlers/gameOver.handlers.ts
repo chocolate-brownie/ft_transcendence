@@ -29,7 +29,7 @@ export const handleMakeMove = (io: Server, socket: Socket) => {
         winner: winInfo ? {
           id: winInfo.winner === "X" ? game.playerX.id : game.playerO.id,
           username: winInfo.winner === "X" ? game.playerX.username : game.playerO.username,
-          symbol: winInfo.winner as "X" | "O"
+          symbol: winInfo.winner
         } : null,
         loser: winInfo ? {
           id: winInfo.winner === "X" ? game.playerO.id : game.playerX.id,

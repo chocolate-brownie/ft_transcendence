@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "@jest/globals";
 import { Server as SocketIOServer } from "socket.io";
 import { io as Client } from "socket.io-client";
 import http from "http";
@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { app } from "../src/index";
 import prisma from "../src/lib/prisma";
 import { registerGameHandlers } from "../src/socket/handlers/game.handlers";
+import { disconnectionService } from "../src/services/disconnection.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "test_secret";
 const PORT = 3005;
@@ -71,6 +72,16 @@ describe("Game Over Logic - Complete Suite", () => {
         status: "IN_PROGRESS",
       },
     });
+  });
+
+  afterEach(async () => {
+    // 1. On déconnecte tous les sockets serveurs pour éviter les fuites
+    const sockets = await io.fetchSockets();
+    sockets.forEach((s) => s.disconnect(true));
+
+    // 2. On annule tous les timers de forfait qui auraient pu être lancés
+    // (Important pour que le test suivant ne soit pas perturbé)
+    disconnectionService.cancelAllTimersForGame(game.id);
   });
 
   // --- TEST 1: WIN SCENARIO ---
@@ -163,7 +174,7 @@ describe("Game Over Logic - Complete Suite", () => {
 
     await new Promise<void>((resolve) => {
       clientB.on("connect", () => {
-        clientB.emit("join_game", { gameId: gameB.id });
+        clientB.emit("join_game_room", { gameId: gameB.id });
         clientB.on("game_over", () => { receivedOtherGameEvent = true; });
 
         // On finit le jeu A
@@ -186,7 +197,7 @@ describe("Game Over Logic - Complete Suite", () => {
 
     await new Promise<void>((res) => {
       client.on("connect", () => {
-        client.emit("join_game", { gameId: game.id });
+        client.emit("join_game_room", { gameId: game.id });
         // Ici on simule une requête pour obtenir l'état actuel (si tu as un handler "get_game_state")
         client.emit("get_game_state", { gameId: game.id }, (response: any) => {
           expect(response.status).toBe("FINISHED");
@@ -197,4 +208,33 @@ describe("Game Over Logic - Complete Suite", () => {
     });
     client.disconnect();
   });
+
+  // --- TEST 6: SECURITY / AUTHORIZATION (Issue #176) ---
+  it("Test 6: should deny access to a non-participant user", async () => {
+    // 1. Création d'un "Hacker" (User C) qui n'est pas dans la partie
+    const userC = await prisma.user.create({
+      data: { email: "hacker@test.com", username: "Charlie", passwordHash: "h" }
+    });
+    const userCToken = jwt.sign({ id: userC.id, username: userC.username }, JWT_SECRET);
+
+    const clientC = Client(`http://localhost:${PORT}`, {
+      auth: { token: `Bearer ${userCToken}` }
+    });
+
+    const error: any = await new Promise((resolve) => {
+      clientC.on("connect", () => {
+        // Tentative de rejoindre la room d'Alice et Bob
+        clientC.emit("join_game_room", { gameId: game.id }, (response: any) => {
+          resolve(response); // On attend la réponse du serveur (callback)
+        });
+      });
+    });
+
+    // VERIFICATION : Le serveur doit refuser
+    expect(error.error).toBeDefined();
+    expect(error.error).toMatch(/unauthorized|not a participant/i);
+
+    clientC.disconnect();
+  });
+
 });
