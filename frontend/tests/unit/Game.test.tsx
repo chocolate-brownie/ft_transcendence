@@ -1,4 +1,12 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Game from "../../src/pages/Game";
@@ -337,7 +345,9 @@ describe("Game page socket wiring", () => {
     render(<Game />);
     joinRoom(socket);
 
-    const initialJoinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+    const initialJoinCalls = socket.emit.mock.calls.filter(
+      (call) => call[0] === "join_game_room",
+    ).length;
     expect(initialJoinCalls).toBe(1);
 
     act(() => {
@@ -347,7 +357,9 @@ describe("Game page socket wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
 
     await waitFor(() => {
-      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+      const joinCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "join_game_room",
+      ).length;
       expect(joinCalls).toBe(2);
     });
   });
@@ -363,7 +375,9 @@ describe("Game page socket wiring", () => {
     render(<Game />);
     joinRoom(socket);
 
-    const initialJoinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+    const initialJoinCalls = socket.emit.mock.calls.filter(
+      (call) => call[0] === "join_game_room",
+    ).length;
     expect(initialJoinCalls).toBe(1);
 
     socket.connected = false;
@@ -379,7 +393,9 @@ describe("Game page socket wiring", () => {
     });
 
     await waitFor(() => {
-      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room").length;
+      const joinCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "join_game_room",
+      ).length;
       expect(joinCalls).toBe(2);
     });
   });
@@ -444,7 +460,9 @@ describe("Game page socket wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
 
-    const leaveCalls = socket.emit.mock.calls.filter((call) => call[0] === "leave_game_room");
+    const leaveCalls = socket.emit.mock.calls.filter(
+      (call) => call[0] === "leave_game_room",
+    );
     expect(leaveCalls).toHaveLength(1);
   });
 });

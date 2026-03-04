@@ -21,7 +21,9 @@ describe("GameBoard", () => {
       />,
     );
 
-    const winningButtons = [1, 2, 3].map((n) => screen.getByLabelText(`Cell ${n}, winning cell`));
+    const winningButtons = [1, 2, 3].map((n) =>
+      screen.getByLabelText(`Cell ${n}, winning cell`),
+    );
     for (const btn of winningButtons) {
       expect(btn.className).toContain("winner-cell-win");
     }
@@ -41,6 +43,8 @@ describe("GameBoard", () => {
       />,
     );
 
-    expect(screen.getAllByLabelText("Cell 1, winning cell")[0].className).toContain("winner-cell-loss");
+    expect(screen.getAllByLabelText("Cell 1, winning cell")[0].className).toContain(
+      "winner-cell-loss",
+    );
   });
 });

@@ -119,12 +119,16 @@ export default function GameOverModal({
 
         <div className="mt-5 grid grid-cols-2 gap-3 rounded-lg bg-black/15 p-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-pong-text/60">Total Moves</p>
+            <p className="text-xs uppercase tracking-wide text-pong-text/60">
+              Total Moves
+            </p>
             <p className="text-2xl font-bold text-pong-text">{totalMoves}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-pong-text/60">Duration</p>
-            <p className="text-2xl font-bold text-pong-text">{formatDuration(durationSeconds)}</p>
+            <p className="text-2xl font-bold text-pong-text">
+              {formatDuration(durationSeconds)}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-pong-text/60">Winner</p>
@@ -173,10 +177,17 @@ export default function GameOverModal({
           </div>
         </div>
 
-        {rematchError ? <p className="mt-3 text-xs text-red-400">{rematchError}</p> : null}
+        {rematchError ? (
+          <p className="mt-3 text-xs text-red-400">{rematchError}</p>
+        ) : null}
 
         <div className="mt-5 space-y-3">
-          <Button variant="primary" className="w-full" onClick={onPlayAgain} disabled={rematchLoading}>
+          <Button
+            variant="primary"
+            className="w-full"
+            onClick={onPlayAgain}
+            disabled={rematchLoading}
+          >
             {rematchLoading ? "Creating rematch..." : "Play Again"}
           </Button>
           <Button variant="secondary" className="w-full" onClick={onGoLobby}>

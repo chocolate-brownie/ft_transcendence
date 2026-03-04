@@ -11,7 +11,8 @@ export default function GameBoard({
   playerSymbol = null,
   gameOver = false,
 }: GameBoardProps) {
-  const didPlayerWin = winnerSymbol !== null && playerSymbol !== null && winnerSymbol === playerSymbol;
+  const didPlayerWin =
+    winnerSymbol !== null && playerSymbol !== null && winnerSymbol === playerSymbol;
 
   const handleCellClick = (index: number) => {
     if (disabled || board[index] !== null) return;

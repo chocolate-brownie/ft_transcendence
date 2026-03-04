@@ -74,7 +74,9 @@ export default function Game() {
 
   const gameId = Number(id);
 
-  const [status, setStatus] = useState<"idle" | "connecting" | "joining" | "ready">("idle");
+  const [status, setStatus] = useState<"idle" | "connecting" | "joining" | "ready">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
 
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
@@ -141,7 +143,8 @@ export default function Game() {
         const line = findWinningLine(game.boardState);
         const winnerSymbol = line ? game.boardState[line[0]] : null;
         if (winnerSymbol === game.yourSymbol) setGameResultText("You won");
-        else if (winnerSymbol === "X" || winnerSymbol === "O") setGameResultText("You lost");
+        else if (winnerSymbol === "X" || winnerSymbol === "O")
+          setGameResultText("You lost");
       }
       setStatus("ready");
     }
@@ -208,7 +211,13 @@ export default function Game() {
       setMoveError(error);
     }
 
-    function onError({ gameId: eventGameId, message }: { gameId?: number; message?: string }) {
+    function onError({
+      gameId: eventGameId,
+      message,
+    }: {
+      gameId?: number;
+      message?: string;
+    }) {
       if (typeof eventGameId === "number" && eventGameId !== gameId) return;
 
       const userMessage = message || "Something went wrong.";
@@ -262,7 +271,6 @@ export default function Game() {
     return () => window.clearInterval(timer);
   }, [startedAtMs, serverStatus]);
 
-
   useEffect(() => {
     function startJoin() {
       if (!socket || joinedRef.current) return;
@@ -301,7 +309,6 @@ export default function Game() {
 
     startJoin();
   }, [socket, gameId, joinRevision]);
-
 
   useEffect(() => {
     return () => {
@@ -399,7 +406,8 @@ export default function Game() {
     return null;
   })();
 
-  const isYourTurn = status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
+  const isYourTurn =
+    status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
   const boardDisabled = !isYourTurn || isSendingMove;
   const winningLine = serverWinningLine || findWinningLine(board);
   const moveCount = board.filter((cell) => cell !== null).length;
@@ -467,8 +475,8 @@ export default function Game() {
           serverStatus === "WAITING"
             ? waitingText
             : serverStatus === "FINISHED" || serverStatus === "DRAW"
-            ? gameOverText
-            : undefined
+              ? gameOverText
+              : undefined
         }
       />
 
@@ -485,7 +493,9 @@ export default function Game() {
 
       <div className="flex items-center gap-4 text-xs text-pong-text/60">
         <span>Move {moveCount} of 9</span>
-        <span>Clock {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}</span>
+        <span>
+          Clock {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}
+        </span>
       </div>
 
       {isGameOver ? (
@@ -528,7 +538,9 @@ export default function Game() {
         winner={gameOverPayload?.winner ?? null}
         loser={gameOverPayload?.loser ?? null}
         mySymbol={yourSymbol}
-        totalMoves={gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length}
+        totalMoves={
+          gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length
+        }
         durationSeconds={gameOverPayload?.duration}
         opponentAvatarUrl={opponentAvatarUrl}
         rematchLoading={isCreatingRematch}

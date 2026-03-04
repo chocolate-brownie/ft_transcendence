@@ -62,6 +62,8 @@ describe("Scoreboard", () => {
     );
 
     expect(screen.getByTestId("scoreboard-player2-card").className).toContain("ring-2");
-    expect(screen.getByTestId("scoreboard-player1-card").className).not.toContain("ring-2");
+    expect(screen.getByTestId("scoreboard-player1-card").className).not.toContain(
+      "ring-2",
+    );
   });
 });
