@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import { makeMoveInDb, checkGameOver } from "../../services/games.service";
 import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
+import { processGameOver } from "../../services/gameOver.service";
 import type { Board } from "../../types/game";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
@@ -12,104 +13,63 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
     try {
       const user = getSocketUser(socket);
-
-      // Check gameId
       gameId = assertGameId(rawGameId);
 
-      // Check cellIndex
-      if (
-        typeof rawCellIndex !== "number" ||
-        !Number.isInteger(rawCellIndex) ||
-        rawCellIndex < 0 ||
-        rawCellIndex > 8
-      ) {
-        socket.emit("move_error", {
-          error: "Invalid cell index",
-          cellIndex: rawCellIndex ?? null,
-        });
+      // 1. Validation de l'index
+      if (cellIndex === null || cellIndex < 0 || cellIndex > 8 || !Number.isInteger(cellIndex)) {
+        socket.emit("move_error", { error: "Invalid cell index", cellIndex });
         return;
       }
 
-      // Execute Move (atomic transaction in service)
-      const updatedGame = await makeMoveInDb(gameId, rawCellIndex, user.id);
+      // 2. Exécution du mouvement en base de données
+      // C'est ici que le statut passe à "FINISHED" ou "DRAW" si le coup est gagnant
+      const updatedGame = await makeMoveInDb(gameId, cellIndex, user.id);
 
-      // Check Player Symbol
-      const playerSymbol =
-        updatedGame.player1Id === user.id
-          ? updatedGame.player1Symbol
-          : updatedGame.player2Symbol;
+      // 3. Détermination du symbole du joueur pour le log/payload
+      const playerSymbol = updatedGame.player1Id === user.id
+        ? updatedGame.player1Symbol
+        : updatedGame.player2Symbol;
 
-      // Won line for Frontend
+      // 4. Vérification de la ligne gagnante (pour le frontend)
       const gameOverResult = checkGameOver(
         updatedGame.boardState as Board,
-        updatedGame.boardSize,
+        updatedGame.boardSize
       );
 
-      // Build game_update payload
-      const gameUpdate: Record<string, unknown> = {
+      // 5. Construction du payload de mise à jour standard
+      const gameUpdate = {
         gameId: updatedGame.id,
         board: updatedGame.boardState,
         currentTurn: updatedGame.currentTurn,
         status: updatedGame.status,
-        winner: updatedGame.winner ?? null,
-        winnerId: updatedGame.winnerId ?? null,
-        player1: updatedGame.player1,
-        player2: updatedGame.player2,
         player1Symbol: updatedGame.player1Symbol,
         player2Symbol: updatedGame.player2Symbol,
         lastMove: {
           player: playerSymbol,
           userId: user.id,
-          cellIndex: rawCellIndex,
+          cellIndex,
           timestamp: new Date().toISOString(),
         },
+        ...(gameOverResult.line && { winningLine: gameOverResult.line })
       };
 
-      if (gameOverResult.line) {
-        gameUpdate.winningLine = gameOverResult.line;
-      }
-
-      // Room Broadcast (2 players receives it)
+      // 6. Broadcast de l'update (toujours envoyé pour mettre à jour le plateau)
       const roomName = getGameRoomName(gameId);
       io.to(roomName).emit("game_update", gameUpdate);
 
-      console.log(
-        `[Game ${gameId}] ${user.username} (${playerSymbol}) → cell ${rawCellIndex}`,
-      );
+      console.log(`[Game ${gameId}] Move by ${user.username} (${playerSymbol})`);
 
-      // If GameOver Send game_over
+      // 7. Gestion de la fin de partie via le service dédié
       if (updatedGame.status === "FINISHED" || updatedGame.status === "DRAW") {
-        const gameOver: Record<string, unknown> = {
-          gameId: updatedGame.id,
-          status: updatedGame.status,
-          winner: updatedGame.winner ?? null,
-          winnerId: updatedGame.winnerId ?? null,
-          board: updatedGame.boardState,
-        };
-
-        if (gameOverResult.line) {
-          gameOver.winningLine = gameOverResult.line;
-        }
-
-        io.to(roomName).emit("game_over", gameOver);
-
-        const outcome =
-          updatedGame.status === "DRAW"
-            ? "Draw"
-            : `Winner: ${updatedGame.winner?.username ?? updatedGame.winnerId}`;
-
-        console.log(`[Game ${gameId}] Game over — ${outcome}`);
+        await processGameOver(io, updatedGame, gameOverResult);
       }
+
     } catch (error: unknown) {
       const rawMessage = error instanceof Error ? error.message : "Failed to make move";
       const errorMessage = rawMessage.replace(/^Invalid move:\s*/i, "");
 
       console.warn(`[Game ${gameId ?? "?"}] Move rejected: ${errorMessage}`);
-
-      socket.emit("move_error", {
-        error: errorMessage,
-        cellIndex,
-      });
+      socket.emit("move_error", { error: errorMessage, cellIndex });
     }
   });
 }
