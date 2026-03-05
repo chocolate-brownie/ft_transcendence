@@ -47,8 +47,19 @@ export type GameAction =
   | { type: "JOIN_START" }
   | { type: "INVALID_GAME_ID"; message: string }
   | { type: "BEGIN_MOVE_SEND" }
+  | { type: "DISCONNECT_COUNTDOWN_TICK" }
+  | { type: "REMATCH_RECEIVED" }
+  | { type: "REMATCH_REQUEST_START" }
+  | { type: "REMATCH_REQUEST_FAILED"; message: string }
+  | { type: "REMATCH_OPPONENT_MISSING" }
+  | { type: "RETRY_OFFLINE" }
+  | { type: "RETRY_SOCKET_UNAVAILABLE" }
+  | { type: "RETRY_RESET" }
+  | { type: "RETRY_READY" }
+  | { type: "OPEN_GAME_OVER_MODAL" }
+  | { type: "CLOSE_GAME_OVER_MODAL" }
   | { type: "RESET_FOR_ROUTE_CHANGE" }
-  | { type: "PATCH"; patch: Partial<GameViewState> };
+  ;
 
 export const initialGameState: GameViewState = {
   status: "idle",
@@ -257,10 +268,52 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
       return { ...state, status: "idle", error: action.message };
     case "BEGIN_MOVE_SEND":
       return { ...state, isSendingMove: true, moveError: null };
+    case "DISCONNECT_COUNTDOWN_TICK":
+      return {
+        ...state,
+        disconnectCountdown:
+          state.disconnectCountdown && state.disconnectCountdown > 0
+            ? state.disconnectCountdown - 1
+            : 0,
+      };
+    case "REMATCH_RECEIVED":
+      return { ...state, isCreatingRematch: true, rematchError: null };
+    case "REMATCH_REQUEST_START":
+      return { ...state, isCreatingRematch: true, rematchError: null };
+    case "REMATCH_REQUEST_FAILED":
+      return { ...state, rematchError: action.message, isCreatingRematch: false };
+    case "REMATCH_OPPONENT_MISSING":
+      return {
+        ...state,
+        rematchError: "Unable to identify opponent for rematch.",
+        isCreatingRematch: false,
+      };
+    case "RETRY_OFFLINE":
+      return {
+        ...state,
+        error: "You are offline. Reconnect to the internet and try again.",
+      };
+    case "RETRY_SOCKET_UNAVAILABLE":
+      return {
+        ...state,
+        status: "connecting",
+        error: "Still connecting to server. Please try again in a moment.",
+      };
+    case "RETRY_RESET":
+      return {
+        ...state,
+        error: null,
+        moveError: null,
+        isSendingMove: false,
+      };
+    case "RETRY_READY":
+      return { ...state, status: "idle" };
+    case "OPEN_GAME_OVER_MODAL":
+      return { ...state, showGameOverModal: true };
+    case "CLOSE_GAME_OVER_MODAL":
+      return { ...state, showGameOverModal: false };
     case "RESET_FOR_ROUTE_CHANGE":
       return { ...state, status: "idle" };
-    case "PATCH":
-      return { ...state, ...action.patch };
     default:
       return state;
   }
