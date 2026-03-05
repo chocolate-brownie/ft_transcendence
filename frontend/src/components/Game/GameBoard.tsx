@@ -6,31 +6,53 @@ export default function GameBoard({
   onCellClick,
   disabled = false,
   className = "",
+  currentTurnSymbol = null,
   winningLine = null,
+  winnerSymbol = null,
+  playerSymbol = null,
+  gameOver = false,
 }: GameBoardProps) {
+  const didPlayerWin =
+    winnerSymbol !== null && playerSymbol !== null && winnerSymbol === playerSymbol;
+
   const handleCellClick = (index: number) => {
     if (disabled || board[index] !== null) return;
     onCellClick(index);
   };
+  const turnHoverClass =
+    currentTurnSymbol === "X"
+      ? "hover:bg-pong-accent/10"
+      : currentTurnSymbol === "O"
+        ? "hover:bg-pong-secondary/10"
+        : "hover:bg-orange-50";
 
   return (
-    <div className={`inline-block rounded-lg bg-pong-surface p-2.5 ${className}`}>
+    <div
+      className={`inline-block rounded-lg bg-pong-surface p-2.5 shadow-sm ${className}`}
+    >
       <div className="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
         {board.map((cell, index) => (
           <button
             key={index}
             disabled={disabled}
             onClick={() => handleCellClick(index)}
+            aria-label={`Cell ${index + 1}${winningLine?.includes(index) ? ", winning cell" : ""}`}
             className={
               "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200 " +
               (disabled
                 ? "cursor-not-allowed opacity-60"
                 : cell === null
-                  ? "cursor-pointer hover:bg-transparent"
+                  ? `cursor-pointer ${turnHoverClass}`
                   : "cursor-default") +
               " " +
+              (gameOver && winningLine && !winningLine.includes(index)
+                ? "opacity-35 saturate-50"
+                : "") +
+              " " +
               (winningLine && winningLine.includes(index)
-                ? "bg-transparent winner-cell"
+                ? didPlayerWin
+                  ? "winner-cell winner-cell-win"
+                  : "winner-cell winner-cell-loss"
                 : "")
             }
           >

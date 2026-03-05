@@ -77,9 +77,12 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
         onClick={() => handleSelect(user)}
       >
         <img
-          src={user.avatarUrl ?? "/logo-friends.png"}
+          src={user.avatarUrl ?? "/default-avatar.png"}
           alt={`${user.username} avatar`}
           className="h-8 w-8 rounded-full object-cover border border-black/10"
+          onError={(e) => {
+            e.currentTarget.src = "/default-avatar.png";
+          }}
         />
         <div className="flex-1 text-left">
           <p className="text-sm font-medium text-pong-text">

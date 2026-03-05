@@ -25,6 +25,10 @@ export const CREATE_ERRORS = {
   SELF_PLAY: "Cannot play against yourself",
   PLAYER_NOT_FOUND: "Player not found",
   NOT_FRIENDS: "Can only play with friends",
+  INVALID_REMATCH_SOURCE: "Invalid rematch source game",
+  REMATCH_NOT_ALLOWED: "Rematch is only allowed for completed games",
+  REMATCH_UNAUTHORIZED: "You are not a participant in the source game",
+  REMATCH_OPPONENT_MISMATCH: "Opponent does not match source game",
 } as const;
 
 // ───────────────── Types ─────────────────
@@ -64,6 +68,12 @@ const statusErrorMap: Record<NonPlayableStatus, string> = {
 const playerSelect = {
   select: { id: true, username: true, avatarUrl: true },
 } as const;
+
+const REMATCH_ACTIVE_STATUSES = ["WAITING", "IN_PROGRESS"] as const;
+
+export const buildPairLockParts = (playerA: number, playerB: number): [number, number] => {
+  return [Math.min(playerA, playerB), Math.max(playerA, playerB)];
+};
 
 // ───────────────── Main Functions ─────────────────
 
@@ -284,6 +294,94 @@ export const createGameInDb = async (player1Id: number, player2Id?: number) => {
   });
 
   return game;
+};
+
+export const createOrGetRematchInDb = async (
+  requesterId: number,
+  opponentId: number,
+  sourceGameId: number,
+) => {
+  return prisma.$transaction(async (tx) => {
+    const [smallId, bigId] = buildPairLockParts(requesterId, opponentId);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${smallId}::integer, ${bigId}::integer)`;
+
+    const sourceGame = await tx.game.findUnique({
+      where: { id: sourceGameId },
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+      },
+    });
+
+    if (!sourceGame) {
+      throw new Error(CREATE_ERRORS.INVALID_REMATCH_SOURCE);
+    }
+
+    const isRequesterParticipant =
+      sourceGame.player1Id === requesterId || sourceGame.player2Id === requesterId;
+    if (!isRequesterParticipant) {
+      throw new Error(CREATE_ERRORS.REMATCH_UNAUTHORIZED);
+    }
+
+    const sourceOpponentId =
+      sourceGame.player1Id === requesterId ? sourceGame.player2Id : sourceGame.player1Id;
+    if (sourceOpponentId !== opponentId) {
+      throw new Error(CREATE_ERRORS.REMATCH_OPPONENT_MISMATCH);
+    }
+
+    if (sourceGame.status !== "FINISHED" && sourceGame.status !== "DRAW") {
+      throw new Error(CREATE_ERRORS.REMATCH_NOT_ALLOWED);
+    }
+
+    const rematch = await tx.game.findFirst({
+      where: {
+        id: { not: sourceGameId },
+        status: { in: REMATCH_ACTIVE_STATUSES as unknown as any[] },
+        createdAt: {
+          gte: sourceGame.finishedAt ?? sourceGame.createdAt,
+        },
+        OR: [
+          {
+            player1Id: requesterId,
+            player2Id: opponentId,
+          },
+          {
+            player1Id: opponentId,
+            player2Id: requesterId,
+          },
+        ],
+      },
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (rematch) {
+      return rematch;
+    }
+
+    return tx.game.create({
+      data: {
+        player1Id: requesterId,
+        player2Id: opponentId,
+        boardState: initializeBoard(),
+        boardSize: 3,
+        currentTurn: "X",
+        status: "IN_PROGRESS",
+        player1Symbol: "X",
+        player2Symbol: "O",
+        startedAt: new Date(),
+      },
+      include: {
+        player1: playerSelect,
+        player2: playerSelect,
+      },
+    });
+  });
 };
 
 //        MAKE MOVE
