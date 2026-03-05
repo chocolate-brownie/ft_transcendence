@@ -31,7 +31,11 @@ export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, saltRounds);
 }
 
-export function generateToken(id: number, email: string, username: string): string {
+export function generateToken(
+  id: number,
+  email: string,
+  username: string,
+): string {
   return jwt.sign({ id, email, username }, jwtSecret, { expiresIn: "24h" });
 }
 

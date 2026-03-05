@@ -26,6 +26,7 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
       const isPlayer1 = game.player1Id === user.id;
       const opponent = isPlayer1 ? game.player2 : game.player1;
       const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
+      const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
 
       if (!opponent) continue;
 
@@ -41,7 +42,7 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
       await disconnectionService.startForfeitTimer(
         io,
         game.id,
-        { id: user.id, username: user.username },
+        { id: user.id, username: user.username, symbol: disconnectedSymbol },
         { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
         roomName,
       );

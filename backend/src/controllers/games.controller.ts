@@ -22,8 +22,14 @@ export const createGame = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: CREATE_ERRORS.SELF_PLAY });
       }
 
+      const hasRematchContext = sourceGameId != null;
+
       // Check RelationShip
-      const validation = await validateCreateGame(player1Id, player2Id, true);
+      const validation = await validateCreateGame(
+        player1Id,
+        player2Id,
+        !hasRematchContext,
+      );
 
       if (!validation.valid) {
         const status = validation.error === CREATE_ERRORS.NOT_FRIENDS ? 403 : 400;

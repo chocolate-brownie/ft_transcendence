@@ -28,7 +28,7 @@ describe("Scoreboard", () => {
     expect(screen.getByTestId("player2-avatar-image")).toBeInTheDocument();
   });
 
-  it("shows waiting slot and avatar fallback when player2 is missing", () => {
+  it("shows waiting slot and default avatar image when player avatar is missing", () => {
     render(
       <Scoreboard
         player1={{ id: 1, username: "alice", avatarUrl: null }}
@@ -43,8 +43,12 @@ describe("Scoreboard", () => {
     );
 
     expect(screen.getByText("Waiting...")).toBeInTheDocument();
-    expect(screen.getByTestId("player1-avatar-fallback")).toBeInTheDocument();
-    expect(screen.getByTestId("player2-avatar-fallback")).toBeInTheDocument();
+    const p1Avatar = screen.getByTestId("player1-avatar-image");
+    const p2Avatar = screen.getByTestId("player2-avatar-image");
+    expect(p1Avatar).toBeInTheDocument();
+    expect(p2Avatar).toBeInTheDocument();
+    expect(p1Avatar).toHaveAttribute("src", "/default-avatar.png");
+    expect(p2Avatar).toHaveAttribute("src", "/default-avatar.png");
   });
 
   it("highlights the active player card during in-progress games", () => {

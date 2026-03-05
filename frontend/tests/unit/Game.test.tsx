@@ -467,6 +467,131 @@ describe("Game page socket wiring", () => {
     expect(cellButtons.every((cell) => cell.hasAttribute("disabled"))).toBe(true);
   });
 
+  it("updates waiting opponent card when opponent_joined event is received", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "WAITING",
+          yourSymbol: "X",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: null,
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    expect(screen.getByText("Waiting...")).toBeInTheDocument();
+
+    act(() => {
+      socket.trigger("opponent_joined", {
+        opponent: { id: 2, username: "bob", avatarUrl: null },
+      });
+    });
+
+    const player2Card = screen.getByTestId("scoreboard-player2-card");
+    expect(within(player2Card).getByText(/bob/i)).toBeInTheDocument();
+  });
+
+  it("does not overwrite player2 when player2 client receives opponent_joined for player1", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "IN_PROGRESS",
+          yourSymbol: "O",
+          player1: { id: 1, username: "admin", avatarUrl: "/uploads/avatars/admin.png" },
+          player2: { id: 2, username: "admin2", avatarUrl: "/uploads/avatars/admin2.png" },
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    act(() => {
+      socket.trigger("opponent_joined", {
+        opponent: { id: 1, username: "admin" },
+      });
+    });
+
+    const player1Card = screen.getByTestId("scoreboard-player1-card");
+    const player2Card = screen.getByTestId("scoreboard-player2-card");
+
+    expect(within(player1Card).getByText(/admin/i)).toBeInTheDocument();
+    expect(within(player2Card).getByText(/admin2/i)).toBeInTheDocument();
+    expect(within(player2Card).getByTestId("player2-avatar-image")).toBeInTheDocument();
+  });
+
+  it("shows disconnection banner, disables board, and clears on opponent_reconnected", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("opponent_disconnected", {
+        gameId: 42,
+        username: "bob",
+        waitTime: 30,
+      });
+    });
+
+    expect(screen.getByTestId("opponent-disconnected-banner")).toBeInTheDocument();
+    expect(screen.getByText(/bob disconnected/i)).toBeInTheDocument();
+    expect(screen.getByText(/waiting for reconnection \(30s\)/i)).toBeInTheDocument();
+
+    const cellButtons = screen
+      .getAllByRole("button")
+      .filter((btn) => btn.getAttribute("aria-label")?.startsWith("Cell"));
+    expect(cellButtons.every((cell) => cell.hasAttribute("disabled"))).toBe(true);
+
+    act(() => {
+      socket.trigger("opponent_reconnected", { gameId: 42 });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("opponent-disconnected-banner")).not.toBeInTheDocument();
+    });
+  });
+
+  it("maps game_forfeited payload to game over state and winner message", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_forfeited", {
+        gameId: 42,
+        forfeitedBy: { id: 2, username: "bob" },
+        winner: { id: 1, username: "alice" },
+      });
+    });
+
+    expect(screen.getByText("Game over: You won")).toBeInTheDocument();
+    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
+    expect(screen.getAllByText("You Won! 🎉").length).toBeGreaterThan(0);
+  });
+
   it("rejoins the room when Try again is clicked while socket is still connected", async () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
