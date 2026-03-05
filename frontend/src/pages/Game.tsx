@@ -68,6 +68,8 @@ type OpponentJoined = {
     id: number;
     username: string;
     avatarUrl?: string | null;
+    role?: "player1" | "player2";
+    symbol?: PlayerSymbol;
   };
 };
 
@@ -79,8 +81,10 @@ type OpponentDisconnected = {
 
 type GameForfeited = {
   gameId: number;
-  forfeitedBy?: { id?: number; username?: string };
-  winner?: { id?: number; username?: string };
+  forfeitedBy?: { id?: number; username?: string; symbol?: PlayerSymbol };
+  winner?: { id?: number; username?: string; symbol?: PlayerSymbol };
+  winnerSymbol?: PlayerSymbol;
+  loserSymbol?: PlayerSymbol;
 };
 
 export default function Game() {
@@ -126,7 +130,6 @@ export default function Game() {
   const joinedRef = useRef(false);
   const leftRoomRef = useRef(false);
   const activeRoomIdRef = useRef<number | null>(null);
-  const disconnectTimerRef = useRef<number | null>(null);
 
   // Fix React : Refs pour éviter les closures
   const yourSymbolRef = useRef(yourSymbol);
@@ -144,13 +147,6 @@ export default function Game() {
 
   const statusRef = useRef(status);
   statusRef.current = status;
-
-  const clearDisconnectTimer = useCallback(() => {
-    if (disconnectTimerRef.current !== null) {
-      window.clearInterval(disconnectTimerRef.current);
-      disconnectTimerRef.current = null;
-    }
-  }, []);
 
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
@@ -195,7 +191,6 @@ export default function Game() {
       setOpponentConnection("online");
       setDisconnectCountdown(null);
       setDisconnectedOpponentName(null);
-      clearDisconnectTimer();
       
       if (game.status === "DRAW") {
         setGameResultText("Draw game");
@@ -265,7 +260,6 @@ export default function Game() {
       setOpponentConnection("online");
       setDisconnectCountdown(null);
       setDisconnectedOpponentName(null);
-      clearDisconnectTimer();
 
       setIsSendingMove(false);
       setMoveError(null);
@@ -329,6 +323,10 @@ export default function Game() {
           ...normalizedOpponent,
           avatarUrl: normalizedOpponent.avatarUrl ?? knownPlayer2.avatarUrl,
         });
+      } else if (opponent.role === "player1") {
+        setPlayer1(normalizedOpponent);
+      } else if (opponent.role === "player2") {
+        setPlayer2(normalizedOpponent);
       } else if (yourSymbolRef.current === "X") {
         setPlayer2(normalizedOpponent);
       } else {
@@ -338,7 +336,6 @@ export default function Game() {
       setOpponentConnection("online");
       setDisconnectCountdown(null);
       setDisconnectedOpponentName(null);
-      clearDisconnectTimer();
     }
 
     function onOpponentDisconnected({
@@ -352,16 +349,6 @@ export default function Game() {
       setOpponentConnection("disconnected");
       setDisconnectedOpponentName(username ?? "Opponent");
       setDisconnectCountdown(safeWait);
-      clearDisconnectTimer();
-      disconnectTimerRef.current = window.setInterval(() => {
-        setDisconnectCountdown((prev) => {
-          if (prev === null || prev <= 1) {
-            clearDisconnectTimer();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     }
 
     function onOpponentReconnected({
@@ -373,10 +360,15 @@ export default function Game() {
       setOpponentConnection("online");
       setDisconnectCountdown(null);
       setDisconnectedOpponentName(null);
-      clearDisconnectTimer();
     }
 
-    function onGameForfeited({ gameId: forfeitedGameId, winner, forfeitedBy }: GameForfeited) {
+    function onGameForfeited({
+      gameId: forfeitedGameId,
+      winner,
+      forfeitedBy,
+      winnerSymbol,
+      loserSymbol,
+    }: GameForfeited) {
       if (forfeitedGameId !== gameId) return;
 
       const resolvedWinnerId = winner?.id;
@@ -386,31 +378,41 @@ export default function Game() {
       const p1Symbol = player1SymbolRef.current;
       const p2Symbol = player2SymbolRef.current;
 
-      const winnerSymbol =
-        resolvedWinnerId === p1?.id ? p1Symbol : resolvedWinnerId === p2?.id ? p2Symbol : null;
-      const loserSymbol =
-        resolvedLoserId === p1?.id ? p1Symbol : resolvedLoserId === p2?.id ? p2Symbol : null;
+      const resolvedWinnerSymbol =
+        winnerSymbol ??
+        winner?.symbol ??
+        (resolvedWinnerId === p1?.id
+          ? p1Symbol
+          : resolvedWinnerId === p2?.id
+            ? p2Symbol
+            : null);
+      const resolvedLoserSymbol =
+        loserSymbol ??
+        forfeitedBy?.symbol ??
+        (resolvedLoserId === p1?.id ? p1Symbol : resolvedLoserId === p2?.id ? p2Symbol : null);
 
       setServerStatus("FINISHED");
-      setGameResultText(winnerSymbol === yourSymbolRef.current ? "You won" : "You lost");
+      setGameResultText(
+        resolvedWinnerSymbol === yourSymbolRef.current ? "You won" : "You lost",
+      );
       setGameOverPayload({
         gameId: forfeitedGameId,
         finalBoard: boardRef.current,
         result: "win",
         winner:
-          typeof resolvedWinnerId === "number" && winnerSymbol
+          typeof resolvedWinnerId === "number" && resolvedWinnerSymbol
             ? {
                 id: resolvedWinnerId,
                 username: winner?.username ?? "Opponent",
-                symbol: winnerSymbol,
+                symbol: resolvedWinnerSymbol,
               }
             : undefined,
         loser:
-          typeof resolvedLoserId === "number" && loserSymbol
+          typeof resolvedLoserId === "number" && resolvedLoserSymbol
             ? {
                 id: resolvedLoserId,
                 username: forfeitedBy?.username ?? "Opponent",
-                symbol: loserSymbol,
+                symbol: resolvedLoserSymbol,
               }
             : undefined,
       });
@@ -418,7 +420,6 @@ export default function Game() {
       setOpponentConnection("online");
       setDisconnectCountdown(null);
       setDisconnectedOpponentName(null);
-      clearDisconnectTimer();
       setIsSendingMove(false);
       setMoveError(null);
     }
@@ -458,7 +459,7 @@ export default function Game() {
       socket.off("disconnect", onDisconnect);
       socket.off("rematch_received", onRematchReceived);
     };
-  }, [socket, gameId, navigate, clearDisconnectTimer]);
+  }, [socket, gameId, navigate]);
 
   useEffect(() => {
     if (!socket || !gameId) return;
@@ -490,6 +491,17 @@ export default function Game() {
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, [startedAtMs, serverStatus]);
+
+  useEffect(() => {
+    if (opponentConnection !== "disconnected") return;
+    if (disconnectCountdown === null || disconnectCountdown <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setDisconnectCountdown((prev) => (prev && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [opponentConnection, disconnectCountdown]);
 
   useEffect(() => {
     function startJoin() {
@@ -537,10 +549,9 @@ export default function Game() {
   // Cleanup au démontage : quitte proprement la room
   useEffect(() => {
     return () => {
-      clearDisconnectTimer();
       emitLeaveRoomOnce();
     };
-  }, [clearDisconnectTimer, emitLeaveRoomOnce]);
+  }, [emitLeaveRoomOnce]);
 
   function handleCellClick(index: number) {
     if (board[index] !== null) return;

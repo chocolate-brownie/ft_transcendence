@@ -135,12 +135,17 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
 
         const joinedPlayer =
           syncedGame.player1Id === user.id ? syncedGame.player1 : syncedGame.player2;
+        const joinedRole = syncedGame.player1Id === user.id ? "player1" : "player2";
+        const joinedSymbol =
+          joinedRole === "player1" ? syncedGame.player1Symbol : syncedGame.player2Symbol;
 
         socket.to(roomName).emit("opponent_joined", {
           opponent: {
             id: user.id,
             username: user.username,
             avatarUrl: joinedPlayer?.avatarUrl ?? null,
+            role: joinedRole,
+            symbol: joinedSymbol,
           },
         });
         callback?.({ success: true });

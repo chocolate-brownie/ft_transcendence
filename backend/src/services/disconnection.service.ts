@@ -15,7 +15,7 @@ class DisconnectionService {
   async startForfeitTimer(
     io: Server,
     gameId: number,
-    disconnectedUser: { id: number; username: string },
+    disconnectedUser: { id: number; username: string; symbol: string },
     opponent: { id: number; username: string; symbol: string },
     roomName: string,
   ) {
@@ -68,7 +68,7 @@ class DisconnectionService {
   private async handleForfeit(
     io: Server,
     gameId: number,
-    loser: { id: number; username: string },
+    loser: { id: number; username: string; symbol: string },
     winner: { id: number; username: string; symbol: string },
     roomName: string,
   ) {
@@ -86,8 +86,10 @@ class DisconnectionService {
       // 2. Notification Socket.io
       io.to(roomName).emit("game_forfeited", {
         gameId,
-        forfeitedBy: { id: loser.id, username: loser.username },
-        winner: { id: winner.id, username: winner.username },
+        forfeitedBy: { id: loser.id, username: loser.username, symbol: loser.symbol },
+        winner: { id: winner.id, username: winner.username, symbol: winner.symbol },
+        winnerSymbol: winner.symbol,
+        loserSymbol: loser.symbol,
         reason: "Player disconnected for too long",
         timestamp: new Date().toISOString(),
       });

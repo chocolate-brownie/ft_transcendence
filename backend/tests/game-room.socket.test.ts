@@ -215,7 +215,12 @@ describeDb("Socket Game Rooms", () => {
         game: { yourSymbol: string };
       }>(p2, "room_joined");
       const p1OpponentJoinedPromise = waitForEvent<{
-        opponent: { id: number; username: string };
+        opponent: {
+          id: number;
+          username: string;
+          role: "player1" | "player2";
+          symbol: "X" | "O";
+        };
       }>(p1, "opponent_joined");
 
       p2.emit("join_game_room", { gameId: game.id });
@@ -228,6 +233,8 @@ describeDb("Socket Game Rooms", () => {
       expect(p2Joined.gameId).toBe(game.id);
       expect(p2Joined.game.yourSymbol).toBe("O");
       expect(p1OpponentJoined.opponent.id).toBe(player2.id);
+      expect(p1OpponentJoined.opponent.role).toBe("player2");
+      expect(p1OpponentJoined.opponent.symbol).toBe("O");
 
       const playersInRoom = gameRoomService.getPlayersInRoom(game.id);
       expect(playersInRoom).toHaveLength(2);
