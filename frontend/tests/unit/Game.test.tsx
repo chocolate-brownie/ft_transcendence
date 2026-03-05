@@ -175,6 +175,7 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
 
   it("renders lose-state message and closes on Escape key", () => {
@@ -270,6 +271,58 @@ describe("Game page socket wiring", () => {
     });
 
     expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
+  });
+
+  it("reopens game over modal when View Result is clicked", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "draw",
+        winner: null,
+        loser: null,
+        totalMoves: 9,
+        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
+        winningLine: null,
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
+    expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
+    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
+  });
+
+  it("shows View Result only when game is over and modal is hidden", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
 
   it("prevents duplicate rematch requests on rapid Play Again clicks", async () => {

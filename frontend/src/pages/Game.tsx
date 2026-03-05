@@ -594,6 +594,12 @@ export default function Game() {
         disabled={boardDisabled}
       />
 
+      {isGameOver && gameOverPayload && !showGameOverModal ? (
+        <Button variant="secondary" onClick={() => setShowGameOverModal(true)}>
+          View Result
+        </Button>
+      ) : null}
+
       <GameOverModal
         open={showGameOverModal && !!gameOverPayload}
         result={gameOverPayload?.result ?? "draw"}

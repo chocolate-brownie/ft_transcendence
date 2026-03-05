@@ -1,7 +1,7 @@
 **Execution Order**
 ~~1. `#197`~~
 ~~2. `#203`~~
-3. `#198`
+~~3. `#198`~~
 4. `#202`
 5. `#195`
 6. `#196`
@@ -10,28 +10,6 @@
 9. `#201`
 ~~10. `#168` (verification/closure)~~
 
-**#198 Draw Modal Shows Opponent As N/A**
-1. Files to touch:
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [GameOverModal.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/GameOverModal.tsx)
-- [Game.test.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/tests/unit/Game.test.tsx)
-2. Tests to add:
-- Draw-case unit test asserting opponent username/avatar is shown from room player data, not winner/loser.
-3. Done criteria:
-- Draw modal never shows `N/A` when opponent is known.
-- Win/loss paths remain correct.
-
-**#202 Modal Close/Reopen UX**
-1. Files to touch:
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [GameOverModal.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/GameOverModal.tsx)
-- [Game.test.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/tests/unit/Game.test.tsx)
-2. Tests to add:
-- Unit test: close modal, show `View Result`, click to reopen modal.
-- Unit test: reopen control appears only during game-over while modal hidden.
-3. Done criteria:
-- User can always recover end-game actions after closing modal.
-- No inaccessible end-state.
 
 **#195 Rename `Symbol` Type**
 1. Files to touch:
