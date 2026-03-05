@@ -102,6 +102,7 @@ export default function Game() {
 
   const joinedRef = useRef(false);
   const leftRoomRef = useRef(false);
+  const activeRoomIdRef = useRef<number | null>(null);
 
   // Fix React : Refs pour éviter les closures
   const yourSymbolRef = useRef(yourSymbol);
@@ -112,12 +113,14 @@ export default function Game() {
 
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
-    if (!gameId) return;
     if (leftRoomRef.current) return;
-    
-    console.log(`[Game] Leaving room ${gameId}`);
+
+    const roomId = activeRoomIdRef.current ?? gameId;
+    if (!roomId) return;
+
+    console.log(`[Game] Leaving room ${roomId}`);
     leftRoomRef.current = true;
-    socket.emit("leave_game_room", { gameId });
+    socket.emit("leave_game_room", { gameId: roomId });
   }, [socket, gameId]);
 
   // Le GRAND useEffect des sockets
@@ -127,6 +130,7 @@ export default function Game() {
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
       console.log(`[Game] Joined room ${joinedId}. Status: ${game.status}`);
+      activeRoomIdRef.current = joinedId;
 
       setBoard(game.boardState);
       setCurrentTurn(game.currentTurn);
@@ -277,6 +281,22 @@ export default function Game() {
       socket.off("disconnect", onDisconnect);
       socket.off("rematch_received", onRematchReceived);
     };
+  }, [socket, gameId]);
+
+  useEffect(() => {
+    if (!socket || !gameId) return;
+
+    const previousRoomId = activeRoomIdRef.current;
+    if (previousRoomId && previousRoomId !== gameId) {
+      socket.emit("leave_game_room", { gameId: previousRoomId });
+    }
+
+    // Route param changes can reuse the same component instance. Reset join guards
+    // so rematch navigation always performs a fresh join for the new game room.
+    joinedRef.current = false;
+    leftRoomRef.current = false;
+    activeRoomIdRef.current = null;
+    setStatus("idle");
   }, [socket, gameId]);
 
   // FIX TIMER : Arrêt correct quand fin de partie

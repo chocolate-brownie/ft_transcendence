@@ -106,9 +106,24 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
           joinedAt: new Date(),
         });
 
+        // Re-fetch after room join so the joining client receives the latest
+        // authoritative state (avoids stale snapshots during rematch races).
+        const syncedGame = await prisma.game.findUnique({
+          where: { id: gameId },
+          include: gamePlayersSelect,
+        });
+
+        if (!syncedGame) {
+          socket.emit("error", { message: "Game not found" });
+          callback?.({ error: "Game not found" });
+          return;
+        }
+
         const yourSymbol =
-          game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
-        const payloadForClient = buildJoinedPayload(game);
+          syncedGame.player1Id === user.id
+            ? syncedGame.player1Symbol
+            : syncedGame.player2Symbol;
+        const payloadForClient = buildJoinedPayload(syncedGame);
 
         socket.emit("room_joined", {
           ...payloadForClient,

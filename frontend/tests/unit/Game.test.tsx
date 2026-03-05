@@ -58,6 +58,7 @@ class MockSocket {
 
 const navigateMock = vi.fn();
 const useSocketMock = vi.fn<{ socket: MockSocket | null }, []>();
+let mockGameId = "42";
 
 vi.mock("react-router-dom", async () => {
   const actual =
@@ -65,7 +66,7 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    useParams: () => ({ id: "42" }),
+    useParams: () => ({ id: mockGameId }),
   };
 });
 
@@ -85,6 +86,7 @@ describe("Game page socket wiring", () => {
   });
 
   beforeEach(() => {
+    mockGameId = "42";
     navigateMock.mockReset();
     useSocketMock.mockReset();
     vi.mocked(gamesService.createGame).mockReset();
@@ -361,6 +363,28 @@ describe("Game page socket wiring", () => {
         (call) => call[0] === "join_game_room",
       ).length;
       expect(joinCalls).toBe(2);
+    });
+  });
+
+  it("leaves old room and joins new room when gameId route param changes", async () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    const { rerender } = render(<Game />);
+    joinRoom(socket);
+
+    const joinCallsBefore = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+    expect(joinCallsBefore).toHaveLength(1);
+    expect(joinCallsBefore[0][1]).toEqual({ gameId: 42 });
+
+    mockGameId = "77";
+    rerender(<Game />);
+
+    await waitFor(() => {
+      const leaveCalls = socket.emit.mock.calls.filter((call) => call[0] === "leave_game_room");
+      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+      expect(leaveCalls.some((call) => call[1]?.gameId === 42)).toBe(true);
+      expect(joinCalls.some((call) => call[1]?.gameId === 77)).toBe(true);
     });
   });
 
