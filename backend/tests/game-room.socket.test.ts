@@ -37,6 +37,26 @@ function waitForEvent<T = unknown>(
   });
 }
 
+function expectNoEvent(
+  socket: ClientSocket,
+  eventName: string,
+  waitMs = 300,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const handler = () => {
+      clearTimeout(timer);
+      reject(new Error(`Unexpected event received: ${eventName}`));
+    };
+
+    const timer = setTimeout(() => {
+      socket.off(eventName, handler);
+      resolve();
+    }, waitMs);
+
+    socket.once(eventName, handler);
+  });
+}
+
 describeDb("Socket Game Rooms", () => {
   let server: http.Server;
   let io: SocketIOServer;
@@ -399,5 +419,59 @@ describeDb("Socket Game Rooms", () => {
     });
 
     expect(rematches).toHaveLength(1);
+  });
+
+  it("rejects rematch relay from non-participant sockets", async () => {
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+    const outsiderToken = jwt.sign(
+      { id: outsider.id, username: outsider.username },
+      JWT_SECRET,
+    );
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+    const out = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${outsiderToken}` },
+    });
+
+    try {
+      await Promise.all([
+        waitForEvent(p1, "connect"),
+        waitForEvent(p2, "connect"),
+        waitForEvent(out, "connect"),
+      ]);
+
+      p1.emit("join_game_room", { gameId: game.id });
+      p2.emit("join_game_room", { gameId: game.id });
+      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+
+      const errorPromise = waitForEvent<{ message: string }>(out, "error");
+      out.emit("send_rematch", { gameId: game.id, newGameId: game.id + 1000 });
+      const errorPayload = await errorPromise;
+
+      expect(errorPayload.message).toMatch(/Unauthorized|not a participant/i);
+      await Promise.all([
+        expectNoEvent(p1, "rematch_received"),
+        expectNoEvent(p2, "rematch_received"),
+      ]);
+    } finally {
+      p1.close();
+      p2.close();
+      out.close();
+    }
   });
 });

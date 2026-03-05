@@ -71,10 +71,8 @@ const playerSelect = {
 
 const REMATCH_ACTIVE_STATUSES = ["WAITING", "IN_PROGRESS"] as const;
 
-const buildPairLockKey = (playerA: number, playerB: number): bigint => {
-  const minId = Math.min(playerA, playerB);
-  const maxId = Math.max(playerA, playerB);
-  return BigInt(minId) * 1_000_000n + BigInt(maxId);
+export const buildPairLockParts = (playerA: number, playerB: number): [number, number] => {
+  return [Math.min(playerA, playerB), Math.max(playerA, playerB)];
 };
 
 // ───────────────── Main Functions ─────────────────
@@ -304,8 +302,8 @@ export const createOrGetRematchInDb = async (
   sourceGameId: number,
 ) => {
   return prisma.$transaction(async (tx) => {
-    const lockKey = buildPairLockKey(requesterId, opponentId);
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockKey})`;
+    const [smallId, bigId] = buildPairLockParts(requesterId, opponentId);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${smallId}::integer, ${bigId}::integer)`;
 
     const sourceGame = await tx.game.findUnique({
       where: { id: sourceGameId },

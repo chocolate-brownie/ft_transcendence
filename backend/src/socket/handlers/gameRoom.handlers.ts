@@ -213,15 +213,50 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
     },
   );
 
-  // Rematch relay: player who created the rematch notifies the opponent in the old game room.
-  socket.on("send_rematch", (payload: { gameId: number, newGameId: number }) => {
-    try {
-      const roomName = getGameRoomName(payload.gameId);
-      socket.to(roomName).emit("rematch_received", { newGameId: payload.newGameId });
-    } catch (error) {
-      console.error("Erreur rematch:", error);
-    }
-  });
+  // Rematch relay: only game participants can notify opponent in the old game room.
+  socket.on(
+    "send_rematch",
+    async (
+      payload: { gameId?: unknown; newGameId?: unknown },
+      callback?: AckCallback,
+    ) => {
+      try {
+        const user = getSocketUser(socket);
+        const gameId = assertGameId(payload?.gameId);
+        const newGameId = assertGameId(payload?.newGameId);
+
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { player1Id: true, player2Id: true },
+        });
+
+        if (!game) {
+          const response = { error: "Game not found" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const isParticipant = game.player1Id === user.id || game.player2Id === user.id;
+        if (!isParticipant) {
+          const response = {
+            error: "Unauthorized: You are not a participant in this game",
+          };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const roomName = getGameRoomName(gameId);
+        socket.to(roomName).emit("rematch_received", { newGameId });
+        callback?.({ success: true });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to send rematch";
+        socket.emit("error", { message });
+        callback?.({ error: message });
+      }
+    },
+  );
   //
 }
 
