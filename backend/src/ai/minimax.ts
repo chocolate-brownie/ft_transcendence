@@ -1,8 +1,8 @@
-import { Board, Player } from "../types/game";
+import { CellValue, Player } from "../types/game";
 import { evaluate } from "./evaluation";
 
 
-export function minimax(board: Board, depth: number, alpha: number = -Infinity, beta: number = Infinity, isMaximizing: boolean, aiSymbol: Player): number
+export function minimax(board: CellValue[], depth: number, alpha: number = -Infinity, beta: number = Infinity, isMaximizing: boolean, aiSymbol: Player): number
 {
     if (board === null) {
         return -1; // Invalid board state

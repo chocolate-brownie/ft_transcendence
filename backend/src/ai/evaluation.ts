@@ -1,9 +1,9 @@
 import { checkWinnerWithLine } from "../services/games.service";
-import { Board } from "../types/game";
+import { Board, CellValue } from "../types/game";
 
-export function evaluate(board: Board, aiSymbol: 'X' | 'O'): number
+export function evaluate(board: CellValue[], aiSymbol: 'X' | 'O'): number
 {
-    const winResult = checkWinnerWithLine(board);
+    const winResult = checkWinnerWithLine(board as Board);
     if (winResult) {
       return winResult.winner === aiSymbol ? 10 : -10;
     }
