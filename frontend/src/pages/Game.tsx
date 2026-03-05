@@ -103,19 +103,30 @@ export default function Game() {
   const joinedRef = useRef(false);
   const leftRoomRef = useRef(false);
 
+  // Fix React : Refs pour éviter les closures
+  const yourSymbolRef = useRef(yourSymbol);
+  yourSymbolRef.current = yourSymbol;
+
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
     if (!gameId) return;
     if (leftRoomRef.current) return;
+    
+    console.log(`[Game] Leaving room ${gameId}`);
     leftRoomRef.current = true;
     socket.emit("leave_game_room", { gameId });
   }, [socket, gameId]);
 
+  // Le GRAND useEffect des sockets
   useEffect(() => {
     if (!socket) return;
 
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
+      console.log(`[Game] Joined room ${joinedId}. Status: ${game.status}`);
 
       setBoard(game.boardState);
       setCurrentTurn(game.currentTurn);
@@ -136,6 +147,7 @@ export default function Game() {
       setIsCreatingRematch(false);
       setRematchError(null);
       setError(null);
+      
       if (game.status === "DRAW") {
         setGameResultText("Draw game");
       }
@@ -184,7 +196,7 @@ export default function Game() {
       setGameResultText(
         result === "draw"
           ? "Draw game"
-          : winner?.symbol === yourSymbol
+          : winner?.symbol === yourSymbolRef.current
             ? "You won"
             : "You lost",
       );
@@ -222,7 +234,8 @@ export default function Game() {
 
       const userMessage = message || "Something went wrong.";
       setIsSendingMove(false);
-      if (status === "ready") {
+
+      if (statusRef.current === "ready") {
         setMoveError(userMessage);
         return;
       }
@@ -239,12 +252,21 @@ export default function Game() {
       setStatus("idle");
     }
 
+    // FIX RESEAU : Réception de la demande de revanche de l'adversaire
+    function onRematchReceived({ newGameId }: { newGameId: number }) {
+      console.log(`[Game] Rematch received for game ${newGameId}. Navigating...`);
+      // On ne touche PAS aux refs ici, le composant va mourir et être remplacé
+      // On navigue simplement, le cleanup (emitLeaveRoomOnce) se fera tout seul
+      void navigate(`/game/${newGameId}`);
+    }
+
     socket.on("room_joined", onRoomJoined);
     socket.on("game_update", onGameUpdate);
     socket.on("game_over", onGameOver);
     socket.on("move_error", onMoveError);
     socket.on("error", onError);
     socket.on("disconnect", onDisconnect);
+    socket.on("rematch_received", onRematchReceived);
 
     return () => {
       socket.off("room_joined", onRoomJoined);
@@ -253,12 +275,13 @@ export default function Game() {
       socket.off("move_error", onMoveError);
       socket.off("error", onError);
       socket.off("disconnect", onDisconnect);
+      socket.off("rematch_received", onRematchReceived);
     };
-  }, [socket, gameId, status, yourSymbol]);
+  }, [socket, gameId]);
 
+  // FIX TIMER : Arrêt correct quand fin de partie
   useEffect(() => {
-    if (startedAtMs === null || serverStatus === "WAITING") {
-      setElapsedSeconds(0);
+    if (startedAtMs === null || serverStatus !== "IN_PROGRESS") {
       return;
     }
 
@@ -274,8 +297,12 @@ export default function Game() {
   useEffect(() => {
     function startJoin() {
       if (!socket || joinedRef.current) return;
+      
+      console.log(`[Game] Joining room ${gameId}...`);
       joinedRef.current = true;
-      leftRoomRef.current = false;
+      
+      // CRITICAL FIX : On doit reset leftRoomRef ici pour autoriser le join !
+      leftRoomRef.current = false; 
 
       setError(null);
       setMoveError(null);
@@ -310,6 +337,7 @@ export default function Game() {
     startJoin();
   }, [socket, gameId, joinRevision]);
 
+  // Cleanup au démontage : quitte proprement la room
   useEffect(() => {
     return () => {
       emitLeaveRoomOnce();
@@ -340,6 +368,7 @@ export default function Game() {
     void navigate("/");
   }
 
+  // FIX RESEAU : Rematch simplifié
   async function handlePlayAgain() {
     if (!gameOverPayload || isCreatingRematch) return;
 
@@ -358,11 +387,17 @@ export default function Game() {
 
     try {
       const newGame = await gamesService.createGame({ player2Id: opponentId });
-      emitLeaveRoomOnce();
+
+      // 1. On prévient l'adversaire (on est encore dans la room, donc il recevra)
+      socket?.emit("send_rematch", { gameId, newGameId: newGame.id });
+
+      // 2. On navigue -> React démonte l'ancien Game -> Le cleanup (emitLeaveRoomOnce) quitte la room.
       void navigate(`/game/${newGame.id}`);
     } catch (err: unknown) {
       const message =
-        err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
+        err instanceof ApiError
+          ? err.message
+          : "Failed to create rematch. Please retry.";
       setRematchError(message);
       setIsCreatingRematch(false);
     }
@@ -370,7 +405,7 @@ export default function Game() {
 
   function handleRetry() {
     if (!navigator.onLine) {
-      setError("You are offline. Reconnect to the internet then try again.");
+      setError("You are offline. Reconnect to the internet and try again.");
       return;
     }
     if (!socket) {
@@ -379,7 +414,6 @@ export default function Game() {
       return;
     }
 
-    // Reset join state so the effect re-runs regardless of connection state.
     joinedRef.current = false;
     setError(null);
     setMoveError(null);
@@ -428,7 +462,6 @@ export default function Game() {
         {gameId > 0 ? `Game #${gameId}` : "Game"}
       </h1>
 
-      {/* Simple status / error (no new layout) */}
       {error ? (
         <div className="w-full max-w-lg rounded-lg bg-pong-surface px-6 py-4 shadow-sm">
           <p className="text-sm font-semibold text-red-400">Game error</p>
@@ -467,7 +500,6 @@ export default function Game() {
         </div>
       ) : null}
 
-      {/* Turn indicator */}
       <TurnIndicator
         currentPlayer={currentTurn}
         playerSymbol={yourSymbol}
@@ -521,10 +553,8 @@ export default function Game() {
         </div>
       ) : null}
 
-      {/* Move error (non-blocking) */}
       {moveError ? <p className="-mt-4 text-xs text-red-400">{moveError}</p> : null}
 
-      {/* Board */}
       <GameBoard
         board={board}
         onCellClick={handleCellClick}

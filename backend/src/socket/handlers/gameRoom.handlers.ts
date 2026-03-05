@@ -197,6 +197,17 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
       }
     },
   );
+
+  // Rematch relay: player who created the rematch notifies the opponent in the old game room.
+  socket.on("send_rematch", (payload: { gameId: number, newGameId: number }) => {
+    try {
+      const roomName = getGameRoomName(payload.gameId);
+      socket.to(roomName).emit("rematch_received", { newGameId: payload.newGameId });
+    } catch (error) {
+      console.error("Erreur rematch:", error);
+    }
+  });
+  //
 }
 
 export function handleGameRoomDisconnect(_io: Server, socket: Socket) {
