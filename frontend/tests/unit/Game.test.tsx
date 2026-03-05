@@ -171,6 +171,7 @@ describe("Game page socket wiring", () => {
     const modal = screen.getByTestId("game-over-modal");
     expect(modal).toBeInTheDocument();
     expect(within(modal).getByText("It's a Draw! 🤝")).toBeInTheDocument();
+    expect(within(modal).getByText("bob (O)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();

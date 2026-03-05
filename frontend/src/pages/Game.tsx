@@ -63,6 +63,12 @@ type GameOver = {
   winningLine?: number[] | null;
 };
 
+type GameOverPlayerSummary = {
+  id: number;
+  username: string;
+  symbol: Symbol;
+};
+
 type MoveError = {
   error: string;
 };
@@ -450,17 +456,18 @@ export default function Game() {
     }
   }
 
-  const opponentAvatarUrl = (() => {
-    if (!gameOverPayload) return null;
-    const opponentId =
-      gameOverPayload.winner?.symbol === yourSymbol
-        ? gameOverPayload.loser?.id
-        : gameOverPayload.winner?.id;
-    if (!opponentId) return null;
-    if (player1?.id === opponentId) return player1.avatarUrl;
-    if (player2?.id === opponentId) return player2.avatarUrl;
-    return null;
-  })();
+  const myPlayer =
+    yourSymbol === player1Symbol ? player1 : yourSymbol === player2Symbol ? player2 : null;
+  const opponentPlayer =
+    myPlayer?.id === player1?.id ? player2 : myPlayer?.id === player2?.id ? player1 : null;
+  const opponentSummary: GameOverPlayerSummary | null = opponentPlayer
+    ? {
+        id: opponentPlayer.id,
+        username: opponentPlayer.username,
+        symbol: opponentPlayer.id === player1?.id ? player1Symbol : player2Symbol,
+      }
+    : null;
+  const opponentAvatarUrl = opponentPlayer?.avatarUrl ?? null;
 
   const isYourTurn =
     status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
@@ -592,6 +599,7 @@ export default function Game() {
         result={gameOverPayload?.result ?? "draw"}
         winner={gameOverPayload?.winner ?? null}
         loser={gameOverPayload?.loser ?? null}
+        opponent={opponentSummary}
         mySymbol={yourSymbol}
         totalMoves={
           gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length

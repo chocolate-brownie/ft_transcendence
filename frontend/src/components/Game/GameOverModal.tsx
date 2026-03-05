@@ -15,6 +15,7 @@ interface GameOverModalProps {
   result: "win" | "draw";
   winner: PlayerSummary | null;
   loser: PlayerSummary | null;
+  opponent: PlayerSummary | null;
   mySymbol: Symbol;
   totalMoves: number;
   durationSeconds?: number;
@@ -41,6 +42,7 @@ export default function GameOverModal({
   result,
   winner,
   loser,
+  opponent,
   mySymbol,
   totalMoves,
   durationSeconds,
@@ -75,7 +77,8 @@ export default function GameOverModal({
     result === "draw"
       ? "Well played by both players."
       : `${winner?.username ?? "Unknown"} wins with ${winner?.symbol ?? "?"}.`;
-  const opponent = didIWin ? loser : winner;
+  const derivedOpponent = didIWin ? loser : winner;
+  const shownOpponent = opponent ?? derivedOpponent;
   const headerToneClass =
     result === "draw"
       ? "from-slate-500/20 to-slate-300/10 border-slate-300/30"
@@ -154,11 +157,11 @@ export default function GameOverModal({
           <div>
             <p className="text-xs uppercase tracking-wide text-pong-text/60">Opponent</p>
             <div className="mt-1 flex items-center gap-2">
-              {opponent ? (
+              {shownOpponent ? (
                 opponentAvatarUrl ? (
                   <img
                     src={opponentAvatarUrl}
-                    alt={`${opponent.username} avatar`}
+                    alt={`${shownOpponent.username} avatar`}
                     className="h-7 w-7 flex-shrink-0 rounded-full border border-black/10 object-cover"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";
@@ -166,12 +169,12 @@ export default function GameOverModal({
                   />
                 ) : (
                   <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/40 text-xs font-bold text-pong-text/70">
-                    {opponent.username[0]?.toUpperCase() ?? "?"}
+                    {shownOpponent.username[0]?.toUpperCase() ?? "?"}
                   </div>
                 )
               ) : null}
               <p className="truncate text-base font-semibold text-pong-text">
-                {opponent ? `${opponent.username} (${opponent.symbol})` : "N/A"}
+                {shownOpponent ? `${shownOpponent.username} (${shownOpponent.symbol})` : "N/A"}
               </p>
             </div>
           </div>
