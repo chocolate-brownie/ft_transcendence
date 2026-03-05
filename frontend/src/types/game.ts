@@ -18,6 +18,7 @@ export interface GameBoardProps {
   onCellClick: (index: number) => void;
   disabled?: boolean;
   className?: string;
+  currentTurnSymbol?: PlayerSymbol | null;
   winningLine?: number[] | null;
   winnerSymbol?: "X" | "O" | null;
   playerSymbol?: "X" | "O" | null;

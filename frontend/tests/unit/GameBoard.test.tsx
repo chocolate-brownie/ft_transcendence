@@ -47,4 +47,42 @@ describe("GameBoard", () => {
       "winner-cell-loss",
     );
   });
+
+  it("uses turn-based hover color for empty cells", () => {
+    const { rerender } = render(
+      <GameBoard
+        board={[null, null, null, null, null, null, null, null, null]}
+        onCellClick={vi.fn()}
+        currentTurnSymbol="X"
+      />,
+    );
+
+    expect(screen.getByLabelText("Cell 1").className).toContain("hover:bg-pong-accent/10");
+
+    rerender(
+      <GameBoard
+        board={[null, null, null, null, null, null, null, null, null]}
+        onCellClick={vi.fn()}
+        currentTurnSymbol="O"
+      />,
+    );
+
+    expect(screen.getByLabelText("Cell 1").className).toContain("hover:bg-pong-secondary/10");
+  });
+
+  it("does not show actionable hover style when board is disabled", () => {
+    render(
+      <GameBoard
+        board={[null, null, null, null, null, null, null, null, null]}
+        onCellClick={vi.fn()}
+        currentTurnSymbol="X"
+        disabled
+      />,
+    );
+
+    const cellClass = screen.getByLabelText("Cell 1").className;
+    expect(cellClass).not.toContain("hover:bg-pong-accent/10");
+    expect(cellClass).not.toContain("hover:bg-pong-secondary/10");
+    expect(cellClass).toContain("cursor-not-allowed");
+  });
 });

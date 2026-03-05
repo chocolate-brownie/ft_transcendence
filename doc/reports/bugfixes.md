@@ -5,20 +5,11 @@
 ~~4. `#202`~~
 ~~5. `#195`~~
 ~~6. `#196`~~
-7. `#199`
+~~7. `#199`~~
 8. `#200`
 9. `#201`
 ~~10. `#168` (verification/closure)~~
 
-**#199 Mirror Right Scoreboard Card**
-1. Files to touch:
-- [Scoreboard.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/Scoreboard.tsx)
-- [Scoreboard.test.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/tests/unit/Scoreboard.test.tsx)
-2. Tests to add:
-- Class/layout assertion for mirrored right card alignment.
-3. Done criteria:
-- Right card visually mirrored and readable on desktop/mobile.
-- Existing active-player highlight still works.
 
 **#200 Turn-Based Cell Hover Color**
 1. Files to touch:

@@ -6,6 +6,7 @@ export default function GameBoard({
   onCellClick,
   disabled = false,
   className = "",
+  currentTurnSymbol = null,
   winningLine = null,
   winnerSymbol = null,
   playerSymbol = null,
@@ -18,6 +19,12 @@ export default function GameBoard({
     if (disabled || board[index] !== null) return;
     onCellClick(index);
   };
+  const turnHoverClass =
+    currentTurnSymbol === "X"
+      ? "hover:bg-pong-accent/10"
+      : currentTurnSymbol === "O"
+        ? "hover:bg-pong-secondary/10"
+        : "hover:bg-orange-50";
 
   return (
     <div
@@ -35,7 +42,7 @@ export default function GameBoard({
               (disabled
                 ? "cursor-not-allowed opacity-60"
                 : cell === null
-                  ? "cursor-pointer hover:bg-orange-50"
+                  ? `cursor-pointer ${turnHoverClass}`
                   : "cursor-default") +
               " " +
               (gameOver && winningLine && !winningLine.includes(index)

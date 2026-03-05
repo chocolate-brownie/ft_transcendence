@@ -571,6 +571,7 @@ export default function Game() {
       <GameBoard
         board={board}
         onCellClick={handleCellClick}
+        currentTurnSymbol={currentTurn}
         winningLine={winningLine}
         winnerSymbol={winnerSymbol === "X" || winnerSymbol === "O" ? winnerSymbol : null}
         playerSymbol={yourSymbol}
