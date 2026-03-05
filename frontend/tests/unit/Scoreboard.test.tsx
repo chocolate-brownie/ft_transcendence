@@ -66,4 +66,22 @@ describe("Scoreboard", () => {
       "ring-2",
     );
   });
+
+  it("mirrors the right player card layout", () => {
+    render(
+      <Scoreboard
+        player1={{ id: 1, username: "alice", avatarUrl: null }}
+        player2={{ id: 2, username: "bob", avatarUrl: null }}
+        player1Symbol="X"
+        player2Symbol="O"
+        currentTurn="X"
+        serverStatus="IN_PROGRESS"
+        player1Score={0}
+        player2Score={0}
+      />,
+    );
+
+    expect(screen.getByTestId("scoreboard-player2-card").className).toContain("text-right");
+    expect(screen.getByTestId("scoreboard-player2-row").className).toContain("flex-row-reverse");
+  });
 });

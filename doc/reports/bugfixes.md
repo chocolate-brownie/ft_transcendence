@@ -4,23 +4,11 @@
 ~~3. `#198`~~
 ~~4. `#202`~~
 ~~5. `#195`~~
-6. `#196`
+~~6. `#196`~~
 7. `#199`
 8. `#200`
 9. `#201`
 ~~10. `#168` (verification/closure)~~
-
-**#196 Centralize `PlayerSummary`**
-1. Files to touch:
-- [game.ts](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/types/game.ts)
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [Scoreboard.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/Scoreboard.tsx)
-- [GameOverModal.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/GameOverModal.tsx)
-2. Tests to add:
-- Unit test covering shared player contract across room_joined + game_over mapping.
-3. Done criteria:
-- Single source of truth for player summary shapes.
-- No duplicate conflicting interfaces.
 
 **#199 Mirror Right Scoreboard Card**
 1. Files to touch:

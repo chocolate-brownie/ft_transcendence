@@ -92,16 +92,16 @@ export default function Scoreboard({
 
         <div
           data-testid="scoreboard-player2-card"
-          className={`rounded-lg border px-3 py-3 transition-all duration-200 ${
+          className={`rounded-lg border px-3 py-3 text-right transition-all duration-200 ${
             player2Active
               ? "border-pong-secondary/70 bg-pong-secondary/15 ring-2 ring-pong-secondary/40"
               : "border-black/10 bg-white/40"
           }`}
         >
           <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 2</p>
-          <div className="mt-2 flex items-center gap-3">
+          <div data-testid="scoreboard-player2-row" className="mt-2 flex flex-row-reverse items-center gap-3">
             <Avatar player={player2} fallback="P2" testId="player2-avatar" />
-            <div className="min-w-0">
+            <div className="min-w-0 text-right">
               <p className="truncate text-sm font-semibold text-pong-text">
                 {player2?.username ?? "Waiting..."}{" "}
                 <span className="text-pong-secondary">
