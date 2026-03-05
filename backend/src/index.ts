@@ -38,6 +38,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(express.json());
 
 // Serve uploaded files (avatars, etc.) as static assets

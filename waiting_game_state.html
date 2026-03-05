@@ -1,0 +1,124 @@
+
+<div class="h-screen flex flex-col gap-24">
+
+  <div class="flex flex-col gap-4">
+    <h2 class="font-bold ">game.status === 'waiting'</h2>
+    <h2>-> <b>Show only player1's info, player2 slot shows "Waiting..."</b>:<br>
+        where is it displayed, under the GameBoard?
+    </h2>
+    <h2>-> <b>Display game ID or shareable link</b>:<br>
+        in the search bar of the navigator?
+    </h2>
+  </div>
+
+  <div class=" flex justify-center items-center  ">
+
+      <div class='inline-block rounded-lg bg-gray-200 p-2.5 absolute'>
+        <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+            <button
+              class=
+                "aspect-square rounded-lg bg-white bg-opacity-20 text-6xl transition-colors duration-200 cursor-not-allowed bg-transparent winner-cell "
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white bg-opacity-20 text-6xl transition-colors duration-200 cursor-not-allowed bg-transparent winner-cell"
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell">
+            </button>
+            <span
+                className="text-pong-accent font-sans font-bold cell-piece">
+            </span>
+        </div>
+        <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell">
+            </button>
+            <span
+                className="text-pong-accent font-sans font-bold cell-piece">
+            </span>
+        </div>
+        <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell"
+                >
+            </button>
+            <button
+              class=
+                "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200  bg-opacity-20 cursor-not-allowed bg-transparent winner-cell">
+            </button>
+
+        </div>
+      </div>
+
+    <div class="text-center bg-gray-100 bg-opacity-20 backdrop-blur-md  rounded-lg flex justify-self-center flex-col relative p-20 w-screen">
+
+      <p class= "text-xl font-semibold text-gray-600 mb-2">
+        Waiting for opponent to join...
+      </p>
+      <div class="animate-spin">
+        ⏳
+      </div>
+      <div class="animate-pulse text-gray-500">
+        Please wait
+      </div>
+    
+  </div>
+
+
+
+  </div>
+
+  <!-- <div class="h-screen flex justify-center align-top gap-8 text-pong-text/80 pb-7"> -->
+ <div class="flex justify-center gap-8 bg-slate-200 rounded-lg px-12 py-3 max-w-md mx-auto">
+
+    <div class="flex flex-col items-center ">
+      <span class="font-semibold uppercase tracking-wide text-pong-text/50">
+        Player 1
+      </span>
+      <span class="text-sm">
+        You 
+        <span class="text-pong-accent">(X)</span>
+      </span>
+      <span class="text-3xl font-sans font-bold text-pong-accent">0</span>
+      </div>
+      <div class="flex flex-col items-center px-7">
+        <span class="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
+          VS
+        </span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="font-semibold uppercase tracking-wide text-pong-text/50">
+          Player 2
+        </span>
+        <span class="text-sm">
+          Opponent 
+        <span class="text-pong-secondary">(O)</span>
+        </span>
+        <span class="text-3xl font-sans font-bold text-pong-secondary">0</span>
+      </div>
+    
+    </div>
+
+  </div>
+</div>
