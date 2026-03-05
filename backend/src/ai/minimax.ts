@@ -1,13 +1,13 @@
-import { Board, DifficultyLevel } from "../types/game";
+import { Board, DifficultyLevel, Player } from "../types/game";
 import { evaluate } from "./evaluation";
 
 
-export function minimax(board: Board, depth: number, alpha: number = -Infinity, beta: number = Infinity, isMaximizing: boolean, aiSymbol: 'X' | 'O'): number
+export function minimax(board: Board, depth: number, alpha: number = -Infinity, beta: number = Infinity, isMaximizing: boolean, aiSymbol: Player): number
 {
     if (board === null) {
         return -1; // Invalid board state
     }
-    const opponentSymbol = aiSymbol === 'X' ? 'O' : 'X';
+    const opponentSymbol = aiSymbol === "X" ? "O" : "X";
 
     const score = evaluate(board, aiSymbol);
 
@@ -47,7 +47,7 @@ export function minimax(board: Board, depth: number, alpha: number = -Infinity, 
     }
 }
 
-export function getAIMove(board: Board, aiSymbol: 'X' | 'O', difficulty: DifficultyLevel): number
+export function getAIMove(board: Board, aiSymbol: Player, difficulty: DifficultyLevel): number
 {
     if (difficulty === 'easy') {
       // 50% de chances de jouer au hasard
@@ -71,7 +71,7 @@ export function getAIMove(board: Board, aiSymbol: 'X' | 'O', difficulty: Difficu
 }
 
 
-export function findBestMove(board: Board, aiSymbol: 'X' | 'O'): number
+export function findBestMove(board: Board, aiSymbol: Player): number
 {
     let bestScore = -Infinity;
     let bestMove = -1;
