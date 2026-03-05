@@ -34,6 +34,7 @@ export function useGameSocketController({
   const joinedRef = useRef(false);
   const leftRoomRef = useRef(false);
   const activeRoomIdRef = useRef<number | null>(null);
+  const lastJoinRevisionRef = useRef(joinRevision);
 
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
@@ -85,7 +86,7 @@ export function useGameSocketController({
     }
 
     function onRematchReceived({ newGameId }: { newGameId: number }) {
-      dispatch({ type: "PATCH", patch: { isCreatingRematch: true, rematchError: null } });
+      dispatch({ type: "REMATCH_RECEIVED" });
       void navigate(`/game/${newGameId}`);
     }
 
@@ -218,6 +219,13 @@ export function useGameSocketController({
   }, [socket, gameId, dispatch, stateRef]);
 
   useEffect(() => {
+    if (joinRevision === lastJoinRevisionRef.current) return;
+    lastJoinRevisionRef.current = joinRevision;
+    joinedRef.current = false;
+    leftRoomRef.current = false;
+  }, [joinRevision]);
+
+  useEffect(() => {
     if (!socket || !gameId) return;
 
     const previousRoomId = activeRoomIdRef.current;
@@ -266,5 +274,11 @@ export function useGameSocketController({
     startJoin();
   }, [socket, gameId, joinRevision, dispatch]);
 
-  return { emitLeaveRoomOnce, resetJoinGuard: () => { joinedRef.current = false; } };
+  useEffect(() => {
+    return () => {
+      emitLeaveRoomOnce();
+    };
+  }, [emitLeaveRoomOnce]);
+
+  return { emitLeaveRoomOnce };
 }

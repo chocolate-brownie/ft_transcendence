@@ -30,7 +30,7 @@ export default function Game() {
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 
-  const { emitLeaveRoomOnce, resetJoinGuard } = useGameSocketController({
+  const { emitLeaveRoomOnce } = useGameSocketController({
     socket,
     gameId,
     joinRevision,
@@ -58,25 +58,11 @@ export default function Game() {
     if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0) return;
 
     const timer = window.setTimeout(() => {
-      dispatch({
-        type: "PATCH",
-        patch: {
-          disconnectCountdown:
-            gameState.disconnectCountdown && gameState.disconnectCountdown > 0
-              ? gameState.disconnectCountdown - 1
-              : 0,
-        },
-      });
+      dispatch({ type: "DISCONNECT_COUNTDOWN_TICK" });
     }, 1000);
 
     return () => window.clearTimeout(timer);
   }, [gameState.opponentConnection, gameState.disconnectCountdown]);
-
-  useEffect(() => {
-    return () => {
-      emitLeaveRoomOnce();
-    };
-  }, [emitLeaveRoomOnce]);
 
   function handleCellClick(index: number) {
     if (gameState.board[index] !== null) return;
@@ -109,14 +95,11 @@ export default function Game() {
         : gameState.gameOverPayload.winner?.id;
 
     if (!opponentId) {
-      dispatch({
-        type: "PATCH",
-        patch: { rematchError: "Unable to identify opponent for rematch." },
-      });
+      dispatch({ type: "REMATCH_OPPONENT_MISSING" });
       return;
     }
 
-    dispatch({ type: "PATCH", patch: { isCreatingRematch: true, rematchError: null } });
+    dispatch({ type: "REMATCH_REQUEST_START" });
 
     try {
       const newGame = await gamesService.createGame({
@@ -129,38 +112,28 @@ export default function Game() {
     } catch (err: unknown) {
       const message =
         err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
-      dispatch({ type: "PATCH", patch: { rematchError: message, isCreatingRematch: false } });
+      dispatch({ type: "REMATCH_REQUEST_FAILED", message });
     }
   }
 
   function handleRetry() {
     if (!navigator.onLine) {
-      dispatch({
-        type: "PATCH",
-        patch: { error: "You are offline. Reconnect to the internet and try again." },
-      });
+      dispatch({ type: "RETRY_OFFLINE" });
       return;
     }
     if (!socket) {
-      dispatch({
-        type: "PATCH",
-        patch: {
-          status: "connecting",
-          error: "Still connecting to server. Please try again in a moment.",
-        },
-      });
+      dispatch({ type: "RETRY_SOCKET_UNAVAILABLE" });
       return;
     }
 
-    resetJoinGuard();
-    dispatch({ type: "PATCH", patch: { error: null, moveError: null, isSendingMove: false } });
+    dispatch({ type: "RETRY_RESET" });
     setJoinRevision((n) => n + 1);
 
     if (!socket.connected) {
       dispatch({ type: "JOIN_CONNECTING" });
       socket.connect();
     } else {
-      dispatch({ type: "PATCH", patch: { status: "idle" } });
+      dispatch({ type: "RETRY_READY" });
     }
   }
 
@@ -338,10 +311,7 @@ export default function Game() {
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button
-          variant="secondary"
-          onClick={() => dispatch({ type: "PATCH", patch: { showGameOverModal: true } })}
-        >
+        <Button variant="secondary" onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}>
           View Result
         </Button>
       ) : null}
@@ -365,7 +335,7 @@ export default function Game() {
         }}
         onGoLobby={backToLobby}
         onGoHome={goHome}
-        onClose={() => dispatch({ type: "PATCH", patch: { showGameOverModal: false } })}
+        onClose={() => dispatch({ type: "CLOSE_GAME_OVER_MODAL" })}
       />
     </div>
   );
