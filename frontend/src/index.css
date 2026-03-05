@@ -30,15 +30,15 @@
   }
   15% {
     transform: scale(1.04);
-    background-color: rgba(196, 193, 199, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
   }
   40% {
     transform: scale(1.13);
-    background-color: rgba(196, 193, 199, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
   }
   70% {
     transform: scale(1.04);
-    background-color: rgba(196, 193, 199, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
   }
   100% {
     transform: scale(1);
@@ -50,24 +50,26 @@
   animation: winner-pop 500ms ease-out;
   border: 3px solid transparent;
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.2),
-    0 0 20px rgba(255, 255, 255, 0.2);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 0 0 2px rgba(15, 23, 42, 0.08);
 }
 
 .winner-cell-win {
-  background-color: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.95);
+  background-color: rgba(16, 185, 129, 0.28);
+  border-color: rgba(5, 150, 105, 1);
   box-shadow:
-    0 0 0 2px rgba(16, 185, 129, 0.25),
-    0 0 18px rgba(16, 185, 129, 0.45);
+    inset 0 0 0 1px rgba(236, 253, 245, 0.7),
+    0 0 0 2px rgba(5, 150, 105, 0.4),
+    0 0 16px rgba(5, 150, 105, 0.28);
 }
 
 .winner-cell-loss {
-  background-color: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.95);
+  background-color: rgba(239, 68, 68, 0.28);
+  border-color: rgba(220, 38, 38, 1);
   box-shadow:
-    0 0 0 2px rgba(239, 68, 68, 0.25),
-    0 0 18px rgba(239, 68, 68, 0.45);
+    inset 0 0 0 1px rgba(254, 242, 242, 0.7),
+    0 0 0 2px rgba(220, 38, 38, 0.4),
+    0 0 16px rgba(220, 38, 38, 0.28);
 }
 
 /* Pop in X / O */
