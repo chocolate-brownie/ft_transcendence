@@ -48,6 +48,8 @@ export interface GameState {
   finishedAt: Date | null; // "finished_at" in DB
 }
 
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
 // ── Helpers ───────────────────────────────────────────────────
 
 // Return Null Board
