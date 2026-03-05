@@ -49,25 +49,19 @@ export function minimax(board: Board, depth: number, alpha: number = -Infinity, 
 
 export function getAIMove(board: Board, aiSymbol: Player, difficulty: DifficultyLevel): number
 {
-    if (difficulty === 'easy') {
-      // 50% de chances de jouer au hasard
-      if (Math.random() < 0.5) {
-          return findBestMove(board, aiSymbol);
-      }
-    }
-    if (difficulty === 'medium') {
-          if (Math.random() < 0.2) {  // 20% de chances de jouer au hasard
-              return findBestMove(board, aiSymbol);
-          }
-      }
+    let threshold = 1; // Par défaut 'hard' (100%)
 
-    else if (difficulty === 'hard') {
-        return findBestMove(board, aiSymbol);
+    if (difficulty === 'easy') threshold = 0.5;
+    if (difficulty === 'medium') threshold = 0.8;
+
+    // Si on dépasse le seuil, on joue au hasard, sinon on joue le meilleur coup
+    if (Math.random() > threshold) {
+        const emptyCells = board.map((cell, index) => cell === null ? index : null)
+                                .filter(index => index !== null) as number[];
+        return emptyCells[Math.floor(Math.random() * emptyCells.length)];
     }
 
-      // Par défaut, retourne un coup aléatoire
-    const emptyCells = board.map((cell, index) => cell === null ? index : null).filter(index => index !== null) as number[];
-    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    return findBestMove(board, aiSymbol);
 }
 
 
