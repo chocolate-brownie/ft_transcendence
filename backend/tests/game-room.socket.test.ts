@@ -474,4 +474,98 @@ describeDb("Socket Game Rooms", () => {
       out.close();
     }
   });
+
+  it("relays rematch to opponent when newGameId belongs to the same participant pair", async () => {
+    const sourceGame = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+    const rematchGame = await prisma.game.create({
+      data: {
+        player1Id: player2.id,
+        player2Id: player1.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+      p1.emit("join_game_room", { gameId: sourceGame.id });
+      p2.emit("join_game_room", { gameId: sourceGame.id });
+      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+
+      const relayPromise = waitForEvent<{ newGameId: number }>(p2, "rematch_received");
+      p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: rematchGame.id });
+      const relayPayload = await relayPromise;
+
+      expect(relayPayload.newGameId).toBe(rematchGame.id);
+    } finally {
+      p1.close();
+      p2.close();
+    }
+  });
+
+  it("rejects rematch relay when newGameId participants do not match source game", async () => {
+    const sourceGame = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+    const unrelatedGame = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: outsider.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+      p1.emit("join_game_room", { gameId: sourceGame.id });
+      p2.emit("join_game_room", { gameId: sourceGame.id });
+      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+
+      const errorPromise = waitForEvent<{ message: string }>(p1, "error");
+      p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: unrelatedGame.id });
+      const errorPayload = await errorPromise;
+
+      expect(errorPayload.message).toBe("Invalid rematch target game");
+      await Promise.all([
+        expectNoEvent(p1, "rematch_received"),
+        expectNoEvent(p2, "rematch_received"),
+      ]);
+    } finally {
+      p1.close();
+      p2.close();
+    }
+  });
 });

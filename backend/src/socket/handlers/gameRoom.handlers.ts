@@ -247,6 +247,41 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
           return;
         }
 
+        const newGame = await prisma.game.findUnique({
+          where: { id: newGameId },
+          select: { player1Id: true, player2Id: true },
+        });
+
+        if (!newGame) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const sourcePair = [game.player1Id, game.player2Id].filter(
+          (value): value is number => typeof value === "number",
+        );
+        const targetPair = [newGame.player1Id, newGame.player2Id].filter(
+          (value): value is number => typeof value === "number",
+        );
+
+        if (sourcePair.length !== 2 || targetPair.length !== 2) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const sourcePairKey = sourcePair.sort((a, b) => a - b).join(":");
+        const targetPairKey = targetPair.sort((a, b) => a - b).join(":");
+        if (sourcePairKey !== targetPairKey) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
         const roomName = getGameRoomName(gameId);
         socket.to(roomName).emit("rematch_received", { newGameId });
         callback?.({ success: true });
