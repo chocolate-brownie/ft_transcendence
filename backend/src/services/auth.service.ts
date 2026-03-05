@@ -31,8 +31,13 @@ export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, saltRounds);
 }
 
-export function generateToken(id: number, email: string, username: string): string {
-  return jwt.sign({ id, email, username }, jwtSecret, { expiresIn: "24h" });
+export function generateToken(
+  id: number,
+  email: string,
+  username: string,
+  avatarUrl: string | null,
+): string {
+  return jwt.sign({ id, email, username, avatarUrl }, jwtSecret, { expiresIn: "24h" });
 }
 
 export async function signup(
@@ -66,7 +71,7 @@ export async function signup(
   const user = await prisma.user.create({
     data: { email, username, passwordHash: hashedPassword },
   });
-  const token = generateToken(user.id, user.email, user.username);
+  const token = generateToken(user.id, user.email, user.username, user.avatarUrl);
   return {
     token,
     user: {
@@ -101,7 +106,7 @@ export async function login(email: string, password: string): Promise<AuthResult
     data: { isOnline: true },
   });
 
-  const token = generateToken(updated.id, updated.email, updated.username);
+  const token = generateToken(updated.id, updated.email, updated.username, updated.avatarUrl);
   return {
     token,
     user: {

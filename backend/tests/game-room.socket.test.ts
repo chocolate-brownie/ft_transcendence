@@ -290,6 +290,60 @@ describeDb("Socket Game Rooms", () => {
     }
   });
 
+  it("emits opponent_joined avatar from DB instead of JWT payload", async () => {
+    const freshAvatar = "/uploads/avatars/player2-fresh.png";
+    await prisma.user.update({
+      where: { id: player2.id },
+      data: { avatarUrl: freshAvatar },
+    });
+
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign(
+      {
+        id: player2.id,
+        username: player2.username,
+        avatarUrl: "/uploads/avatars/player2-stale-from-token.png",
+      },
+      JWT_SECRET,
+    );
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+
+      p1.emit("join_game_room", { gameId: game.id });
+      await waitForEvent(p1, "room_joined");
+
+      const opponentJoinedPromise = waitForEvent<{
+        opponent: { id: number; username: string; avatarUrl: string | null };
+      }>(p1, "opponent_joined");
+
+      p2.emit("join_game_room", { gameId: game.id });
+      const opponentJoinedPayload = await opponentJoinedPromise;
+
+      expect(opponentJoinedPayload.opponent.id).toBe(player2.id);
+      expect(opponentJoinedPayload.opponent.avatarUrl).toBe(freshAvatar);
+    } finally {
+      p1.close();
+      p2.close();
+    }
+  });
+
   it("emits opponent_left and cleans room membership on disconnect", async () => {
     const game = await prisma.game.create({
       data: {

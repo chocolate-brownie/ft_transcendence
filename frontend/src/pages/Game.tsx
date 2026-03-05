@@ -18,7 +18,13 @@ import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 
-type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
+type ServerStatus =
+  | "WAITING"
+  | "IN_PROGRESS"
+  | "FINISHED"
+  | "DRAW"
+  | "CANCELLED"
+  | "ABANDONED";
 type RoomJoined = {
   gameId: number;
   game: {
@@ -57,6 +63,26 @@ type MoveError = {
   error: string;
 };
 
+type OpponentJoined = {
+  opponent?: {
+    id: number;
+    username: string;
+    avatarUrl?: string | null;
+  };
+};
+
+type OpponentDisconnected = {
+  gameId?: number;
+  username?: string;
+  waitTime?: number;
+};
+
+type GameForfeited = {
+  gameId: number;
+  forfeitedBy?: { id?: number; username?: string };
+  winner?: { id?: number; username?: string };
+};
+
 export default function Game() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -89,17 +115,42 @@ export default function Game() {
   const [player2Symbol, setPlayer2Symbol] = useState<PlayerSymbol>("O");
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [opponentConnection, setOpponentConnection] = useState<"online" | "disconnected">(
+    "online",
+  );
+  const [disconnectCountdown, setDisconnectCountdown] = useState<number | null>(null);
+  const [disconnectedOpponentName, setDisconnectedOpponentName] = useState<string | null>(
+    null,
+  );
 
   const joinedRef = useRef(false);
   const leftRoomRef = useRef(false);
   const activeRoomIdRef = useRef<number | null>(null);
+  const disconnectTimerRef = useRef<number | null>(null);
 
   // Fix React : Refs pour éviter les closures
   const yourSymbolRef = useRef(yourSymbol);
   yourSymbolRef.current = yourSymbol;
+  const boardRef = useRef(board);
+  boardRef.current = board;
+  const player1Ref = useRef(player1);
+  player1Ref.current = player1;
+  const player2Ref = useRef(player2);
+  player2Ref.current = player2;
+  const player1SymbolRef = useRef(player1Symbol);
+  player1SymbolRef.current = player1Symbol;
+  const player2SymbolRef = useRef(player2Symbol);
+  player2SymbolRef.current = player2Symbol;
 
   const statusRef = useRef(status);
   statusRef.current = status;
+
+  const clearDisconnectTimer = useCallback(() => {
+    if (disconnectTimerRef.current !== null) {
+      window.clearInterval(disconnectTimerRef.current);
+      disconnectTimerRef.current = null;
+    }
+  }, []);
 
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
@@ -141,6 +192,10 @@ export default function Game() {
       setIsCreatingRematch(false);
       setRematchError(null);
       setError(null);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      clearDisconnectTimer();
       
       if (game.status === "DRAW") {
         setGameResultText("Draw game");
@@ -207,6 +262,10 @@ export default function Game() {
       });
       setShowGameOverModal(true);
       setRematchError(null);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      clearDisconnectTimer();
 
       setIsSendingMove(false);
       setMoveError(null);
@@ -246,6 +305,124 @@ export default function Game() {
       setStatus("idle");
     }
 
+    function onOpponentJoined({ opponent }: OpponentJoined) {
+      if (!opponent) return;
+
+      const normalizedOpponent: RoomPlayerSummary = {
+        id: opponent.id,
+        username: opponent.username,
+        avatarUrl: opponent.avatarUrl ?? null,
+      };
+
+      const knownPlayer1 = player1Ref.current;
+      const knownPlayer2 = player2Ref.current;
+
+      if (knownPlayer1?.id === normalizedOpponent.id) {
+        setPlayer1({
+          ...knownPlayer1,
+          ...normalizedOpponent,
+          avatarUrl: normalizedOpponent.avatarUrl ?? knownPlayer1.avatarUrl,
+        });
+      } else if (knownPlayer2?.id === normalizedOpponent.id) {
+        setPlayer2({
+          ...knownPlayer2,
+          ...normalizedOpponent,
+          avatarUrl: normalizedOpponent.avatarUrl ?? knownPlayer2.avatarUrl,
+        });
+      } else if (yourSymbolRef.current === "X") {
+        setPlayer2(normalizedOpponent);
+      } else {
+        setPlayer1(normalizedOpponent);
+      }
+
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      clearDisconnectTimer();
+    }
+
+    function onOpponentDisconnected({
+      gameId: disconnectedGameId,
+      username,
+      waitTime,
+    }: OpponentDisconnected) {
+      if (typeof disconnectedGameId === "number" && disconnectedGameId !== gameId) return;
+
+      const safeWait = typeof waitTime === "number" && waitTime > 0 ? waitTime : 30;
+      setOpponentConnection("disconnected");
+      setDisconnectedOpponentName(username ?? "Opponent");
+      setDisconnectCountdown(safeWait);
+      clearDisconnectTimer();
+      disconnectTimerRef.current = window.setInterval(() => {
+        setDisconnectCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearDisconnectTimer();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    function onOpponentReconnected({
+      gameId: reconnectedGameId,
+    }: {
+      gameId?: number;
+    }) {
+      if (typeof reconnectedGameId === "number" && reconnectedGameId !== gameId) return;
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      clearDisconnectTimer();
+    }
+
+    function onGameForfeited({ gameId: forfeitedGameId, winner, forfeitedBy }: GameForfeited) {
+      if (forfeitedGameId !== gameId) return;
+
+      const resolvedWinnerId = winner?.id;
+      const resolvedLoserId = forfeitedBy?.id;
+      const p1 = player1Ref.current;
+      const p2 = player2Ref.current;
+      const p1Symbol = player1SymbolRef.current;
+      const p2Symbol = player2SymbolRef.current;
+
+      const winnerSymbol =
+        resolvedWinnerId === p1?.id ? p1Symbol : resolvedWinnerId === p2?.id ? p2Symbol : null;
+      const loserSymbol =
+        resolvedLoserId === p1?.id ? p1Symbol : resolvedLoserId === p2?.id ? p2Symbol : null;
+
+      setServerStatus("FINISHED");
+      setGameResultText(winnerSymbol === yourSymbolRef.current ? "You won" : "You lost");
+      setGameOverPayload({
+        gameId: forfeitedGameId,
+        finalBoard: boardRef.current,
+        result: "win",
+        winner:
+          typeof resolvedWinnerId === "number" && winnerSymbol
+            ? {
+                id: resolvedWinnerId,
+                username: winner?.username ?? "Opponent",
+                symbol: winnerSymbol,
+              }
+            : undefined,
+        loser:
+          typeof resolvedLoserId === "number" && loserSymbol
+            ? {
+                id: resolvedLoserId,
+                username: forfeitedBy?.username ?? "Opponent",
+                symbol: loserSymbol,
+              }
+            : undefined,
+      });
+      setShowGameOverModal(true);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      clearDisconnectTimer();
+      setIsSendingMove(false);
+      setMoveError(null);
+    }
+
     // FIX RESEAU : Réception de la demande de revanche de l'adversaire
     function onRematchReceived({ newGameId }: { newGameId: number }) {
       console.log(`[Game] Rematch received for game ${newGameId}. Navigating...`);
@@ -257,23 +434,31 @@ export default function Game() {
     }
 
     socket.on("room_joined", onRoomJoined);
+    socket.on("opponent_joined", onOpponentJoined);
     socket.on("game_update", onGameUpdate);
     socket.on("game_over", onGameOver);
     socket.on("move_error", onMoveError);
+    socket.on("opponent_disconnected", onOpponentDisconnected);
+    socket.on("opponent_reconnected", onOpponentReconnected);
+    socket.on("game_forfeited", onGameForfeited);
     socket.on("error", onError);
     socket.on("disconnect", onDisconnect);
     socket.on("rematch_received", onRematchReceived);
 
     return () => {
       socket.off("room_joined", onRoomJoined);
+      socket.off("opponent_joined", onOpponentJoined);
       socket.off("game_update", onGameUpdate);
       socket.off("game_over", onGameOver);
       socket.off("move_error", onMoveError);
+      socket.off("opponent_disconnected", onOpponentDisconnected);
+      socket.off("opponent_reconnected", onOpponentReconnected);
+      socket.off("game_forfeited", onGameForfeited);
       socket.off("error", onError);
       socket.off("disconnect", onDisconnect);
       socket.off("rematch_received", onRematchReceived);
     };
-  }, [socket, gameId]);
+  }, [socket, gameId, navigate, clearDisconnectTimer]);
 
   useEffect(() => {
     if (!socket || !gameId) return;
@@ -352,9 +537,10 @@ export default function Game() {
   // Cleanup au démontage : quitte proprement la room
   useEffect(() => {
     return () => {
+      clearDisconnectTimer();
       emitLeaveRoomOnce();
     };
-  }, [emitLeaveRoomOnce]);
+  }, [clearDisconnectTimer, emitLeaveRoomOnce]);
 
   function handleCellClick(index: number) {
     if (board[index] !== null) return;
@@ -455,7 +641,7 @@ export default function Game() {
 
   const isYourTurn =
     status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
-  const boardDisabled = !isYourTurn || isSendingMove;
+  const boardDisabled = !isYourTurn || isSendingMove || opponentConnection === "disconnected";
   const winningLine = serverWinningLine || findWinningLine(board);
   const moveCount = board.filter((cell) => cell !== null).length;
   const gameClock = gameOverPayload?.duration ?? elapsedSeconds;
@@ -513,6 +699,21 @@ export default function Game() {
         </div>
       ) : null}
 
+      {opponentConnection === "disconnected" ? (
+        <div
+          className="w-full max-w-xl rounded-lg border border-carrot-orange-400 bg-carrot-orange-100 px-5 py-3 text-pong-text"
+          data-testid="opponent-disconnected-banner"
+        >
+          <p className="text-sm font-semibold text-carrot-orange-700">
+            {disconnectedOpponentName ?? "Opponent"} disconnected.
+          </p>
+          <p className="text-xs text-pong-text/80">
+            Waiting for reconnection
+            {typeof disconnectCountdown === "number" ? ` (${disconnectCountdown}s)` : ""}.
+          </p>
+        </div>
+      ) : null}
+
       <TurnIndicator
         currentPlayer={currentTurn}
         playerSymbol={yourSymbol}
@@ -567,6 +768,7 @@ export default function Game() {
       ) : null}
 
       {moveError ? <p className="-mt-4 text-xs text-red-400">{moveError}</p> : null}
+      {isSendingMove ? <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p> : null}
 
       <GameBoard
         board={board}

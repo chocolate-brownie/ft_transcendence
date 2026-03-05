@@ -133,11 +133,14 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
           },
         });
 
+        const joinedPlayer =
+          syncedGame.player1Id === user.id ? syncedGame.player1 : syncedGame.player2;
+
         socket.to(roomName).emit("opponent_joined", {
           opponent: {
             id: user.id,
             username: user.username,
-            avatarUrl: user.avatarUrl,
+            avatarUrl: joinedPlayer?.avatarUrl ?? null,
           },
         });
         callback?.({ success: true });

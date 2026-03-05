@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 type JwtSocketUser = {
   id: number;
   username: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 };
 
 export function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void) {
