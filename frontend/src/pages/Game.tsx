@@ -1,7 +1,12 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import type { GameOverPlayerSummary } from "../types/game";
+import type {
+  Board,
+  PlayerSymbol,
+  RoomPlayerSummary,
+  GameOverPlayerSummary,
+} from "../types/game";
 import { useSocket } from "../context/SocketContext";
 import { ApiError } from "../lib/apiClient";
 import { gamesService } from "../services/games.service";
@@ -13,8 +18,74 @@ import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 
-import { gameReducer, initialGameState } from "./game/state";
-import { useGameSocketController } from "./game/useGameSocketController";
+type ServerStatus =
+  | "WAITING"
+  | "IN_PROGRESS"
+  | "FINISHED"
+  | "DRAW"
+  | "CANCELLED"
+  | "ABANDONED";
+type RoomJoined = {
+  gameId: number;
+  game: {
+    boardState: Board;
+    currentTurn: PlayerSymbol;
+    status: ServerStatus;
+    yourSymbol: PlayerSymbol;
+    player1: RoomPlayerSummary;
+    player2: RoomPlayerSummary | null;
+    player1Symbol: PlayerSymbol;
+    player2Symbol: PlayerSymbol;
+    startedAt: string | null;
+  };
+};
+
+type GameUpdate = {
+  gameId: number;
+  board: Board;
+  currentTurn: PlayerSymbol;
+  status: ServerStatus;
+  winningLine?: number[];
+};
+
+type GameOver = {
+  gameId: number;
+  finalBoard: Board;
+  result: "win" | "draw";
+  winner?: GameOverPlayerSummary | null;
+  loser?: GameOverPlayerSummary | null;
+  totalMoves?: number;
+  duration?: number;
+  winningLine?: number[] | null;
+};
+
+type MoveError = {
+  error: string;
+};
+
+type OpponentJoined = {
+  opponent?: {
+    id: number;
+    username: string;
+    avatarUrl?: string | null;
+    role?: "player1" | "player2";
+    symbol?: PlayerSymbol;
+  };
+};
+
+type OpponentDisconnected = {
+  gameId?: number;
+  username?: string;
+  waitTime?: number;
+};
+
+type GameForfeited = {
+  gameId: number;
+  forfeitedBy?: { id?: number; username?: string; symbol?: PlayerSymbol };
+  winner?: { id?: number; username?: string; symbol?: PlayerSymbol };
+  winnerSymbol?: PlayerSymbol;
+  loserSymbol?: PlayerSymbol;
+};
 
 export default function Game() {
   const navigate = useNavigate();
@@ -23,55 +94,459 @@ export default function Game() {
 
   const gameId = Number(id);
 
-  const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
+  const [status, setStatus] = useState<"idle" | "connecting" | "joining" | "ready">(
+    "idle",
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  const [board, setBoard] = useState<Board>(Array(9).fill(null));
+  const [currentTurn, setCurrentTurn] = useState<PlayerSymbol>("X");
+  const [serverStatus, setServerStatus] = useState<ServerStatus>("WAITING");
+  const [yourSymbol, setYourSymbol] = useState<PlayerSymbol>("X");
+
+  const [serverWinningLine, setServerWinningLine] = useState<number[] | null>(null);
+  const [isSendingMove, setIsSendingMove] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [gameResultText, setGameResultText] = useState<string | null>(null);
+  const [gameOverPayload, setGameOverPayload] = useState<GameOver | null>(null);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [isCreatingRematch, setIsCreatingRematch] = useState(false);
+  const [rematchError, setRematchError] = useState<string | null>(null);
   const [joinRevision, setJoinRevision] = useState(0);
+  const [player1, setPlayer1] = useState<RoomPlayerSummary | null>(null);
+  const [player2, setPlayer2] = useState<RoomPlayerSummary | null>(null);
+  const [player1Symbol, setPlayer1Symbol] = useState<PlayerSymbol>("X");
+  const [player2Symbol, setPlayer2Symbol] = useState<PlayerSymbol>("O");
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [opponentConnection, setOpponentConnection] = useState<"online" | "disconnected">(
+    "online",
+  );
+  const [disconnectCountdown, setDisconnectCountdown] = useState<number | null>(null);
+  const [disconnectedOpponentName, setDisconnectedOpponentName] = useState<string | null>(
+    null,
+  );
 
-  const stateRef = useRef(gameState);
-  stateRef.current = gameState;
+  const joinedRef = useRef(false);
+  const leftRoomRef = useRef(false);
+  const activeRoomIdRef = useRef<number | null>(null);
 
-  const { emitLeaveRoomOnce, resetJoinGuard } = useGameSocketController({
-    socket,
-    gameId,
-    joinRevision,
-    navigate,
-    dispatch,
-    stateRef,
-  });
+  // Fix React : Refs pour éviter les closures
+  const yourSymbolRef = useRef(yourSymbol);
+  yourSymbolRef.current = yourSymbol;
+  const boardRef = useRef(board);
+  boardRef.current = board;
+  const player1Ref = useRef(player1);
+  player1Ref.current = player1;
+  const player2Ref = useRef(player2);
+  player2Ref.current = player2;
+  const player1SymbolRef = useRef(player1Symbol);
+  player1SymbolRef.current = player1Symbol;
+  const player2SymbolRef = useRef(player2Symbol);
+  player2SymbolRef.current = player2Symbol;
+
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  const emitLeaveRoomOnce = useCallback(() => {
+    if (!socket) return;
+    if (leftRoomRef.current) return;
+
+    const roomId = activeRoomIdRef.current ?? gameId;
+    if (!roomId) return;
+
+    console.log(`[Game] Leaving room ${roomId}`);
+    leftRoomRef.current = true;
+    socket.emit("leave_game_room", { gameId: roomId });
+  }, [socket, gameId]);
+
+  // Le GRAND useEffect des sockets
+  useEffect(() => {
+    if (!socket) return;
+
+    function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
+      if (joinedId !== gameId) return;
+      console.log(`[Game] Joined room ${joinedId}. Status: ${game.status}`);
+      activeRoomIdRef.current = joinedId;
+
+      setBoard(game.boardState);
+      setCurrentTurn(game.currentTurn);
+      setServerStatus(game.status);
+      setYourSymbol(game.yourSymbol);
+      setPlayer1(game.player1);
+      setPlayer2(game.player2);
+      setPlayer1Symbol(game.player1Symbol);
+      setPlayer2Symbol(game.player2Symbol);
+      setStartedAtMs(game.startedAt ? new Date(game.startedAt).getTime() : null);
+
+      setServerWinningLine(null);
+      setIsSendingMove(false);
+      setMoveError(null);
+      setGameResultText(null);
+      setGameOverPayload(null);
+      setShowGameOverModal(false);
+      setIsCreatingRematch(false);
+      setRematchError(null);
+      setError(null);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      
+      if (game.status === "DRAW") {
+        setGameResultText("Draw game");
+      }
+      if (game.status === "FINISHED") {
+        const line = findWinningLine(game.boardState);
+        const winnerSymbol = line ? game.boardState[line[0]] : null;
+        if (winnerSymbol === game.yourSymbol) setGameResultText("You won");
+        else if (winnerSymbol === "X" || winnerSymbol === "O")
+          setGameResultText("You lost");
+      }
+      setStatus("ready");
+    }
+
+    function onGameUpdate({
+      gameId: updateId,
+      board,
+      currentTurn,
+      status,
+      winningLine,
+    }: GameUpdate) {
+      if (updateId !== gameId) return;
+
+      setBoard(board);
+      setCurrentTurn(currentTurn);
+      setServerStatus(status);
+      setServerWinningLine(winningLine ?? null);
+
+      setIsSendingMove(false);
+      setMoveError(null);
+    }
+
+    function onGameOver({
+      gameId: overId,
+      finalBoard,
+      result,
+      winner,
+      loser,
+      totalMoves,
+      duration,
+      winningLine,
+    }: GameOver) {
+      if (overId !== gameId) return;
+
+      setBoard(finalBoard);
+      setServerStatus(result === "draw" ? "DRAW" : "FINISHED");
+      setGameResultText(
+        result === "draw"
+          ? "Draw game"
+          : winner?.symbol === yourSymbolRef.current
+            ? "You won"
+            : "You lost",
+      );
+      setServerWinningLine(winningLine ?? null);
+      setGameOverPayload({
+        gameId: overId,
+        finalBoard,
+        result,
+        winner,
+        loser,
+        totalMoves,
+        duration,
+        winningLine,
+      });
+      setShowGameOverModal(true);
+      setRematchError(null);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+
+      setIsSendingMove(false);
+      setMoveError(null);
+    }
+
+    function onMoveError({ error }: MoveError) {
+      setIsSendingMove(false);
+      setMoveError(error);
+    }
+
+    function onError({
+      gameId: eventGameId,
+      message,
+    }: {
+      gameId?: number;
+      message?: string;
+    }) {
+      if (typeof eventGameId === "number" && eventGameId !== gameId) return;
+
+      const userMessage = message || "Something went wrong.";
+      setIsSendingMove(false);
+
+      if (statusRef.current === "ready") {
+        setMoveError(userMessage);
+        return;
+      }
+
+      setMoveError(null);
+      setError(userMessage);
+      setStatus("idle");
+    }
+
+    function onDisconnect() {
+      setIsSendingMove(false);
+      setMoveError(null);
+      setError("Connection lost. Please check your network and try again.");
+      setStatus("idle");
+    }
+
+    function onOpponentJoined({ opponent }: OpponentJoined) {
+      if (!opponent) return;
+
+      const normalizedOpponent: RoomPlayerSummary = {
+        id: opponent.id,
+        username: opponent.username,
+        avatarUrl: opponent.avatarUrl ?? null,
+      };
+
+      const knownPlayer1 = player1Ref.current;
+      const knownPlayer2 = player2Ref.current;
+
+      if (knownPlayer1?.id === normalizedOpponent.id) {
+        setPlayer1({
+          ...knownPlayer1,
+          ...normalizedOpponent,
+          avatarUrl: normalizedOpponent.avatarUrl ?? knownPlayer1.avatarUrl,
+        });
+      } else if (knownPlayer2?.id === normalizedOpponent.id) {
+        setPlayer2({
+          ...knownPlayer2,
+          ...normalizedOpponent,
+          avatarUrl: normalizedOpponent.avatarUrl ?? knownPlayer2.avatarUrl,
+        });
+      } else if (opponent.role === "player1") {
+        setPlayer1(normalizedOpponent);
+      } else if (opponent.role === "player2") {
+        setPlayer2(normalizedOpponent);
+      } else if (yourSymbolRef.current === "X") {
+        setPlayer2(normalizedOpponent);
+      } else {
+        setPlayer1(normalizedOpponent);
+      }
+
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+    }
+
+    function onOpponentDisconnected({
+      gameId: disconnectedGameId,
+      username,
+      waitTime,
+    }: OpponentDisconnected) {
+      if (typeof disconnectedGameId === "number" && disconnectedGameId !== gameId) return;
+
+      const safeWait = typeof waitTime === "number" && waitTime > 0 ? waitTime : 30;
+      setOpponentConnection("disconnected");
+      setDisconnectedOpponentName(username ?? "Opponent");
+      setDisconnectCountdown(safeWait);
+    }
+
+    function onOpponentReconnected({
+      gameId: reconnectedGameId,
+    }: {
+      gameId?: number;
+    }) {
+      if (typeof reconnectedGameId === "number" && reconnectedGameId !== gameId) return;
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+    }
+
+    function onGameForfeited({
+      gameId: forfeitedGameId,
+      winner,
+      forfeitedBy,
+      winnerSymbol,
+      loserSymbol,
+    }: GameForfeited) {
+      if (forfeitedGameId !== gameId) return;
+
+      const resolvedWinnerId = winner?.id;
+      const resolvedLoserId = forfeitedBy?.id;
+      const p1 = player1Ref.current;
+      const p2 = player2Ref.current;
+      const p1Symbol = player1SymbolRef.current;
+      const p2Symbol = player2SymbolRef.current;
+
+      const resolvedWinnerSymbol =
+        winnerSymbol ??
+        winner?.symbol ??
+        (resolvedWinnerId === p1?.id
+          ? p1Symbol
+          : resolvedWinnerId === p2?.id
+            ? p2Symbol
+            : null);
+      const resolvedLoserSymbol =
+        loserSymbol ??
+        forfeitedBy?.symbol ??
+        (resolvedLoserId === p1?.id ? p1Symbol : resolvedLoserId === p2?.id ? p2Symbol : null);
+
+      setServerStatus("FINISHED");
+      setGameResultText(
+        resolvedWinnerSymbol === yourSymbolRef.current ? "You won" : "You lost",
+      );
+      setGameOverPayload({
+        gameId: forfeitedGameId,
+        finalBoard: boardRef.current,
+        result: "win",
+        winner:
+          typeof resolvedWinnerId === "number" && resolvedWinnerSymbol
+            ? {
+                id: resolvedWinnerId,
+                username: winner?.username ?? "Opponent",
+                symbol: resolvedWinnerSymbol,
+              }
+            : undefined,
+        loser:
+          typeof resolvedLoserId === "number" && resolvedLoserSymbol
+            ? {
+                id: resolvedLoserId,
+                username: forfeitedBy?.username ?? "Opponent",
+                symbol: resolvedLoserSymbol,
+              }
+            : undefined,
+      });
+      setShowGameOverModal(true);
+      setOpponentConnection("online");
+      setDisconnectCountdown(null);
+      setDisconnectedOpponentName(null);
+      setIsSendingMove(false);
+      setMoveError(null);
+    }
+
+    // FIX RESEAU : Réception de la demande de revanche de l'adversaire
+    function onRematchReceived({ newGameId }: { newGameId: number }) {
+      console.log(`[Game] Rematch received for game ${newGameId}. Navigating...`);
+      setIsCreatingRematch(true);
+      setRematchError(null);
+      // On ne touche PAS aux refs ici, le composant va mourir et être remplacé
+      // On navigue simplement, le cleanup (emitLeaveRoomOnce) se fera tout seul
+      void navigate(`/game/${newGameId}`);
+    }
+
+    socket.on("room_joined", onRoomJoined);
+    socket.on("opponent_joined", onOpponentJoined);
+    socket.on("game_update", onGameUpdate);
+    socket.on("game_over", onGameOver);
+    socket.on("move_error", onMoveError);
+    socket.on("opponent_disconnected", onOpponentDisconnected);
+    socket.on("opponent_reconnected", onOpponentReconnected);
+    socket.on("game_forfeited", onGameForfeited);
+    socket.on("error", onError);
+    socket.on("disconnect", onDisconnect);
+    socket.on("rematch_received", onRematchReceived);
+
+    return () => {
+      socket.off("room_joined", onRoomJoined);
+      socket.off("opponent_joined", onOpponentJoined);
+      socket.off("game_update", onGameUpdate);
+      socket.off("game_over", onGameOver);
+      socket.off("move_error", onMoveError);
+      socket.off("opponent_disconnected", onOpponentDisconnected);
+      socket.off("opponent_reconnected", onOpponentReconnected);
+      socket.off("game_forfeited", onGameForfeited);
+      socket.off("error", onError);
+      socket.off("disconnect", onDisconnect);
+      socket.off("rematch_received", onRematchReceived);
+    };
+  }, [socket, gameId, navigate]);
 
   useEffect(() => {
-    if (gameState.startedAtMs === null || gameState.serverStatus !== "IN_PROGRESS") {
+    if (!socket || !gameId) return;
+
+    const previousRoomId = activeRoomIdRef.current;
+    if (previousRoomId && previousRoomId !== gameId) {
+      socket.emit("leave_game_room", { gameId: previousRoomId });
+    }
+
+    // Route param changes can reuse the same component instance. Reset join guards
+    // so rematch navigation always performs a fresh join for the new game room.
+    joinedRef.current = false;
+    leftRoomRef.current = false;
+    activeRoomIdRef.current = null;
+    setStatus("idle");
+  }, [socket, gameId]);
+
+  // FIX TIMER : Arrêt correct quand fin de partie
+  useEffect(() => {
+    if (startedAtMs === null || serverStatus !== "IN_PROGRESS") {
       return;
     }
 
     const tick = () => {
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - gameState.startedAtMs!) / 1000)));
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)));
     };
 
     tick();
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
-  }, [gameState.startedAtMs, gameState.serverStatus]);
+  }, [startedAtMs, serverStatus]);
 
   useEffect(() => {
-    if (gameState.opponentConnection !== "disconnected") return;
-    if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0) return;
+    if (opponentConnection !== "disconnected") return;
+    if (disconnectCountdown === null || disconnectCountdown <= 0) return;
 
     const timer = window.setTimeout(() => {
-      dispatch({
-        type: "PATCH",
-        patch: {
-          disconnectCountdown:
-            gameState.disconnectCountdown && gameState.disconnectCountdown > 0
-              ? gameState.disconnectCountdown - 1
-              : 0,
-        },
-      });
+      setDisconnectCountdown((prev) => (prev && prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => window.clearTimeout(timer);
-  }, [gameState.opponentConnection, gameState.disconnectCountdown]);
+  }, [opponentConnection, disconnectCountdown]);
 
+  useEffect(() => {
+    function startJoin() {
+      if (!socket || joinedRef.current) return;
+      
+      console.log(`[Game] Joining room ${gameId}...`);
+      joinedRef.current = true;
+      
+      // CRITICAL FIX : On doit reset leftRoomRef ici pour autoriser le join !
+      leftRoomRef.current = false; 
+
+      setError(null);
+      setMoveError(null);
+      setIsSendingMove(false);
+      setStatus("joining");
+
+      socket.emit("join_game_room", { gameId });
+    }
+
+    if (joinedRef.current) return;
+
+    if (!gameId) {
+      setError("Invalid game id in URL.");
+      setStatus("idle");
+      return;
+    }
+
+    if (!socket) {
+      setStatus("connecting");
+      return;
+    }
+
+    if (!socket.connected) {
+      setStatus("connecting");
+      socket.once("connect", startJoin);
+      socket.connect();
+      return () => {
+        socket.off("connect", startJoin);
+      };
+    }
+
+    startJoin();
+  }, [socket, gameId, joinRevision]);
+
+  // Cleanup au démontage : quitte proprement la room
   useEffect(() => {
     return () => {
       emitLeaveRoomOnce();
@@ -79,14 +554,16 @@ export default function Game() {
   }, [emitLeaveRoomOnce]);
 
   function handleCellClick(index: number) {
-    if (gameState.board[index] !== null) return;
+    if (board[index] !== null) return;
     if (!socket) return;
-    if (gameState.status !== "ready") return;
-    if (gameState.isSendingMove) return;
-    if (gameState.serverStatus !== "IN_PROGRESS") return;
-    if (gameState.currentTurn !== gameState.yourSymbol) return;
+    if (status !== "ready") return;
+    if (isSendingMove) return;
+    if (serverStatus !== "IN_PROGRESS") return;
+    if (currentTurn !== yourSymbol) return;
 
-    dispatch({ type: "BEGIN_MOVE_SEND" });
+    setIsSendingMove(true);
+    setMoveError(null);
+
     socket.emit("make_move", { gameId, cellIndex: index });
   }
 
@@ -100,111 +577,94 @@ export default function Game() {
     void navigate("/");
   }
 
+  // FIX RESEAU : Rematch simplifié
   async function handlePlayAgain() {
-    if (!gameState.gameOverPayload || gameState.isCreatingRematch) return;
+    if (!gameOverPayload || isCreatingRematch) return;
 
     const opponentId =
-      gameState.gameOverPayload.winner?.symbol === gameState.yourSymbol
-        ? gameState.gameOverPayload.loser?.id
-        : gameState.gameOverPayload.winner?.id;
+      gameOverPayload.winner?.symbol === yourSymbol
+        ? gameOverPayload.loser?.id
+        : gameOverPayload.winner?.id;
 
     if (!opponentId) {
-      dispatch({
-        type: "PATCH",
-        patch: { rematchError: "Unable to identify opponent for rematch." },
-      });
+      setRematchError("Unable to identify opponent for rematch.");
       return;
     }
 
-    dispatch({ type: "PATCH", patch: { isCreatingRematch: true, rematchError: null } });
+    setIsCreatingRematch(true);
+    setRematchError(null);
 
     try {
-      const newGame = await gamesService.createGame({
-        player2Id: opponentId,
-        sourceGameId: gameId,
-      });
+      const newGame = await gamesService.createGame({ player2Id: opponentId, sourceGameId: gameId });
 
+      // 1. On prévient l'adversaire (on est encore dans la room, donc il recevra)
       socket?.emit("send_rematch", { gameId, newGameId: newGame.id });
+
+      // 2. On navigue -> React démonte l'ancien Game -> Le cleanup (emitLeaveRoomOnce) quitte la room.
       void navigate(`/game/${newGame.id}`);
     } catch (err: unknown) {
       const message =
-        err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
-      dispatch({ type: "PATCH", patch: { rematchError: message, isCreatingRematch: false } });
+        err instanceof ApiError
+          ? err.message
+          : "Failed to create rematch. Please retry.";
+      setRematchError(message);
+      setIsCreatingRematch(false);
     }
   }
 
   function handleRetry() {
     if (!navigator.onLine) {
-      dispatch({
-        type: "PATCH",
-        patch: { error: "You are offline. Reconnect to the internet and try again." },
-      });
+      setError("You are offline. Reconnect to the internet and try again.");
       return;
     }
     if (!socket) {
-      dispatch({
-        type: "PATCH",
-        patch: {
-          status: "connecting",
-          error: "Still connecting to server. Please try again in a moment.",
-        },
-      });
+      setStatus("connecting");
+      setError("Still connecting to server. Please try again in a moment.");
       return;
     }
 
-    resetJoinGuard();
-    dispatch({ type: "PATCH", patch: { error: null, moveError: null, isSendingMove: false } });
+    joinedRef.current = false;
+    setError(null);
+    setMoveError(null);
+    setIsSendingMove(false);
     setJoinRevision((n) => n + 1);
 
     if (!socket.connected) {
-      dispatch({ type: "JOIN_CONNECTING" });
+      setStatus("connecting");
       socket.connect();
     } else {
-      dispatch({ type: "PATCH", patch: { status: "idle" } });
+      setStatus("idle");
     }
   }
 
   const myPlayer =
-    gameState.yourSymbol === gameState.player1Symbol
-      ? gameState.player1
-      : gameState.yourSymbol === gameState.player2Symbol
-        ? gameState.player2
-        : null;
+    yourSymbol === player1Symbol ? player1 : yourSymbol === player2Symbol ? player2 : null;
   const opponentPlayer =
-    myPlayer?.id === gameState.player1?.id
-      ? gameState.player2
-      : myPlayer?.id === gameState.player2?.id
-        ? gameState.player1
-        : null;
+    myPlayer?.id === player1?.id ? player2 : myPlayer?.id === player2?.id ? player1 : null;
   const opponentSummary: GameOverPlayerSummary | null = opponentPlayer
     ? {
         id: opponentPlayer.id,
         username: opponentPlayer.username,
-        symbol:
-          opponentPlayer.id === gameState.player1?.id
-            ? gameState.player1Symbol
-            : gameState.player2Symbol,
+        symbol: opponentPlayer.id === player1?.id ? player1Symbol : player2Symbol,
       }
     : null;
   const opponentAvatarUrl = opponentPlayer?.avatarUrl ?? null;
 
   const isYourTurn =
-    gameState.status === "ready" &&
-    gameState.serverStatus === "IN_PROGRESS" &&
-    gameState.currentTurn === gameState.yourSymbol;
-  const boardDisabled =
-    !isYourTurn || gameState.isSendingMove || gameState.opponentConnection === "disconnected";
-  const winningLine = gameState.serverWinningLine || findWinningLine(gameState.board);
-  const moveCount = gameState.board.filter((cell) => cell !== null).length;
-  const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
-  const isGameOver = gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
+    status === "ready" && serverStatus === "IN_PROGRESS" && currentTurn === yourSymbol;
+  const boardDisabled = !isYourTurn || isSendingMove || opponentConnection === "disconnected";
+  const winningLine = serverWinningLine || findWinningLine(board);
+  const moveCount = board.filter((cell) => cell !== null).length;
+  const gameClock = gameOverPayload?.duration ?? elapsedSeconds;
+  const isGameOver = serverStatus === "FINISHED" || serverStatus === "DRAW";
   const winnerSymbol =
-    gameState.gameOverPayload?.winner?.symbol ??
-    (isGameOver && winningLine ? gameState.board[winningLine[0]] : null);
-  const waitingText = gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
-  const gameOverText = gameState.gameResultText ? `Game over: ${gameState.gameResultText}` : "Game over";
-  const player1Score = gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
-  const player2Score = gameState.gameOverPayload?.winner?.symbol === gameState.player2Symbol ? 1 : 0;
+    gameOverPayload?.winner?.symbol ??
+    (isGameOver && winningLine ? board[winningLine[0]] : null);
+  const waitingText =
+    gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
+  const gameOverText = gameResultText ? `Game over: ${gameResultText}` : "Game over";
+  const player1Score = gameOverPayload?.winner?.symbol === player1Symbol ? 1 : 0;
+  const player2Score = gameOverPayload?.winner?.symbol === player2Symbol ? 1 : 0;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -212,10 +672,10 @@ export default function Game() {
         {gameId > 0 ? `Game #${gameId}` : "Game"}
       </h1>
 
-      {gameState.error ? (
+      {error ? (
         <div className="w-full max-w-lg rounded-lg bg-pong-surface px-6 py-4 shadow-sm">
           <p className="text-sm font-semibold text-red-400">Game error</p>
-          <p className="mt-2 text-sm text-pong-text/70">{gameState.error}</p>
+          <p className="mt-2 text-sm text-pong-text/70">{error}</p>
           <div className="mt-4 flex gap-3">
             <Button variant="primary" className="flex-1" onClick={handleRetry}>
               Try again
@@ -225,15 +685,15 @@ export default function Game() {
             </Button>
           </div>
         </div>
-      ) : gameState.status === "connecting" ? (
+      ) : status === "connecting" ? (
         <p className="animate-pulse text-sm text-pong-text/60">Connecting…</p>
-      ) : gameState.status === "joining" ? (
+      ) : status === "joining" ? (
         <p className="animate-pulse text-sm text-pong-text/60">Joining game…</p>
-      ) : gameState.status !== "ready" ? (
+      ) : status !== "ready" ? (
         <p className="animate-pulse text-sm text-pong-text/60">Loading game…</p>
       ) : null}
 
-      {gameState.serverStatus === "WAITING" ? (
+      {serverStatus === "WAITING" ? (
         <div className="w-full max-w-xl rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
           <p className="text-base font-semibold text-pong-text">{waitingText}</p>
           <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
@@ -250,45 +710,42 @@ export default function Game() {
         </div>
       ) : null}
 
-      {gameState.opponentConnection === "disconnected" ? (
+      {opponentConnection === "disconnected" ? (
         <div
           className="w-full max-w-xl rounded-lg border border-carrot-orange-400 bg-carrot-orange-100 px-5 py-3 text-pong-text"
           data-testid="opponent-disconnected-banner"
         >
           <p className="text-sm font-semibold text-carrot-orange-700">
-            {gameState.disconnectedOpponentName ?? "Opponent"} disconnected.
+            {disconnectedOpponentName ?? "Opponent"} disconnected.
           </p>
           <p className="text-xs text-pong-text/80">
             Waiting for reconnection
-            {typeof gameState.disconnectCountdown === "number"
-              ? ` (${gameState.disconnectCountdown}s)`
-              : ""}
-            .
+            {typeof disconnectCountdown === "number" ? ` (${disconnectCountdown}s)` : ""}.
           </p>
         </div>
       ) : null}
 
       <TurnIndicator
-        currentPlayer={gameState.currentTurn}
-        playerSymbol={gameState.yourSymbol}
+        currentPlayer={currentTurn}
+        playerSymbol={yourSymbol}
         isYourTurn={isYourTurn}
         className="-mb-6"
         textOverride={
-          gameState.serverStatus === "WAITING"
+          serverStatus === "WAITING"
             ? waitingText
-            : gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW"
+            : serverStatus === "FINISHED" || serverStatus === "DRAW"
               ? gameOverText
               : undefined
         }
       />
 
       <Scoreboard
-        player1={gameState.player1}
-        player2={gameState.player2}
-        player1Symbol={gameState.player1Symbol}
-        player2Symbol={gameState.player2Symbol}
-        currentTurn={gameState.currentTurn}
-        serverStatus={gameState.serverStatus}
+        player1={player1}
+        player2={player2}
+        player1Symbol={player1Symbol}
+        player2Symbol={player2Symbol}
+        currentTurn={currentTurn}
+        serverStatus={serverStatus}
         player1Score={player1Score}
         player2Score={player2Score}
       />
@@ -304,68 +761,63 @@ export default function Game() {
       {isGameOver ? (
         <div
           className={`rounded-lg border px-5 py-3 text-center ${
-            gameState.serverStatus === "DRAW"
+            serverStatus === "DRAW"
               ? "border-slate-300/40 bg-slate-300/10 text-pong-text/90"
-              : gameState.gameResultText === "You won"
+              : gameResultText === "You won"
                 ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
                 : "border-red-300/50 bg-red-400/10 text-red-300"
           }`}
         >
           <p className="text-2xl font-bold">
-            {gameState.serverStatus === "DRAW"
+            {serverStatus === "DRAW"
               ? "It's a Draw! 🤝"
-              : gameState.gameResultText === "You won"
+              : gameResultText === "You won"
                 ? "You Won! 🎉"
                 : "You Lost 😢"}
           </p>
         </div>
       ) : null}
 
-      {gameState.moveError ? <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p> : null}
-      {gameState.isSendingMove ? (
-        <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p>
-      ) : null}
+      {moveError ? <p className="-mt-4 text-xs text-red-400">{moveError}</p> : null}
+      {isSendingMove ? <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p> : null}
 
       <GameBoard
-        board={gameState.board}
+        board={board}
         onCellClick={handleCellClick}
-        currentTurnSymbol={gameState.currentTurn}
+        currentTurnSymbol={currentTurn}
         winningLine={winningLine}
         winnerSymbol={winnerSymbol === "X" || winnerSymbol === "O" ? winnerSymbol : null}
-        playerSymbol={gameState.yourSymbol}
+        playerSymbol={yourSymbol}
         gameOver={isGameOver}
         disabled={boardDisabled}
       />
 
-      {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button
-          variant="secondary"
-          onClick={() => dispatch({ type: "PATCH", patch: { showGameOverModal: true } })}
-        >
+      {isGameOver && gameOverPayload && !showGameOverModal ? (
+        <Button variant="secondary" onClick={() => setShowGameOverModal(true)}>
           View Result
         </Button>
       ) : null}
 
       <GameOverModal
-        open={gameState.showGameOverModal && !!gameState.gameOverPayload}
-        result={gameState.gameOverPayload?.result ?? "draw"}
-        winner={gameState.gameOverPayload?.winner ?? null}
-        loser={gameState.gameOverPayload?.loser ?? null}
+        open={showGameOverModal && !!gameOverPayload}
+        result={gameOverPayload?.result ?? "draw"}
+        winner={gameOverPayload?.winner ?? null}
+        loser={gameOverPayload?.loser ?? null}
         opponent={opponentSummary}
-        mySymbol={gameState.yourSymbol}
+        mySymbol={yourSymbol}
         totalMoves={
-          gameState.gameOverPayload?.totalMoves ?? gameState.board.filter((cell) => cell !== null).length
+          gameOverPayload?.totalMoves ?? board.filter((cell) => cell !== null).length
         }
-        durationSeconds={gameState.gameOverPayload?.duration}
+        durationSeconds={gameOverPayload?.duration}
         opponentAvatarUrl={opponentAvatarUrl}
-        rematchLoading={gameState.isCreatingRematch}
-        rematchError={gameState.rematchError}
+        rematchLoading={isCreatingRematch}
+        rematchError={rematchError}
         onPlayAgain={() => {
           void handlePlayAgain();
         }}
         onGoLobby={backToLobby}
         onGoHome={goHome}
-        onClose={() => dispatch({ type: "PATCH", patch: { showGameOverModal: false } })}
+        onClose={() => setShowGameOverModal(false)}
       />
     </div>
   );
