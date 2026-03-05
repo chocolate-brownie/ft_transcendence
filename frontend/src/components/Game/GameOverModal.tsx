@@ -1,13 +1,12 @@
 import { useEffect } from "react";
+import type { PlayerSymbol } from "../../types/game";
 
 import Button from "../Button";
-
-type Symbol = "X" | "O";
 
 interface PlayerSummary {
   id: number;
   username: string;
-  symbol: Symbol;
+  symbol: PlayerSymbol;
 }
 
 interface GameOverModalProps {
@@ -16,7 +15,7 @@ interface GameOverModalProps {
   winner: PlayerSummary | null;
   loser: PlayerSummary | null;
   opponent: PlayerSummary | null;
-  mySymbol: Symbol;
+  mySymbol: PlayerSymbol;
   totalMoves: number;
   durationSeconds?: number;
   opponentAvatarUrl?: string | null;

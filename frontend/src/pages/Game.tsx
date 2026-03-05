@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import type { Board } from "../types/game";
+import type { Board, PlayerSymbol } from "../types/game";
 import { useSocket } from "../context/SocketContext";
 import { ApiError } from "../lib/apiClient";
 import { gamesService } from "../services/games.service";
@@ -13,7 +13,6 @@ import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 
-type Symbol = "X" | "O";
 type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
 type PlayerSummary = {
   id: number;
@@ -25,13 +24,13 @@ type RoomJoined = {
   gameId: number;
   game: {
     boardState: Board;
-    currentTurn: Symbol;
+    currentTurn: PlayerSymbol;
     status: ServerStatus;
-    yourSymbol: Symbol;
+    yourSymbol: PlayerSymbol;
     player1: PlayerSummary;
     player2: PlayerSummary | null;
-    player1Symbol: Symbol;
-    player2Symbol: Symbol;
+    player1Symbol: PlayerSymbol;
+    player2Symbol: PlayerSymbol;
     startedAt: string | null;
   };
 };
@@ -39,7 +38,7 @@ type RoomJoined = {
 type GameUpdate = {
   gameId: number;
   board: Board;
-  currentTurn: Symbol;
+  currentTurn: PlayerSymbol;
   status: ServerStatus;
   winningLine?: number[];
 };
@@ -51,12 +50,12 @@ type GameOver = {
   winner?: {
     id: number;
     username: string;
-    symbol: Symbol;
+    symbol: PlayerSymbol;
   } | null;
   loser?: {
     id: number;
     username: string;
-    symbol: Symbol;
+    symbol: PlayerSymbol;
   } | null;
   totalMoves?: number;
   duration?: number;
@@ -66,7 +65,7 @@ type GameOver = {
 type GameOverPlayerSummary = {
   id: number;
   username: string;
-  symbol: Symbol;
+  symbol: PlayerSymbol;
 };
 
 type MoveError = {
@@ -86,9 +85,9 @@ export default function Game() {
   const [error, setError] = useState<string | null>(null);
 
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
-  const [currentTurn, setCurrentTurn] = useState<Symbol>("X");
+  const [currentTurn, setCurrentTurn] = useState<PlayerSymbol>("X");
   const [serverStatus, setServerStatus] = useState<ServerStatus>("WAITING");
-  const [yourSymbol, setYourSymbol] = useState<Symbol>("X");
+  const [yourSymbol, setYourSymbol] = useState<PlayerSymbol>("X");
 
   const [serverWinningLine, setServerWinningLine] = useState<number[] | null>(null);
   const [isSendingMove, setIsSendingMove] = useState(false);
@@ -101,8 +100,8 @@ export default function Game() {
   const [joinRevision, setJoinRevision] = useState(0);
   const [player1, setPlayer1] = useState<PlayerSummary | null>(null);
   const [player2, setPlayer2] = useState<PlayerSummary | null>(null);
-  const [player1Symbol, setPlayer1Symbol] = useState<Symbol>("X");
-  const [player2Symbol, setPlayer2Symbol] = useState<Symbol>("O");
+  const [player1Symbol, setPlayer1Symbol] = useState<PlayerSymbol>("X");
+  const [player2Symbol, setPlayer2Symbol] = useState<PlayerSymbol>("O");
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 

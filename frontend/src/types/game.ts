@@ -1,4 +1,5 @@
 export type CellValue = "X" | "O" | null;
+export type PlayerSymbol = "X" | "O";
 
 export type Board = CellValue[];
 

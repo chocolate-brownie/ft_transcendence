@@ -1,4 +1,5 @@
-type Symbol = "X" | "O";
+import type { PlayerSymbol } from "../../types/game";
+
 type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
 
 interface PlayerSummary {
@@ -10,9 +11,9 @@ interface PlayerSummary {
 interface ScoreboardProps {
   player1: PlayerSummary | null;
   player2: PlayerSummary | null;
-  player1Symbol: Symbol;
-  player2Symbol: Symbol;
-  currentTurn: Symbol;
+  player1Symbol: PlayerSymbol;
+  player2Symbol: PlayerSymbol;
+  currentTurn: PlayerSymbol;
   serverStatus: ServerStatus;
   player1Score: number;
   player2Score: number;
