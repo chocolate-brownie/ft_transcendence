@@ -27,7 +27,7 @@ export function minimax(board: Board, depth: number, alpha: number = -Infinity, 
             board[i] = null;
             bestScore = Math.max(bestScore, currentScore);
             alpha = Math.max(alpha, bestScore);
-            if (beta <= alpha) { break; } // Beta break
+            if (beta <= alpha) { break; } // looking for least => if node score is greater than beta, no need to explore further
           }
         }
       return bestScore;
@@ -40,7 +40,7 @@ export function minimax(board: Board, depth: number, alpha: number = -Infinity, 
             board[i] = null;
             bestScore = Math.min(bestScore, currentScore);
             beta = Math.min(beta, bestScore);
-            if (beta <= alpha) { break; } // Alpha break
+            if (beta <= alpha) { break; } // looking for greatest => if node score is less than alpha, no need to explore further
           }
         }
       return bestScore;
