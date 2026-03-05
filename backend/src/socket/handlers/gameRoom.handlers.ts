@@ -106,9 +106,24 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
           joinedAt: new Date(),
         });
 
+        // Re-fetch after room join so the joining client receives the latest
+        // authoritative state (avoids stale snapshots during rematch races).
+        const syncedGame = await prisma.game.findUnique({
+          where: { id: gameId },
+          include: gamePlayersSelect,
+        });
+
+        if (!syncedGame) {
+          socket.emit("error", { message: "Game not found" });
+          callback?.({ error: "Game not found" });
+          return;
+        }
+
         const yourSymbol =
-          game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
-        const payloadForClient = buildJoinedPayload(game);
+          syncedGame.player1Id === user.id
+            ? syncedGame.player1Symbol
+            : syncedGame.player2Symbol;
+        const payloadForClient = buildJoinedPayload(syncedGame);
 
         socket.emit("room_joined", {
           ...payloadForClient,
@@ -197,6 +212,87 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
       }
     },
   );
+
+  // Rematch relay: only game participants can notify opponent in the old game room.
+  socket.on(
+    "send_rematch",
+    async (
+      payload: { gameId?: unknown; newGameId?: unknown },
+      callback?: AckCallback,
+    ) => {
+      try {
+        const user = getSocketUser(socket);
+        const gameId = assertGameId(payload?.gameId);
+        const newGameId = assertGameId(payload?.newGameId);
+
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { player1Id: true, player2Id: true },
+        });
+
+        if (!game) {
+          const response = { error: "Game not found" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const isParticipant = game.player1Id === user.id || game.player2Id === user.id;
+        if (!isParticipant) {
+          const response = {
+            error: "Unauthorized: You are not a participant in this game",
+          };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const newGame = await prisma.game.findUnique({
+          where: { id: newGameId },
+          select: { player1Id: true, player2Id: true },
+        });
+
+        if (!newGame) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const sourcePair = [game.player1Id, game.player2Id].filter(
+          (value): value is number => typeof value === "number",
+        );
+        const targetPair = [newGame.player1Id, newGame.player2Id].filter(
+          (value): value is number => typeof value === "number",
+        );
+
+        if (sourcePair.length !== 2 || targetPair.length !== 2) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const sourcePairKey = sourcePair.sort((a, b) => a - b).join(":");
+        const targetPairKey = targetPair.sort((a, b) => a - b).join(":");
+        if (sourcePairKey !== targetPairKey) {
+          const response = { error: "Invalid rematch target game" };
+          socket.emit("error", { message: response.error });
+          callback?.(response);
+          return;
+        }
+
+        const roomName = getGameRoomName(gameId);
+        socket.to(roomName).emit("rematch_received", { newGameId });
+        callback?.({ success: true });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to send rematch";
+        socket.emit("error", { message });
+        callback?.({ error: message });
+      }
+    },
+  );
+  //
 }
 
 export function handleGameRoomDisconnect(_io: Server, socket: Socket) {

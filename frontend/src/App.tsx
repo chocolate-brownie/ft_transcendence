@@ -19,6 +19,8 @@ import { ChatProvider } from "./context/ChatContext";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
+import { useParams } from "react-router-dom"; //
+
 function HomeLayout() {
   return (
     <div className="relative min-h-screen flex flex-col bg-pong-background overflow-hidden">
@@ -54,6 +56,13 @@ function Layout() {
   );
 }
 
+//
+function GameWrapper() {
+  const { id } = useParams();
+  return <Game key={id} />;
+}
+//
+
 function App() {
   return (
     <ChatProvider>
@@ -79,7 +88,7 @@ function App() {
               <Route path="/lobby" element={<GameLobby />} />
               <Route path="/game" element={<Navigate to="/lobby" replace />} />
               <Route path="/game/local" element={<LocalGame />} />
-              <Route path="/game/:id" element={<Game />} />
+              <Route path="/game/:id" element={<GameWrapper />} /> {/**/}
               <Route path="/matchmaking" element={<Matchmaking />} />
             </Route>
           </Route>

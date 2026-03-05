@@ -21,9 +21,7 @@ export default function TurnIndicator({
         : `Waiting for opponent (${currentPlayer})…`;
   const colorClass =
     textOverride !== ""
-      ? currentPlayer === "X"
-        ? "text-pong-accent"
-        : "text-pong-secondary"
+      ? "text-pong-text/60"
       : isYourTurn
         ? "text-pong-secondary animate-pulse"
         : "text-pong-text/50";

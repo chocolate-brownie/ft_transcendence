@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import {
   createGameInDb,
+  createOrGetRematchInDb,
   CREATE_ERRORS,
   makeMoveInDb,
   validateCreateGame,
@@ -14,7 +15,7 @@ import {
 export const createGame = async (req: AuthRequest, res: Response) => {
   try {
     const player1Id: number = req.user.id;
-    const { player2Id } = req.body;
+    const { player2Id, sourceGameId } = req.body;
 
     if (player2Id != null) {
       if (player2Id === player1Id) {
@@ -30,13 +31,31 @@ export const createGame = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Create Game
+    const hasRematchContext = sourceGameId != null;
+    if (hasRematchContext && (!Number.isInteger(sourceGameId) || sourceGameId <= 0)) {
+      return res.status(400).json({ error: CREATE_ERRORS.INVALID_REMATCH_SOURCE });
+    }
 
-    const game = await createGameInDb(player1Id, player2Id ?? undefined);
+    const game =
+      player2Id != null && hasRematchContext
+        ? await createOrGetRematchInDb(player1Id, player2Id, Number(sourceGameId))
+        : await createGameInDb(player1Id, player2Id ?? undefined);
 
     return res.status(201).json(game);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating game:", error);
+
+    if (
+      error?.message === CREATE_ERRORS.INVALID_REMATCH_SOURCE ||
+      error?.message === CREATE_ERRORS.REMATCH_NOT_ALLOWED ||
+      error?.message === CREATE_ERRORS.REMATCH_UNAUTHORIZED ||
+      error?.message === CREATE_ERRORS.REMATCH_OPPONENT_MISMATCH
+    ) {
+      const status =
+        error.message === CREATE_ERRORS.REMATCH_UNAUTHORIZED ? 403 : 400;
+      return res.status(status).json({ error: error.message });
+    }
+
     return res.status(500).json({ error: "Failed to create game" });
   }
 };
