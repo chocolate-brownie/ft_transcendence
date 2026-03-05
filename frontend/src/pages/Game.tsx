@@ -259,6 +259,8 @@ export default function Game() {
     // FIX RESEAU : Réception de la demande de revanche de l'adversaire
     function onRematchReceived({ newGameId }: { newGameId: number }) {
       console.log(`[Game] Rematch received for game ${newGameId}. Navigating...`);
+      setIsCreatingRematch(true);
+      setRematchError(null);
       // On ne touche PAS aux refs ici, le composant va mourir et être remplacé
       // On navigue simplement, le cleanup (emitLeaveRoomOnce) se fera tout seul
       void navigate(`/game/${newGameId}`);
@@ -406,7 +408,7 @@ export default function Game() {
     setRematchError(null);
 
     try {
-      const newGame = await gamesService.createGame({ player2Id: opponentId });
+      const newGame = await gamesService.createGame({ player2Id: opponentId, sourceGameId: gameId });
 
       // 1. On prévient l'adversaire (on est encore dans la room, donc il recevra)
       socket?.emit("send_rematch", { gameId, newGameId: newGame.id });

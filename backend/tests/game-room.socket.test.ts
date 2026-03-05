@@ -9,6 +9,7 @@ import {
   handleGameRoomDisconnect,
 } from "../src/socket/handlers/gameRoom.handlers";
 import { gameRoomService } from "../src/socket/services/gameRoom.service";
+import { createOrGetRematchInDb } from "../src/services/games.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "test_secret";
 const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
@@ -114,7 +115,20 @@ describeDb("Socket Game Rooms", () => {
     });
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await prisma.game.deleteMany({
+      where: {
+        OR: [
+          { player1Id: player1.id },
+          { player2Id: player1.id },
+          { player1Id: player2.id },
+          { player2Id: player2.id },
+          { player1Id: outsider.id },
+          { player2Id: outsider.id },
+        ],
+      },
+    });
+
     gameRoomService.removePlayerFromAllRooms(player1.id);
     gameRoomService.removePlayerFromAllRooms(player2.id);
     gameRoomService.removePlayerFromAllRooms(outsider.id);
@@ -350,5 +364,40 @@ describeDb("Socket Game Rooms", () => {
     } finally {
       p1First.close();
     }
+  });
+
+  it("creates only one rematch game when both players request concurrently", async () => {
+    const sourceGame = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "FINISHED",
+        winnerId: player1.id,
+        finishedAt: new Date(),
+      },
+    });
+
+    const [fromPlayer1, fromPlayer2] = await Promise.all([
+      createOrGetRematchInDb(player1.id, player2.id, sourceGame.id),
+      createOrGetRematchInDb(player2.id, player1.id, sourceGame.id),
+    ]);
+
+    expect(fromPlayer1.id).toBe(fromPlayer2.id);
+
+    const rematches = await prisma.game.findMany({
+      where: {
+        id: { not: sourceGame.id },
+        status: { in: ["WAITING", "IN_PROGRESS"] },
+        createdAt: {
+          gte: sourceGame.finishedAt!,
+        },
+        OR: [
+          { player1Id: player1.id, player2Id: player2.id },
+          { player1Id: player2.id, player2Id: player1.id },
+        ],
+      },
+    });
+
+    expect(rematches).toHaveLength(1);
   });
 });

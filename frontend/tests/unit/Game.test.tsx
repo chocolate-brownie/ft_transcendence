@@ -226,7 +226,10 @@ describe("Game page socket wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /play again/i }));
 
     await waitFor(() => {
-      expect(gamesService.createGame).toHaveBeenCalledWith({ player2Id: 2 });
+      expect(gamesService.createGame).toHaveBeenCalledWith({
+        player2Id: 2,
+        sourceGameId: 42,
+      });
       expect(navigateMock).toHaveBeenCalledWith("/game/77");
     });
   });
@@ -303,6 +306,36 @@ describe("Game page socket wiring", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/game/88");
     });
+  });
+
+  it("disables local rematch action when opponent rematch event is received", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "win",
+        winner: { id: 1, username: "alice", symbol: "X" },
+        loser: { id: 2, username: "bob", symbol: "O" },
+        totalMoves: 5,
+        finalBoard: ["X", "X", "X", null, "O", null, null, "O", null],
+        winningLine: [0, 1, 2],
+      });
+    });
+
+    const playAgainButton = screen.getByRole("button", { name: /play again/i });
+    expect(playAgainButton).not.toBeDisabled();
+
+    act(() => {
+      socket.trigger("rematch_received", { newGameId: 99 });
+    });
+
+    expect(playAgainButton).toBeDisabled();
+    expect(navigateMock).toHaveBeenCalledWith("/game/99");
   });
 
   it("shows waiting state UI with animated indicator and cancel button, board disabled", () => {

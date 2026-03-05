@@ -1,6 +1,6 @@
 **Execution Order**
-1. `#197`
-2. `#203`
+~~1. `#197`~~
+~~2. `#203`~~
 3. `#198`
 4. `#202`
 5. `#195`
@@ -8,36 +8,7 @@
 7. `#199`
 8. `#200`
 9. `#201`
-10. `#168` (verification/closure)
-
-**#197 Missing `game_update` In Rematch**
-1. Files to touch:
-- [gameRoom.handlers.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/src/socket/handlers/gameRoom.handlers.ts)
-- [game.handlers.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/src/socket/handlers/game.handlers.ts)
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [game-room.socket.test.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/tests/game-room.socket.test.ts)
-2. Tests to add:
-- Backend integration test for rematch join timing where first move happens immediately after navigation and both clients must receive `game_update`.
-- Frontend unit test for rematch navigation + first update consumption.
-3. Done criteria:
-- Deterministic repro fails before fix and passes after.
-- Both players receive first rematch `game_update` without refresh.
-- No regressions in existing socket/game tests.
-
-**#203 Double “Play Again” Collision**
-1. Files to touch:
-- [games.service.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/src/services/games.service.ts)
-- [games.controller.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/src/controllers/games.controller.ts)
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [Game.test.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/tests/unit/Game.test.tsx)
-- [game-room.socket.test.ts](/home/mgodawat/Documents/42/ft_transcendence/backend/tests/game-room.socket.test.ts)
-2. Tests to add:
-- Backend race test: two clients request rematch concurrently, only one rematch game is created.
-- Frontend test: opponent-requested state disables local Play Again path.
-3. Done criteria:
-- Server enforces idempotency.
-- UI reflects pending/rematch-created state for both players.
-- Concurrency test proves no duplicate rematch creation.
+~~10. `#168` (verification/closure)~~
 
 **#198 Draw Modal Shows Opponent As N/A**
 1. Files to touch:
@@ -140,4 +111,4 @@
 If you want, next I’ll turn this into a day plan with exact command sequence and per-issue timebox (still no coding).
 
 ### New Bug
-When searching for a profile. The default avatar doesnt show up. Only when a new avatar is updated it shows up in the search. 
+When searching for a profile. The default avatar doesnt show up. Only when a new avatar is updated it shows up in the search.

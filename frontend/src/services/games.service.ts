@@ -4,6 +4,7 @@ import { apiClient } from "../lib/apiClient";
 
 interface CreateGamePayload {
   player2Id?: number;
+  sourceGameId?: number;
 }
 
 export const gamesService = {
