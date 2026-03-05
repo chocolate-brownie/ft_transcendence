@@ -1,16 +1,10 @@
-import type { PlayerSymbol } from "../../types/game";
+import type { PlayerSymbol, RoomPlayerSummary } from "../../types/game";
 
 type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
 
-interface PlayerSummary {
-  id: number;
-  username: string;
-  avatarUrl: string | null;
-}
-
 interface ScoreboardProps {
-  player1: PlayerSummary | null;
-  player2: PlayerSummary | null;
+  player1: RoomPlayerSummary | null;
+  player2: RoomPlayerSummary | null;
   player1Symbol: PlayerSymbol;
   player2Symbol: PlayerSymbol;
   currentTurn: PlayerSymbol;
@@ -24,7 +18,7 @@ function Avatar({
   fallback,
   testId,
 }: {
-  player: PlayerSummary | null;
+  player: RoomPlayerSummary | null;
   fallback: string;
   testId: string;
 }) {

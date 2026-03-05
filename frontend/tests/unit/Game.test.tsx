@@ -299,6 +299,46 @@ describe("Game page socket wiring", () => {
     expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
   });
 
+  it("maps shared player contract across room_joined and game_over payloads", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "IN_PROGRESS",
+          yourSymbol: "X",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: { id: 2, username: "bob", avatarUrl: "https://cdn.test/bob.png" },
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    act(() => {
+      socket.trigger("game_over", {
+        gameId: 42,
+        result: "draw",
+        winner: null,
+        loser: null,
+        totalMoves: 9,
+        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
+        winningLine: null,
+      });
+    });
+
+    const modal = screen.getByTestId("game-over-modal");
+    expect(within(modal).getByText("bob (O)")).toBeInTheDocument();
+    expect(within(modal).getByAltText("bob avatar")).toBeInTheDocument();
+  });
+
   it("shows View Result only when game is over and modal is hidden", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import type { Board, PlayerSymbol } from "../types/game";
+import type {
+  Board,
+  PlayerSymbol,
+  RoomPlayerSummary,
+  GameOverPlayerSummary,
+} from "../types/game";
 import { useSocket } from "../context/SocketContext";
 import { ApiError } from "../lib/apiClient";
 import { gamesService } from "../services/games.service";
@@ -14,12 +19,6 @@ import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 
 type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
-type PlayerSummary = {
-  id: number;
-  username: string;
-  avatarUrl: string | null;
-};
-
 type RoomJoined = {
   gameId: number;
   game: {
@@ -27,8 +26,8 @@ type RoomJoined = {
     currentTurn: PlayerSymbol;
     status: ServerStatus;
     yourSymbol: PlayerSymbol;
-    player1: PlayerSummary;
-    player2: PlayerSummary | null;
+    player1: RoomPlayerSummary;
+    player2: RoomPlayerSummary | null;
     player1Symbol: PlayerSymbol;
     player2Symbol: PlayerSymbol;
     startedAt: string | null;
@@ -47,25 +46,11 @@ type GameOver = {
   gameId: number;
   finalBoard: Board;
   result: "win" | "draw";
-  winner?: {
-    id: number;
-    username: string;
-    symbol: PlayerSymbol;
-  } | null;
-  loser?: {
-    id: number;
-    username: string;
-    symbol: PlayerSymbol;
-  } | null;
+  winner?: GameOverPlayerSummary | null;
+  loser?: GameOverPlayerSummary | null;
   totalMoves?: number;
   duration?: number;
   winningLine?: number[] | null;
-};
-
-type GameOverPlayerSummary = {
-  id: number;
-  username: string;
-  symbol: PlayerSymbol;
 };
 
 type MoveError = {
@@ -98,8 +83,8 @@ export default function Game() {
   const [isCreatingRematch, setIsCreatingRematch] = useState(false);
   const [rematchError, setRematchError] = useState<string | null>(null);
   const [joinRevision, setJoinRevision] = useState(0);
-  const [player1, setPlayer1] = useState<PlayerSummary | null>(null);
-  const [player2, setPlayer2] = useState<PlayerSummary | null>(null);
+  const [player1, setPlayer1] = useState<RoomPlayerSummary | null>(null);
+  const [player2, setPlayer2] = useState<RoomPlayerSummary | null>(null);
   const [player1Symbol, setPlayer1Symbol] = useState<PlayerSymbol>("X");
   const [player2Symbol, setPlayer2Symbol] = useState<PlayerSymbol>("O");
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);

@@ -3,25 +3,12 @@
 ~~2. `#203`~~
 ~~3. `#198`~~
 ~~4. `#202`~~
-5. `#195`
+~~5. `#195`~~
 6. `#196`
 7. `#199`
 8. `#200`
 9. `#201`
 ~~10. `#168` (verification/closure)~~
-
-
-**#195 Rename `Symbol` Type**
-1. Files to touch:
-- [game.ts](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/types/game.ts)
-- [Game.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/pages/Game.tsx)
-- [Scoreboard.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/Scoreboard.tsx)
-- [GameOverModal.tsx](/home/mgodawat/Documents/42/ft_transcendence/frontend/src/components/Game/GameOverModal.tsx)
-2. Tests to add:
-- No new behavior test required; run TS/lint plus affected unit tests.
-3. Done criteria:
-- No local alias named `Symbol` remains in game UI modules.
-- Shared `PlayerSymbol` type is used consistently.
 
 **#196 Centralize `PlayerSummary`**
 1. Files to touch:

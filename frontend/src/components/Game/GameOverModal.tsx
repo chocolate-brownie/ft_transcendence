@@ -1,20 +1,14 @@
 import { useEffect } from "react";
-import type { PlayerSymbol } from "../../types/game";
+import type { GameOverPlayerSummary, PlayerSymbol } from "../../types/game";
 
 import Button from "../Button";
-
-interface PlayerSummary {
-  id: number;
-  username: string;
-  symbol: PlayerSymbol;
-}
 
 interface GameOverModalProps {
   open: boolean;
   result: "win" | "draw";
-  winner: PlayerSummary | null;
-  loser: PlayerSummary | null;
-  opponent: PlayerSummary | null;
+  winner: GameOverPlayerSummary | null;
+  loser: GameOverPlayerSummary | null;
+  opponent: GameOverPlayerSummary | null;
   mySymbol: PlayerSymbol;
   totalMoves: number;
   durationSeconds?: number;
