@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { getAIMove } from '../src/ai/minimax';
+import { getAIMove } from '../src/ai/difficulty';
 import { evaluate } from "../src/ai/evaluation";
 import { Board, CellValue, Player } from '../src/types/game';
 import { checkGameOver } from "../src/services/games.service";
