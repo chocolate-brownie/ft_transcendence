@@ -9,6 +9,15 @@ type UpdateUserData = {
   displayName?: string;
 };
 
+const normalizeAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+  const hasCustomAvatar =
+    !!avatarUrl &&
+    avatarUrl.startsWith("/uploads/") &&
+    !avatarUrl.includes("default.png");
+
+  return hasCustomAvatar ? avatarUrl : null;
+};
+
 //      Get User profile
 export const getUserById = async (id: number) => {
   const user = await prisma.user.findUnique({
@@ -30,14 +39,9 @@ export const getUserById = async (id: number) => {
   // Any authenticated viewer can see any user's avatar.
   // Return the real avatarUrl for custom avatars; null for default so the
   // frontend falls back to /default-avatar.png consistently.
-  const hasCustomAvatar =
-    !!user.avatarUrl &&
-    user.avatarUrl.startsWith("/uploads/") &&
-    !user.avatarUrl.includes("default.png");
-
   return {
     ...user,
-    avatarUrl: hasCustomAvatar ? user.avatarUrl : null,
+    avatarUrl: normalizeAvatarUrl(user.avatarUrl),
   };
 };
 
@@ -122,5 +126,8 @@ export const searchUsers = async (currentUserId: number, query: string) => {
     },
   });
 
-  return users;
+  return users.map((user) => ({
+    ...user,
+    avatarUrl: normalizeAvatarUrl(user.avatarUrl),
+  }));
 };
