@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useId, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import type { MessageWithSender } from "../../types";
@@ -8,6 +8,8 @@ interface MessageInputProps {
 }
 
 export function MessageInput({ receiverId }: MessageInputProps) {
+  const uniqueId = useId();
+  const inputId = `chat-message-${uniqueId}`;
   const { user } = useAuth();
   const { socket } = useSocket();
   const [message, setMessage] = useState("");
@@ -132,6 +134,8 @@ export function MessageInput({ receiverId }: MessageInputProps) {
       {error && <p className="text-xs text-red-500 px-1">{error}</p>}
       <div className="flex items-end gap-2">
         <textarea
+          id={inputId}
+          name={inputId}
           ref={textareaRef}
           value={message}
           onChange={handleChange}
