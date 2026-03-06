@@ -4,6 +4,7 @@ import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import { processGameOver } from "../../services/gameOver.service";
 import type { Board } from "../../types/game";
 import { disconnectionService } from "../../services/disconnection.service";
+import type { BoardSize } from "../../types/game";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
   socket.on("make_move", async (payload: unknown) => {
@@ -39,7 +40,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
 
       // 4. Vérification de la ligne gagnante (pour le frontend)
       const boardData = updatedGame.boardState as Board; // Cast pour s'assurer que c'est bien un Board
-      const gameOverResult = checkGameOver(boardData, updatedGame.boardSize);
+      const gameOverResult = checkGameOver(boardData, updatedGame.boardSize as BoardSize);
 
       // 5. Construction du payload de mise à jour standard
       const gameUpdate = {

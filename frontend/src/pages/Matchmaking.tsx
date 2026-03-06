@@ -168,6 +168,11 @@ export default function Matchmaking() {
   useEffect(() => {
     return () => {
       clearRedirectTimer();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
       if (socket && status === "searching") {
         socket.emit("cancel_search");
       }

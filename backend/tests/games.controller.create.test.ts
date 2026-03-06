@@ -4,7 +4,7 @@ const mockValidateCreateGame = jest.fn<any>();
 const mockCreateGameInDb = jest.fn<any>();
 const mockCreateOrGetRematchInDb = jest.fn<any>();
 
-jest.unstable_mockModule("./src/services/games.service.js", () => ({
+jest.unstable_mockModule("../src/services/games.service.js", () => ({
   validateCreateGame: mockValidateCreateGame,
   createGameInDb: mockCreateGameInDb,
   createOrGetRematchInDb: mockCreateOrGetRematchInDb,

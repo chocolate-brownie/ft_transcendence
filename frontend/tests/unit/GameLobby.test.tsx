@@ -24,6 +24,6 @@ describe("GameLobby", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /find match/i }));
 
-    expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
+    expect(navigateMock).toHaveBeenCalledWith("/matchmaking?boardSize=3");
   });
 });

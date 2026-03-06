@@ -742,3 +742,85 @@ describe("Game page socket wiring", () => {
     expect(leaveCalls).toHaveLength(1);
   });
 });
+
+it("renders a 4x4 game with 16 cells and updated move counter", () => {
+  const socket = new MockSocket();
+  useSocketMock.mockReturnValue({ socket });
+
+  render(<Game />);
+
+  act(() => {
+    socket.trigger("room_joined", {
+      gameId: 42,
+      game: {
+        boardState: Array(16).fill(null),
+        currentTurn: "X",
+        status: "IN_PROGRESS",
+        yourSymbol: "X",
+        player1: { id: 1, username: "alice", avatarUrl: null },
+        player2: { id: 2, username: "bob", avatarUrl: null },
+        player1Symbol: "X",
+        player2Symbol: "O",
+        startedAt: null,
+      },
+    });
+  });
+
+  expect(screen.getByText(/move 0 \/ 16/i)).toBeInTheDocument();
+
+  const cellButtons = screen
+    .getAllByRole("button")
+    .filter((btn) => btn.getAttribute("aria-label")?.startsWith("Cell"));
+
+  expect(cellButtons).toHaveLength(16);
+});
+
+it("renders a 5x5 winning line of 4 cells on game over", () => {
+  const socket = new MockSocket();
+  useSocketMock.mockReturnValue({ socket });
+
+  render(<Game />);
+
+  act(() => {
+    socket.trigger("room_joined", {
+      gameId: 42,
+      game: {
+        boardState: Array(25).fill(null),
+        currentTurn: "X",
+        status: "IN_PROGRESS",
+        yourSymbol: "X",
+        player1: { id: 1, username: "alice", avatarUrl: null },
+        player2: { id: 2, username: "bob", avatarUrl: null },
+        player1Symbol: "X",
+        player2Symbol: "O",
+        startedAt: null,
+      },
+    });
+  });
+
+  act(() => {
+    socket.trigger("game_over", {
+      gameId: 42,
+      result: "win",
+      winner: { id: 1, username: "alice", symbol: "X" },
+      loser: { id: 2, username: "bob", symbol: "O" },
+      totalMoves: 4,
+      finalBoard: [
+        null, "X", null, null, null,
+        null, null, "X", null, null,
+        null, null, null, "X", null,
+        null, null, null, null, "X",
+        null, null, null, null, null,
+      ],
+      winningLine: [1, 7, 13, 19],
+    });
+  });
+
+  expect(screen.getByText(/game over: you won/i)).toBeInTheDocument();
+  expect(screen.getByText(/move 4 \/ 25/i)).toBeInTheDocument();
+
+  expect(screen.getByLabelText("Cell 2, winning cell")).toBeInTheDocument();
+  expect(screen.getByLabelText("Cell 8, winning cell")).toBeInTheDocument();
+  expect(screen.getByLabelText("Cell 14, winning cell")).toBeInTheDocument();
+  expect(screen.getByLabelText("Cell 20, winning cell")).toBeInTheDocument();
+});
