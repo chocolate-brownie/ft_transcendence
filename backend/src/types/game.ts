@@ -1,21 +1,7 @@
 // ── Cell & Board ──────────────────────────────────────────────
 export type CellValue = "X" | "O" | null;
-
-// Board : 3 x 3
-// Index :  0 | 1 | 2
-//          3 | 4 | 5
-//          6 | 7 | 8
-export type Board = [
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-  CellValue,
-];
+export type BoardSize = 3 | 4 | 5;
+export type Board = CellValue[];
 
 // ── Enums logiques ────────────────────────────────────────────
 export type GameStatus =
@@ -51,6 +37,6 @@ export interface GameState {
 // ── Helpers ───────────────────────────────────────────────────
 
 // Return Null Board
-export function initializeBoard(): Board {
-  return [null, null, null, null, null, null, null, null, null];
+export function initializeBoard(boardSize: BoardSize = 3): Board {
+  return Array(boardSize * boardSize).fill(null);
 }

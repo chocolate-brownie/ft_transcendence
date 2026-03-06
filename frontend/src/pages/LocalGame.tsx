@@ -1,21 +1,38 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import type { Board } from "../types/game";
+import { useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+import type { Board, BoardSize } from "../types/game";
 import GameBoard from "../components/Game/GameBoard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import Button from "../components/Button";
 import { findWinningLine } from "../utils/gameUtils";
 
+function parseBoardSize(value: string | null): BoardSize {
+  if (value === "4") return 4;
+  if (value === "5") return 5;
+  return 3;
+}
+
+function createEmptyBoard(boardSize: BoardSize): Board {
+  return Array(boardSize * boardSize).fill(null);
+}
+
 export default function LocalGame() {
-  const [board, setBoard] = useState<Board>(Array(9).fill(null));
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const boardSize = useMemo(
+    () => parseBoardSize(searchParams.get("boardSize")),
+    [searchParams],
+  );
+
+  const [board, setBoard] = useState<Board>(() => createEmptyBoard(boardSize));
   const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
   const [result, setResult] = useState<"X" | "O" | "DRAW" | null>(null);
 
   const [scoreX, setScoreX] = useState(0);
   const [scoreO, setScoreO] = useState(0);
   const [scoreDraw, setScoreDraw] = useState(0);
-
-  const navigate = useNavigate();
 
   const backButtonClass =
     "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
@@ -39,7 +56,7 @@ export default function LocalGame() {
   else if (result === "O") gameOverText = "Player 2 wins! (O)";
 
   function handleBackToLobby() {
-    void navigate("/game");
+    void navigate("/lobby");
   }
 
   function handleCellClick(index: number) {
@@ -49,7 +66,7 @@ export default function LocalGame() {
     const nextBoard = [...board];
     nextBoard[index] = currentPlayer;
 
-    const nextWinningLine = findWinningLine(nextBoard);
+    const nextWinningLine = findWinningLine(nextBoard, boardSize);
     const isBoardFull = nextBoard.every((c) => c !== null);
     const isDraw = nextWinningLine === null && isBoardFull;
 
@@ -58,15 +75,15 @@ export default function LocalGame() {
     if (nextWinningLine !== null) {
       setResult(currentPlayer);
 
-      if (currentPlayer === "X") setScoreX(scoreX + 1);
-      else setScoreO(scoreO + 1);
+      if (currentPlayer === "X") setScoreX((n) => n + 1);
+      else setScoreO((n) => n + 1);
 
       return;
     }
 
     if (isDraw) {
       setResult("DRAW");
-      setScoreDraw(scoreDraw + 1);
+      setScoreDraw((n) => n + 1);
       return;
     }
 
@@ -74,18 +91,17 @@ export default function LocalGame() {
   }
 
   function handlePlayAgain() {
-    setBoard(Array(9).fill(null));
+    setBoard(createEmptyBoard(boardSize));
     setCurrentPlayer("X");
     setResult(null);
   }
 
-  const winningLine = findWinningLine(board);
+  const winningLine = findWinningLine(board, boardSize);
   const playerSymbol: "X" | "O" = "X";
   const isYourTurn = result === null && currentPlayer === playerSymbol;
 
   return (
     <div className="min-h-screen w-full px-4 pt-4">
-      {/* Back to lobby */}
       <div className="flex w-full justify-start">
         <button type="button" onClick={handleBackToLobby} className={backButtonClass}>
           <span className="text-base leading-none">←</span>
@@ -93,7 +109,6 @@ export default function LocalGame() {
         </button>
       </div>
 
-      {/* Game content */}
       <div className="flex flex-col items-center gap-6">
         <h1 className="text-2xl font-bold text-pong-text -mb-4">Local Game Mode</h1>
 
@@ -111,6 +126,12 @@ export default function LocalGame() {
             onCellClick={handleCellClick}
             winningLine={winningLine}
             className={boardClass}
+            boardSize={boardSize}
+            currentTurnSymbol={currentPlayer}
+            winnerSymbol={result === "X" || result === "O" ? result : null}
+            playerSymbol={playerSymbol}
+            gameOver={result !== null}
+            disabled={result !== null}
           />
 
           {result !== null && (
@@ -135,10 +156,8 @@ export default function LocalGame() {
           )}
         </div>
 
-        {/* Scoreboard / Player vs Player */}
         <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
           <div className="flex items-center gap-8 text-pong-text/80">
-            {/* Player 1 */}
             <div className="flex flex-col items-center px-3">
               <span className="font-semibold uppercase tracking-wide text-pong-text/50">
                 Player 1
@@ -151,7 +170,6 @@ export default function LocalGame() {
               </span>
             </div>
 
-            {/* VS + Draws */}
             <div className="flex flex-col items-center px-7">
               <span className="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
                 VS
@@ -159,7 +177,6 @@ export default function LocalGame() {
               <span className="mt-1 text-xs text-pong-text/50">Draws: {scoreDraw}</span>
             </div>
 
-            {/* Player 2 */}
             <div className="flex flex-col items-center">
               <span className="font-semibold uppercase tracking-wide text-pong-text/50">
                 Player 2

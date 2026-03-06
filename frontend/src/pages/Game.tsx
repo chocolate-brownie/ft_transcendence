@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import type { GameOverPlayerSummary } from "../types/game";
+import type { BoardSize, GameOverPlayerSummary } from "../types/game";
 import { useSocket } from "../context/SocketContext";
 import { ApiError } from "../lib/apiClient";
 import { gamesService } from "../services/games.service";
@@ -167,8 +167,10 @@ export default function Game() {
     gameState.currentTurn === gameState.yourSymbol;
   const boardDisabled =
     !isYourTurn || gameState.isSendingMove || gameState.opponentConnection === "disconnected";
-  const winningLine = gameState.serverWinningLine || findWinningLine(gameState.board);
+  const boardSize = Math.sqrt(gameState.board.length) as BoardSize;
+  const winningLine = gameState.serverWinningLine || findWinningLine(gameState.board, boardSize);
   const moveCount = gameState.board.filter((cell) => cell !== null).length;
+  const totalCells = boardSize * boardSize;
   const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
   const isGameOver = gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
   const winnerSymbol =
@@ -267,7 +269,7 @@ export default function Game() {
       />
 
       <div className="flex items-center gap-3 text-xs text-pong-text/60">
-        <span>Move {moveCount} / 9</span>
+        <span>Move {moveCount} / {totalCells}</span>
         <span className="opacity-40">·</span>
         <span>
           ⏱ {Math.floor(gameClock / 60)}:{String(gameClock % 60).padStart(2, "0")}
@@ -308,6 +310,7 @@ export default function Game() {
         playerSymbol={gameState.yourSymbol}
         gameOver={isGameOver}
         disabled={boardDisabled}
+        boardSize={boardSize}
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (

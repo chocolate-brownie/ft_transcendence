@@ -1,9 +1,12 @@
+import "@testing-library/jest-dom/vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import Matchmaking from "../../src/pages/Matchmaking";
 
 type Handler = (...args: unknown[]) => void;
+type UseSocketResult = { socket: MockSocket | null };
 
 class MockSocket {
   connected = true;
@@ -48,7 +51,7 @@ class MockSocket {
 }
 
 const navigateMock = vi.fn();
-const useSocketMock = vi.fn<{ socket: MockSocket | null }, []>();
+const useSocketMock = vi.fn<() => UseSocketResult>();
 
 vi.mock("react-router-dom", async () => {
   const actual =
@@ -63,15 +66,24 @@ vi.mock("../../src/context/SocketContext", () => ({
   useSocket: () => useSocketMock(),
 }));
 
+function renderMatchmaking(route = "/matchmaking?boardSize=3") {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <Matchmaking />
+    </MemoryRouter>,
+  );
+}
+
 describe("Matchmaking", () => {
   beforeEach(() => {
     navigateMock.mockReset();
     useSocketMock.mockReset();
+    vi.useRealTimers();
   });
 
   it("shows connecting state when socket is unavailable", () => {
     useSocketMock.mockReturnValue({ socket: null });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
     expect(screen.getByText(/connecting to matchmaking/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry connection/i })).toBeInTheDocument();
@@ -80,9 +92,9 @@ describe("Matchmaking", () => {
   it("emits find_game on mount and renders queue position on searching event", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
-    expect(socket.emit).toHaveBeenCalledWith("find_game");
+    expect(socket.emit).toHaveBeenCalledWith("find_game", { boardSize: 3 });
 
     act(() => {
       socket.trigger("searching", { position: 2 });
@@ -94,9 +106,10 @@ describe("Matchmaking", () => {
 
   it("navigates to game after match_found transition delay", () => {
     vi.useFakeTimers();
+
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
     act(() => {
       socket.trigger("match_found", {
@@ -114,13 +127,12 @@ describe("Matchmaking", () => {
     });
 
     expect(navigateMock).toHaveBeenCalledWith("/game/42");
-    vi.useRealTimers();
   });
 
   it("returns to lobby on search_cancelled event", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
     act(() => {
       socket.trigger("search_cancelled");
@@ -132,7 +144,7 @@ describe("Matchmaking", () => {
   it("shows error state and retries matchmaking when connected", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
     act(() => {
       socket.trigger("error", { message: "Already in an active game" });
@@ -143,13 +155,13 @@ describe("Matchmaking", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
 
-    expect(socket.emit).toHaveBeenLastCalledWith("find_game");
+    expect(socket.emit).toHaveBeenLastCalledWith("find_game", { boardSize: 3 });
   });
 
   it("surfaces connection-lost error on disconnect", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    render(<Matchmaking />);
+    renderMatchmaking();
 
     act(() => {
       socket.trigger("disconnect");

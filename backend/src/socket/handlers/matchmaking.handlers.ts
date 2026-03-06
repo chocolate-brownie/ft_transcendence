@@ -1,13 +1,26 @@
 import type { Server, Socket } from "socket.io";
+
 import prisma from "../../lib/prisma";
-import { matchmakingService } from "../services/matchmaking.service";
 import { createGameInDb } from "../../services/games.service";
+import type { BoardSize } from "../../types/game";
+import { matchmakingService } from "../services/matchmaking.service";
+
+type FindGamePayload = {
+  boardSize?: unknown;
+};
+
+function isBoardSize(value: unknown): value is BoardSize {
+  return value === 3 || value === 4 || value === 5;
+}
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   const userId: number = socket.data.user.id;
 
-  socket.on("find_game", async () => {
+  socket.on("find_game", async (payload: FindGamePayload = {}) => {
     if (!matchmakingService.startProcessing(userId)) return;
+
+    const boardSize: BoardSize = isBoardSize(payload.boardSize) ? payload.boardSize : 3;
+
     try {
       if (matchmakingService.isInQueue(userId)) {
         return socket.emit("error", { message: "Already searching for a game" });
@@ -19,6 +32,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
           status: "IN_PROGRESS",
         },
       });
+
       if (activeGame) {
         return socket.emit("error", { message: "Already in an active game" });
       }
@@ -27,6 +41,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         userId,
         socketId: socket.id,
         joinedAt: new Date(),
+        boardSize,
       });
 
       socket.emit("searching", {
@@ -54,22 +69,26 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
             status: "IN_PROGRESS",
           },
         });
+
         if (active) {
           const other = player === player1 ? player2 : player1;
           matchmakingService.requeueAtFront(other);
+
           io.sockets.sockets.get(player.socketId)?.emit("error", {
             message: "Already in an active game",
           });
+
           return;
         }
       }
 
       let game;
       try {
-        game = await createGameInDb(player1.userId, player2.userId);
+        game = await createGameInDb(player1.userId, player2.userId, player1.boardSize);
       } catch (err) {
         matchmakingService.requeueAtFront(player2);
         matchmakingService.requeueAtFront(player1);
+
         console.error("[Matchmaking] Game creation failed:", err);
         p1Socket.emit("error", { message: "Matchmaking failed, please retry" });
         p2Socket.emit("error", { message: "Matchmaking failed, please retry" });
@@ -84,6 +103,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
       }
 
       const roomName = `game-${game.id}`;
+
       await p1Socket.join(roomName);
       await p2Socket.join(roomName);
 
