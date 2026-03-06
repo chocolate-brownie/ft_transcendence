@@ -29,6 +29,7 @@ export default function LocalGame() {
   const [board, setBoard] = useState<Board>(() => createEmptyBoard(boardSize));
   const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
   const [result, setResult] = useState<"X" | "O" | "DRAW" | null>(null);
+
   const [scoreX, setScoreX] = useState(0);
   const [scoreO, setScoreO] = useState(0);
   const [scoreDraw, setScoreDraw] = useState(0);
@@ -73,8 +74,10 @@ export default function LocalGame() {
 
     if (nextWinningLine !== null) {
       setResult(currentPlayer);
+
       if (currentPlayer === "X") setScoreX((n) => n + 1);
       else setScoreO((n) => n + 1);
+
       return;
     }
 
@@ -96,62 +99,97 @@ export default function LocalGame() {
   const winningLine = findWinningLine(board, boardSize);
   const playerSymbol: "X" | "O" = "X";
   const isYourTurn = result === null && currentPlayer === playerSymbol;
-  const moveCount = board.filter((cell) => cell !== null).length;
-  const totalCells = boardSize * boardSize;
 
   return (
-    <div className="w-full max-w-4xl">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="min-h-screen w-full px-4 pt-4">
+      <div className="flex w-full justify-start">
         <button type="button" onClick={handleBackToLobby} className={backButtonClass}>
-          ← Back
+          <span className="text-base leading-none">←</span>
+          <span>Back to Lobby</span>
         </button>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-pong-text/40">Local Game</p>
-          <p className="text-sm font-semibold text-pong-text">{boardSize}x{boardSize}</p>
-        </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center justify-center gap-3 text-sm text-pong-text/70">
-        <span className="rounded-full bg-pong-surface px-3 py-1">X: {scoreX}</span>
-        <span className="rounded-full bg-pong-surface px-3 py-1">O: {scoreO}</span>
-        <span className="rounded-full bg-pong-surface px-3 py-1">Draws: {scoreDraw}</span>
-        <span className="rounded-full bg-pong-surface px-3 py-1">
-          Move {moveCount} / {totalCells}
-        </span>
-      </div>
+      <div className="flex flex-col items-center gap-6">
+        <h1 className="text-2xl font-bold text-pong-text -mb-4">Local Game Mode</h1>
 
-      <div className="flex flex-col items-center gap-5">
         <TurnIndicator
           currentPlayer={currentPlayer}
           playerSymbol={playerSymbol}
           isYourTurn={isYourTurn}
-          textOverride={result !== null ? gameOverText : turnTextOverride}
+          className={"-mb-6" + (result !== null ? " invisible" : "")}
+          textOverride={turnTextOverride}
         />
 
-        <div className={boardClass}>
+        <div className="relative">
           <GameBoard
             board={board}
             onCellClick={handleCellClick}
-            disabled={result !== null}
             winningLine={winningLine}
+            className={boardClass}
+            boardSize={boardSize}
+            currentTurnSymbol={currentPlayer}
             winnerSymbol={result === "X" || result === "O" ? result : null}
             playerSymbol={playerSymbol}
             gameOver={result !== null}
-            currentTurnSymbol={currentPlayer}
-            boardSize={boardSize}
+            disabled={result !== null}
           />
+
+          {result !== null && (
+            <div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
+              <span
+                className={
+                  "text-xl font-semibold " +
+                  (result === "X"
+                    ? "text-pong-accent"
+                    : result === "O"
+                      ? "text-pong-secondary"
+                      : "text-pong-text")
+                }
+              >
+                {gameOverText}
+              </span>
+
+              <Button variant="primary" onClick={handlePlayAgain}>
+                Play Again
+              </Button>
+            </div>
+          )}
         </div>
 
-        {result !== null ? (
-          <div className="flex gap-3">
-            <Button variant="primary" onClick={handlePlayAgain}>
-              Play Again
-            </Button>
-            <Button variant="secondary" onClick={handleBackToLobby}>
-              Back to Lobby
-            </Button>
+        <div className="rounded-lg bg-pong-surface px-12 py-2 shadow-sm">
+          <div className="flex items-center gap-8 text-pong-text/80">
+            <div className="flex flex-col items-center px-3">
+              <span className="font-semibold uppercase tracking-wide text-pong-text/50">
+                Player 1
+              </span>
+              <span className="text-sm">
+                You <span className="text-pong-accent">(X)</span>
+              </span>
+              <span className="text-3xl font-sans font-bold text-pong-accent">
+                {scoreX}
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center px-7">
+              <span className="text-xl font-semibold uppercase tracking-wide text-pong-text/50">
+                VS
+              </span>
+              <span className="mt-1 text-xs text-pong-text/50">Draws: {scoreDraw}</span>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <span className="font-semibold uppercase tracking-wide text-pong-text/50">
+                Player 2
+              </span>
+              <span className="text-sm">
+                Opponent <span className="text-pong-secondary">(O)</span>
+              </span>
+              <span className="text-3xl font-sans font-bold text-pong-secondary">
+                {scoreO}
+              </span>
+            </div>
           </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );
