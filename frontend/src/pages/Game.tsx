@@ -86,7 +86,14 @@ export default function Game() {
     void navigate("/");
   }
 
-  async function handlePlayAgain() {
+  function handlePlayAgain() {
+    emitLeaveRoomOnce();
+  void navigate("/matchmaking");
+  }
+
+  //  Old version, createNewgame
+
+  /*async function handlePlayAgain() {
     if (!gameState.gameOverPayload || gameState.isCreatingRematch) return;
 
     const opponentId =
@@ -114,7 +121,7 @@ export default function Game() {
         err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
       dispatch({ type: "REMATCH_REQUEST_FAILED", message });
     }
-  }
+  }*/
 
   function handleRetry() {
     if (!navigator.onLine) {

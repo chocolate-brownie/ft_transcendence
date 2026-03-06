@@ -1,6 +1,5 @@
 import type { PlayerSymbol, RoomPlayerSummary } from "../../types/game";
-
-type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
+import type { ServerStatus } from "../../pages/game/types";
 
 interface ScoreboardProps {
   player1: RoomPlayerSummary | null;
