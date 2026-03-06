@@ -71,7 +71,10 @@ const playerSelect = {
 
 const REMATCH_ACTIVE_STATUSES = ["WAITING", "IN_PROGRESS"] as const;
 
-export const buildPairLockParts = (playerA: number, playerB: number): [number, number] => {
+export const buildPairLockParts = (
+  playerA: number,
+  playerB: number,
+): [number, number] => {
   return [Math.min(playerA, playerB), Math.max(playerA, playerB)];
 };
 

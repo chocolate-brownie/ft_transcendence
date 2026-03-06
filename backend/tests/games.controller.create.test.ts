@@ -39,7 +39,10 @@ describe("createGame controller friendship behavior", () => {
   });
 
   it("requires friendship for normal game creation", async () => {
-    mockValidateCreateGame.mockResolvedValue({ valid: false, error: "Can only play with friends" });
+    mockValidateCreateGame.mockResolvedValue({
+      valid: false,
+      error: "Can only play with friends",
+    });
     const req = {
       user: { id: 10 },
       body: { player2Id: 20 },

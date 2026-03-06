@@ -167,7 +167,9 @@ export default function GameOverModal({
                 )
               ) : null}
               <p className="truncate text-base font-semibold text-pong-text">
-                {shownOpponent ? `${shownOpponent.username} (${shownOpponent.symbol})` : "N/A"}
+                {shownOpponent
+                  ? `${shownOpponent.username} (${shownOpponent.symbol})`
+                  : "N/A"}
               </p>
             </div>
           </div>

@@ -1,4 +1,9 @@
-import type { Board, PlayerSymbol, RoomPlayerSummary, GameOverPlayerSummary } from "../../types/game";
+import type {
+  Board,
+  PlayerSymbol,
+  RoomPlayerSummary,
+  GameOverPlayerSummary,
+} from "../../types/game";
 
 export type JoinStatus = "idle" | "connecting" | "joining" | "ready";
 

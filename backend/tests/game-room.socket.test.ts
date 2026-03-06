@@ -523,7 +523,10 @@ describeDb("Socket Game Rooms", () => {
 
       p1.emit("join_game_room", { gameId: game.id });
       p2.emit("join_game_room", { gameId: game.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const errorPromise = waitForEvent<{ message: string }>(out, "error");
       out.emit("send_rematch", { gameId: game.id, newGameId: game.id + 1000 });
@@ -573,7 +576,10 @@ describeDb("Socket Game Rooms", () => {
       await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
       p1.emit("join_game_room", { gameId: sourceGame.id });
       p2.emit("join_game_room", { gameId: sourceGame.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const relayPromise = waitForEvent<{ newGameId: number }>(p2, "rematch_received");
       p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: rematchGame.id });
@@ -618,7 +624,10 @@ describeDb("Socket Game Rooms", () => {
       await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
       p1.emit("join_game_room", { gameId: sourceGame.id });
       p2.emit("join_game_room", { gameId: sourceGame.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const errorPromise = waitForEvent<{ message: string }>(p1, "error");
       p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: unrelatedGame.id });

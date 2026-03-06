@@ -75,9 +75,9 @@ export function useGameSocketController({
     cancelPendingLeave();
 
     joinState.leaveTimeout = setTimeout(() => {
-      // Vérifier qu'on n'a pas rejoint entre temps
+      // Check we haven't re-joined in the meantime
       if (joinState.joinedGameId === roomId && joinState.pendingGameId === roomId) {
-        // On veut toujours cette room, ne pas leave
+        // Still want this room — don't leave
         return;
       }
 
@@ -97,9 +97,10 @@ export function useGameSocketController({
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
 
-      // Ignorer les doublons
+      // Skip duplicates
       if (receivedEventsRef.current.roomJoined) {
-        console.log("[Game] Ignoring duplicate room_joined for game", joinedId);
+        if (import.meta.env.DEV)
+          console.log("[Game] Ignoring duplicate room_joined for game", joinedId);
         return;
       }
 
@@ -175,9 +176,9 @@ export function useGameSocketController({
     function onOpponentJoined({ opponent }: OpponentJoined) {
       if (!opponent) return;
 
-      // Ignorer les doublons
+      // Skip duplicates
       if (receivedEventsRef.current.opponentJoined) {
-        console.log("[Game] Ignoring duplicate opponent_joined");
+        if (import.meta.env.DEV) console.log("[Game] Ignoring duplicate opponent_joined");
         return;
       }
 
@@ -313,7 +314,7 @@ export function useGameSocketController({
   }, [socket, gameId, dispatch, cancelPendingLeave]);
 
   // ══════════════════════════════════════════════════════════════════════
-  // JOIN LOGIC — avec déduplication via état module
+  // JOIN LOGIC — deduplicated via module-level state
   // ══════════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!gameId) {
@@ -329,17 +330,17 @@ export function useGameSocketController({
     function startJoin() {
       if (!socket) return;
 
-      // Annuler tout leave en attente
+      // Cancel any pending leave
       cancelPendingLeave();
 
-      // ══ DÉDUPLICATION CLÉ ══
-      // Si on a déjà un join pending ou complété pour ce gameId, skip
+      // Skip if a join is already pending or completed for this gameId
       if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
-        console.log(
-          "[Game] Join already pending/completed for game",
-          gameId,
-          "— skipping",
-        );
+        if (import.meta.env.DEV)
+          console.log(
+            "[Game] Join already pending/completed for game",
+            gameId,
+            "— skipping",
+          );
         return;
       }
 

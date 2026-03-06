@@ -166,7 +166,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
       await socket.leave(roomName);
       gameRoomService.removePlayerFromRoom(gameId, user.id);
 
-      // ── NOUVEAU : vérifier si la game est toujours en cours ──
+      // Check if the game is still in progress
       const game = await prisma.game.findUnique({
         where: { id: gameId },
         include: {
@@ -184,7 +184,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
           const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
           const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
 
-          // Prévenir l'adversaire
+          // Notify the opponent
           socket.to(roomName).emit("opponent_disconnected", {
             gameId,
             userId: user.id,
@@ -193,7 +193,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
             message: "Opponent left the game, waiting for reconnection...",
           });
 
-          // Démarrer le timer de forfait (même logique que déconnexion réseau)
+          // Start forfeit timer (same logic as network disconnect)
           await disconnectionService.startForfeitTimer(
             io,
             gameId,
