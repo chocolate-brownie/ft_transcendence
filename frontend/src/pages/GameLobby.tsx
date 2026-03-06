@@ -1,16 +1,24 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+import type { BoardSize } from "../types/game";
 import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
-import { useState } from "react";
+import BoardSizeSelector from "../components/Customization/BoardSizeSelector";
 
 type AiDifficulty = "easy" | "medium" | "hard";
 
 export default function GameLobby() {
   const navigate = useNavigate();
   const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>("medium");
+  const [boardSize, setBoardSize] = useState<BoardSize>(3);
 
   function handlePlayOnline() {
-    void navigate("/matchmaking");
+    void navigate(`/matchmaking?boardSize=${boardSize}`);
+  }
+
+  function handlePlayLocal() {
+    void navigate(`/game/local?boardSize=${boardSize}`);
   }
 
   return (
@@ -27,6 +35,11 @@ export default function GameLobby() {
         </div>
       </div>
 
+      <div className="mx-auto w-full max-w-4xl rounded-2xl border border-black/10 bg-white/50 p-6 backdrop-blur-sm">
+        <h2 className="mb-4 text-xl font-semibold text-pong-text">Board Size</h2>
+        <BoardSizeSelector selected={boardSize} onSelect={setBoardSize} />
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <GameModeCard
           imageSrc="/playlocal.png"
@@ -34,10 +47,9 @@ export default function GameLobby() {
           title="Play Local"
           description="Play with a friend on the same device"
           buttonText="Start Local Game"
-          onClick={() => void navigate("/game/local")}
+          onClick={handlePlayLocal}
           color="blue"
         />
-
         <GameModeCard
           imageSrc="/playonline.png"
           imageAlt="Play online mode"
@@ -47,7 +59,6 @@ export default function GameLobby() {
           onClick={handlePlayOnline}
           color="green"
         />
-
         <GameModeCard
           imageSrc="/playvsai.png"
           imageAlt="Play versus AI mode"

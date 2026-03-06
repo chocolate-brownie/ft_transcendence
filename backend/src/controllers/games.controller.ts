@@ -10,12 +10,25 @@ import {
   getCompletedGamesFromDb,
 } from "../services/games.service";
 
-// ── createGame ────────────────────────────────────────
+type BoardSize = 3 | 4 | 5;
 
+const isBoardSize = (value: unknown): value is BoardSize => {
+  return value === 3 || value === 4 || value === 5;
+};
+
+// ── createGame ────────────────────────────────────────
 export const createGame = async (req: AuthRequest, res: Response) => {
   try {
     const player1Id: number = req.user.id;
-    const { player2Id, sourceGameId } = req.body;
+    const { player2Id, sourceGameId, boardSize } = req.body;
+
+    let selectedBoardSize: BoardSize = 3;
+    if (boardSize !== undefined) {
+      if (!isBoardSize(boardSize)) {
+        return res.status(400).json({ error: "Invalid board size" });
+      }
+      selectedBoardSize = boardSize;
+    }
 
     if (player2Id != null) {
       if (player2Id === player1Id) {
@@ -45,7 +58,11 @@ export const createGame = async (req: AuthRequest, res: Response) => {
     const game =
       player2Id != null && hasRematchContext
         ? await createOrGetRematchInDb(player1Id, player2Id, Number(sourceGameId))
-        : await createGameInDb(player1Id, player2Id ?? undefined);
+        : await createGameInDb(
+            player1Id,
+            player2Id ?? undefined,
+            selectedBoardSize,
+          );
 
     return res.status(201).json(game);
   } catch (error: any) {
@@ -67,7 +84,6 @@ export const createGame = async (req: AuthRequest, res: Response) => {
 };
 
 // ── makeMove ──────────────────────────────────────────
-
 export const makeMove = async (req: AuthRequest, res: Response) => {
   try {
     const gameId = parseInt(req.params.id as string);
@@ -82,14 +98,12 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
       cellIndex === undefined ||
       typeof cellIndex !== "number" ||
       !Number.isInteger(cellIndex) ||
-      cellIndex < 0 ||
-      cellIndex > 8
+      cellIndex < 0
     ) {
-      return res.status(400).json({ error: "Invalid cell index (must be 0-8)" });
+      return res.status(400).json({ error: "Invalid cell index" });
     }
 
     const updatedGame = await makeMoveInDb(gameId, cellIndex, userId);
-
     return res.status(200).json(updatedGame);
   } catch (error: any) {
     console.error("Error making move:", error);
@@ -108,7 +122,6 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
 };
 
 // ── getGameById ───────────────────────────────────────
-
 export const getGameById = async (req: AuthRequest, res: Response) => {
   try {
     const gameId = parseInt(req.params.id as string, 10);
@@ -124,16 +137,15 @@ export const getGameById = async (req: AuthRequest, res: Response) => {
     if (error.message === "Game not found") {
       return res.status(404).json({ error: "Game not found" });
     }
+
     return res.status(500).json({ error: "Failed to fetch game" });
   }
 };
 
 // ── getGameHistory ────────────────────────────────────
-
 export const getGameHistory = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
-
     const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 

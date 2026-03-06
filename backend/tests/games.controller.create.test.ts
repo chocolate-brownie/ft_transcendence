@@ -4,7 +4,7 @@ const mockValidateCreateGame = jest.fn<any>();
 const mockCreateGameInDb = jest.fn<any>();
 const mockCreateOrGetRematchInDb = jest.fn<any>();
 
-jest.unstable_mockModule("../src/services/games.service.js", () => ({
+jest.unstable_mockModule("./src/services/games.service.js", () => ({
   validateCreateGame: mockValidateCreateGame,
   createGameInDb: mockCreateGameInDb,
   createOrGetRematchInDb: mockCreateOrGetRematchInDb,
@@ -39,7 +39,11 @@ describe("createGame controller friendship behavior", () => {
   });
 
   it("requires friendship for normal game creation", async () => {
-    mockValidateCreateGame.mockResolvedValue({ valid: false, error: "Can only play with friends" });
+    mockValidateCreateGame.mockResolvedValue({
+      valid: false,
+      error: "Can only play with friends",
+    });
+
     const req = {
       user: { id: 10 },
       body: { player2Id: 20 },
@@ -58,6 +62,7 @@ describe("createGame controller friendship behavior", () => {
   it("does not require friendship for rematch creation", async () => {
     mockValidateCreateGame.mockResolvedValue({ valid: true });
     mockCreateOrGetRematchInDb.mockResolvedValue({ id: 777 });
+
     const req = {
       user: { id: 10 },
       body: { player2Id: 20, sourceGameId: 55 },
@@ -71,5 +76,40 @@ describe("createGame controller friendship behavior", () => {
     expect(mockCreateGameInDb).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ id: 777 });
+  });
+
+  it("passes boardSize to normal game creation", async () => {
+    mockValidateCreateGame.mockResolvedValue({ valid: true });
+    mockCreateGameInDb.mockResolvedValue({ id: 123, boardSize: 5 });
+
+    const req = {
+      user: { id: 10 },
+      body: { player2Id: 20, boardSize: 5 },
+    };
+    const res = makeRes();
+
+    await createGame(req as any, res as any);
+
+    expect(mockValidateCreateGame).toHaveBeenCalledWith(10, 20, true);
+    expect(mockCreateGameInDb).toHaveBeenCalledWith(10, 20, 5);
+    expect(mockCreateOrGetRematchInDb).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ id: 123, boardSize: 5 });
+  });
+
+  it("rejects invalid boardSize", async () => {
+    const req = {
+      user: { id: 10 },
+      body: { player2Id: 20, boardSize: 6 },
+    };
+    const res = makeRes();
+
+    await createGame(req as any, res as any);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: "Invalid board size" });
+    expect(mockValidateCreateGame).not.toHaveBeenCalled();
+    expect(mockCreateGameInDb).not.toHaveBeenCalled();
+    expect(mockCreateOrGetRematchInDb).not.toHaveBeenCalled();
   });
 });

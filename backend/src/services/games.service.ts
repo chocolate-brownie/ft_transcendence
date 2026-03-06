@@ -3,7 +3,14 @@
 
 import prisma from "../lib/prisma";
 import { initializeBoard } from "../types/game";
-import type { GameState, GameStatus, Player, Board, CellValue } from "../types/game";
+import type {
+  GameState,
+  GameStatus,
+  Player,
+  Board,
+  CellValue,
+  BoardSize,
+} from "../types/game";
 
 // ───────────────── CONST ERROR (Move) ─────────────────
 
@@ -53,6 +60,9 @@ const safeGetPlayerSymbol = (game: GameState, userId: number): Player | null => 
 
 const isCellIndexValid = (cellIndex: number, boardSize: number): boolean =>
   Number.isInteger(cellIndex) && cellIndex >= 0 && cellIndex < boardSize * boardSize;
+
+const isBoardShapeValid = (board: Board, boardSize: number): boolean =>
+  board.length === boardSize * boardSize;
 
 type NonPlayableStatus = Exclude<GameStatus, "IN_PROGRESS">;
 
@@ -111,30 +121,84 @@ export const validateMove = (
 
 //        CHECK WIN
 
-const WINNING_LINES = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-] as const;
+export function getWinLength(boardSize: BoardSize): number {
+  return boardSize === 3 ? 3 : 4;
+}
+
+function inBounds(row: number, col: number, boardSize: number): boolean {
+  return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+}
+
+function checkDirection(
+  board: Board,
+  boardSize: BoardSize,
+  startRow: number,
+  startCol: number,
+  rowStep: number,
+  colStep: number,
+  winLength: number,
+): { winner: Player; line: number[] } | null {
+  const first = board[startRow * boardSize + startCol];
+  if (!first) return null;
+
+  const line: number[] = [];
+
+  for (let i = 0; i < winLength; i++) {
+    const row = startRow + i * rowStep;
+    const col = startCol + i * colStep;
+
+    if (!inBounds(row, col, boardSize)) {
+      return null;
+    }
+
+    const index = row * boardSize + col;
+    if (board[index] !== first) {
+      return null;
+    }
+
+    line.push(index);
+  }
+
+  return { winner: first, line };
+}
 
 type WinResult = {
-  winner: "X" | "O";
-  line: readonly [number, number, number];
+  winner: Player;
+  line: number[];
 } | null;
 
-export const checkWinnerWithLine = (board: Board, boardSize: number = 3): WinResult => {
-  if (boardSize !== 3) throw new Error("Only 3x3 boards supported");
-  for (const line of WINNING_LINES) {
-    const [a, b, c] = line;
-    if (board[a] !== null && board[a] === board[b] && board[a] === board[c]) {
-      return { winner: board[a], line };
+export const checkWinnerWithLine = (
+  board: Board,
+  boardSize: BoardSize = 3,
+): WinResult => {
+  const winLength = getWinLength(boardSize);
+  const directions = [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, -1],
+  ] as const;
+
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
+      for (const [rowStep, colStep] of directions) {
+        const result = checkDirection(
+          board,
+          boardSize,
+          row,
+          col,
+          rowStep,
+          colStep,
+          winLength,
+        );
+
+        if (result) {
+          return result;
+        }
+      }
     }
   }
+
   return null;
 };
 
@@ -151,12 +215,15 @@ export type GameOverResult =
       gameOver: true;
       winner: Player;
       isDraw: false;
-      line: readonly [number, number, number];
+      line: number[];
     }
   | { gameOver: true; winner: null; isDraw: true; line: null }
   | { gameOver: false; winner: null; isDraw: false; line: null };
 
-export const checkGameOver = (board: Board, boardSize: number = 3): GameOverResult => {
+export const checkGameOver = (
+  board: Board,
+  boardSize: BoardSize = 3,
+): GameOverResult => {
   const winResult = checkWinnerWithLine(board, boardSize);
 
   if (winResult) {
@@ -272,15 +339,24 @@ export const validateCreateGame = async (
 
 //        CREATE GAME
 
-export const createGameInDb = async (player1Id: number, player2Id?: number) => {
+export const createGameInDb = async (
+  player1Id: number,
+  player2Id: number | undefined,
+  boardSize: BoardSize = 3,
+) => {
   const hasOpponent = player2Id != null;
+  const board = initializeBoard(boardSize);
+
+  if (!isBoardShapeValid(board, boardSize)) {
+    throw new Error("Invalid board state");
+  }
 
   const game = await prisma.game.create({
     data: {
       player1Id,
       player2Id: player2Id ?? null,
-      boardState: initializeBoard(),
-      boardSize: 3,
+      boardState: board,
+      boardSize,
       currentTurn: "X",
       status: hasOpponent ? "IN_PROGRESS" : "WAITING",
       player1Symbol: "X",
@@ -364,12 +440,19 @@ export const createOrGetRematchInDb = async (
       return rematch;
     }
 
+    const boardSize = sourceGame.boardSize as BoardSize;
+    const board = initializeBoard(boardSize);
+
+    if (!isBoardShapeValid(board, boardSize)) {
+      throw new Error("Invalid board state");
+    }
+
     return tx.game.create({
       data: {
         player1Id: requesterId,
         player2Id: opponentId,
-        boardState: initializeBoard(),
-        boardSize: 3,
+        boardState: board,
+        boardSize,
         currentTurn: "X",
         status: "IN_PROGRESS",
         player1Symbol: "X",
@@ -399,6 +482,13 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     if (!game) throw new Error("Game not found");
 
+    const boardSize = game.boardSize as BoardSize;
+    const currentBoard = game.boardState as CellValue[];
+
+    if (!isBoardShapeValid(currentBoard, boardSize)) {
+      throw new Error("Invalid board state");
+    }
+
     // 2. Validate the move
     const gameState = game as unknown as GameState;
     const validation = validateMove(gameState, cellIndex, userId);
@@ -408,11 +498,11 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     // 3. Apply the move (new array, no mutation)
     const playerSymbol = safeGetPlayerSymbol(gameState, userId)!;
-    const newBoard = [...(game.boardState as CellValue[])] as Board;
+    const newBoard = [...currentBoard] as Board;
     newBoard[cellIndex] = playerSymbol;
 
     // 4. Check game over
-    const result = checkGameOver(newBoard, game.boardSize);
+    const result = checkGameOver(newBoard, boardSize);
 
     const updateData: Record<string, unknown> = {
       boardState: newBoard,
