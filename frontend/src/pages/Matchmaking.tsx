@@ -24,6 +24,7 @@ export default function Matchmaking() {
   const [matchData, setMatchData] = useState<MatchFound | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   function clearRedirectTimer() {
     if (!redirectTimerRef.current) return;
@@ -115,14 +116,19 @@ export default function Matchmaking() {
 
   useEffect(() => {
     return () => {
-      if (socket && status === "searching") socket.emit("cancel_search");
+      if (socket && status === "searching" && !cancelledRef.current) {
+        socket.emit("cancel_search");
+      }
     };
   }, [socket, status]);
 
   function leaveMatchmaking() {
     if (status === "found") return;
     clearRedirectTimer();
-    if (socket) socket.emit("cancel_search");
+    if (socket) {
+      cancelledRef.current = true;
+      socket.emit("cancel_search");
+    }
     void navigate("/lobby");
   }
 

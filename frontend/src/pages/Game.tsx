@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import type { GameOverPlayerSummary } from "../types/game";
 import { useSocket } from "../context/SocketContext";
-import { ApiError } from "../lib/apiClient";
-import { gamesService } from "../services/games.service";
 
 import Button from "../components/Button";
 import GameOverModal from "../components/Game/GameOverModal";
@@ -45,7 +43,9 @@ export default function Game() {
     }
 
     const tick = () => {
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - gameState.startedAtMs!) / 1000)));
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - gameState.startedAtMs!) / 1000)),
+      );
     };
 
     tick();
@@ -55,7 +55,8 @@ export default function Game() {
 
   useEffect(() => {
     if (gameState.opponentConnection !== "disconnected") return;
-    if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0) return;
+    if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0)
+      return;
 
     const timer = window.setTimeout(() => {
       dispatch({ type: "DISCONNECT_COUNTDOWN_TICK" });
@@ -88,40 +89,8 @@ export default function Game() {
 
   function handlePlayAgain() {
     emitLeaveRoomOnce();
-  void navigate("/matchmaking");
+    void navigate("/matchmaking");
   }
-
-  //  Old version, createNewgame
-
-  /*async function handlePlayAgain() {
-    if (!gameState.gameOverPayload || gameState.isCreatingRematch) return;
-
-    const opponentId =
-      gameState.gameOverPayload.winner?.symbol === gameState.yourSymbol
-        ? gameState.gameOverPayload.loser?.id
-        : gameState.gameOverPayload.winner?.id;
-
-    if (!opponentId) {
-      dispatch({ type: "REMATCH_OPPONENT_MISSING" });
-      return;
-    }
-
-    dispatch({ type: "REMATCH_REQUEST_START" });
-
-    try {
-      const newGame = await gamesService.createGame({
-        player2Id: opponentId,
-        sourceGameId: gameId,
-      });
-
-      socket?.emit("send_rematch", { gameId, newGameId: newGame.id });
-      void navigate(`/game/${newGame.id}`);
-    } catch (err: unknown) {
-      const message =
-        err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
-      dispatch({ type: "REMATCH_REQUEST_FAILED", message });
-    }
-  }*/
 
   function handleRetry() {
     if (!navigator.onLine) {
@@ -173,18 +142,26 @@ export default function Game() {
     gameState.serverStatus === "IN_PROGRESS" &&
     gameState.currentTurn === gameState.yourSymbol;
   const boardDisabled =
-    !isYourTurn || gameState.isSendingMove || gameState.opponentConnection === "disconnected";
+    !isYourTurn ||
+    gameState.isSendingMove ||
+    gameState.opponentConnection === "disconnected";
   const winningLine = gameState.serverWinningLine || findWinningLine(gameState.board);
   const moveCount = gameState.board.filter((cell) => cell !== null).length;
   const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
-  const isGameOver = gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
+  const isGameOver =
+    gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
   const winnerSymbol =
     gameState.gameOverPayload?.winner?.symbol ??
     (isGameOver && winningLine ? gameState.board[winningLine[0]] : null);
-  const waitingText = gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
-  const gameOverText = gameState.gameResultText ? `Game over: ${gameState.gameResultText}` : "Game over";
-  const player1Score = gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
-  const player2Score = gameState.gameOverPayload?.winner?.symbol === gameState.player2Symbol ? 1 : 0;
+  const waitingText =
+    gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
+  const gameOverText = gameState.gameResultText
+    ? `Game over: ${gameState.gameResultText}`
+    : "Game over";
+  const player1Score =
+    gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
+  const player2Score =
+    gameState.gameOverPayload?.winner?.symbol === gameState.player2Symbol ? 1 : 0;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -301,7 +278,9 @@ export default function Game() {
         </div>
       ) : null}
 
-      {gameState.moveError ? <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p> : null}
+      {gameState.moveError ? (
+        <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p>
+      ) : null}
       {gameState.isSendingMove ? (
         <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p>
       ) : null}
@@ -318,7 +297,10 @@ export default function Game() {
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button variant="secondary" onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}>
+        <Button
+          variant="secondary"
+          onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
+        >
           View Result
         </Button>
       ) : null}
@@ -331,7 +313,8 @@ export default function Game() {
         opponent={opponentSummary}
         mySymbol={gameState.yourSymbol}
         totalMoves={
-          gameState.gameOverPayload?.totalMoves ?? gameState.board.filter((cell) => cell !== null).length
+          gameState.gameOverPayload?.totalMoves ??
+          gameState.board.filter((cell) => cell !== null).length
         }
         durationSeconds={gameState.gameOverPayload?.duration}
         opponentAvatarUrl={opponentAvatarUrl}

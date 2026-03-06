@@ -25,9 +25,17 @@ type UseGameSocketControllerParams = {
 
 const LEAVE_DEBOUNCE_MS = 150;
 
-// ══════════════════════════════════════════════════════════════════════
-// ÉTAT GLOBAL AU MODULE — persiste entre les mounts React StrictMode
-// ══════════════════════════════════════════════════════════════════════
+/* Module-level state — intentionally lives outside the hook.
+
+WHY: React StrictMode double-invokes effects in development. If this state
+lived inside the hook (e.g. a useRef), each mount/unmount cycle would reset
+it, causing a second join_game_room emit before the first completes. By
+keeping it at module scope it survives the StrictMode unmount and prevents
+duplicate join/leave events.
+
+RISK: stale gameId across navigations. Mitigated by the joinRevision and
+gameId change effects which both reset pendingGameId/joinedGameId explicitly.
+Revisit with a proper context or ref-forwarding approach in Phase 5. */
 const joinState = {
   pendingGameId: null as number | null,
   joinedGameId: null as number | null,
@@ -72,10 +80,9 @@ export function useGameSocketController({
         // On veut toujours cette room, ne pas leave
         return;
       }
-      
-      console.log("[DEBUG] Emitting leave_game_room for game", roomId);
+
       socket.emit("leave_game_room", { gameId: roomId });
-      
+
       if (joinState.joinedGameId === roomId) {
         joinState.joinedGameId = null;
       }
@@ -117,7 +124,13 @@ export function useGameSocketController({
       dispatch({ type: "MOVE_ERROR", error });
     }
 
-    function onError({ gameId: eventGameId, message }: { gameId?: number; message?: string }) {
+    function onError({
+      gameId: eventGameId,
+      message,
+    }: {
+      gameId?: number;
+      message?: string;
+    }) {
       if (typeof eventGameId === "number" && eventGameId !== gameId) return;
       const userMessage = message || "Something went wrong.";
       const asMoveError = stateRef.current.status === "ready";
@@ -322,7 +335,11 @@ export function useGameSocketController({
       // ══ DÉDUPLICATION CLÉ ══
       // Si on a déjà un join pending ou complété pour ce gameId, skip
       if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
-        console.log("[Game] Join already pending/completed for game", gameId, "— skipping");
+        console.log(
+          "[Game] Join already pending/completed for game",
+          gameId,
+          "— skipping",
+        );
         return;
       }
 
@@ -346,7 +363,6 @@ export function useGameSocketController({
   // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
-      console.log("[DEBUG] Game component unmounting, calling emitLeaveRoomOnce");
       emitLeaveRoomOnce();
     };
   }, [emitLeaveRoomOnce]);
