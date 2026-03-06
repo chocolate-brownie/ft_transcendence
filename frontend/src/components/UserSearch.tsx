@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../types";
 import { usersService } from "../services/users.service";
@@ -8,6 +8,9 @@ type UserSearchProps = {
 };
 
 export default function UserSearch({ className = "" }: UserSearchProps) {
+  // ── Unique ID
+  const uniqueId = useId();
+  const inputId = `search-users-${uniqueId}`;
   // ── State
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<User[]>([]);
@@ -127,8 +130,8 @@ export default function UserSearch({ className = "" }: UserSearchProps) {
           />
         </svg>
         <input
-          id="search-users"
-          name="search-users"
+          id={inputId}
+          name={inputId}
           aria-label="Search users"
           type="text"
           className="w-full rounded-lg border border-black/10 bg-white/70 pl-9 pr-3 py-2 text-sm shadow-sm outline-none"
