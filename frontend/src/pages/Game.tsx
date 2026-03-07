@@ -161,15 +161,19 @@ export default function Game() {
   const moveCount = gameState.board.filter((cell) => cell !== null).length;
   const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
   const isGameOver =
-    gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
+    gameState.serverStatus === "FINISHED" ||
+    gameState.serverStatus === "DRAW" ||
+    gameState.serverStatus === "ABANDONED";
   const winnerSymbol =
     gameState.gameOverPayload?.winner?.symbol ??
     (isGameOver && winningLine ? gameState.board[winningLine[0]] : null);
   const waitingText =
     gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
-  const gameOverText = gameState.gameResultText
-    ? `Game over: ${gameState.gameResultText}`
-    : "Game over";
+  const gameOverText = gameState.isForfeit
+    ? `Game over: ${gameState.gameResultText ?? "Forfeit"} (forfeit)`
+    : gameState.gameResultText
+      ? `Game over: ${gameState.gameResultText}`
+      : "Game over";
   const player1Score =
     gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
   const player2Score =
@@ -275,17 +279,23 @@ export default function Game() {
           className={`rounded-lg border px-5 py-3 text-center ${
             gameState.serverStatus === "DRAW"
               ? "border-slate-300/40 bg-slate-300/10 text-pong-text/90"
-              : gameState.gameResultText === "You won"
-                ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
-                : "border-red-300/50 bg-red-400/10 text-red-300"
+              : gameState.isForfeit
+                ? "border-amber-300/50 bg-amber-400/10 text-amber-300"
+                : gameState.gameResultText === "You won"
+                  ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
+                  : "border-red-300/50 bg-red-400/10 text-red-300"
           }`}
         >
           <p className="text-2xl font-bold">
             {gameState.serverStatus === "DRAW"
               ? "It's a Draw! 🤝"
-              : gameState.gameResultText === "You won"
-                ? "You Won! 🎉"
-                : "You Lost 😢"}
+              : gameState.isForfeit
+                ? gameState.gameResultText === "You won"
+                  ? "⚠️ Won by Forfeit"
+                  : "⚠️ Lost by Forfeit"
+                : gameState.gameResultText === "You won"
+                  ? "You Won! 🎉"
+                  : "You Lost 😢"}
           </p>
         </div>
       ) : null}
@@ -328,8 +338,9 @@ export default function Game() {
           gameState.gameOverPayload?.totalMoves ??
           gameState.board.filter((cell) => cell !== null).length
         }
-        durationSeconds={gameState.gameOverPayload?.duration}
+        durationSeconds={gameClock}
         opponentAvatarUrl={opponentAvatarUrl}
+        isForfeit={gameState.isForfeit}
         rematchLoading={gameState.isCreatingRematch}
         rematchError={gameState.rematchError}
         onPlayAgain={() => {
