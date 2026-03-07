@@ -249,7 +249,7 @@ export default function Game() {
         textOverride={
           gameState.serverStatus === "WAITING"
             ? waitingText
-            : gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW"
+            : isGameOver
               ? gameOverText
               : undefined
         }
