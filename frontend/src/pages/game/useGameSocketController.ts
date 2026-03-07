@@ -162,7 +162,67 @@ export function useGameSocketController({
       void navigate(`/game/${newGameId}`);
     }
 
-    function onGameAlreadyEnded() {
+    function onGameAlreadyEnded(data?: {
+      gameId?: number;
+      game?: {
+        status?: string;
+        boardState?: import("../../types/game").Board;
+        yourSymbol?: import("../../types/game").PlayerSymbol;
+        player1?: import("../../types/game").RoomPlayerSummary;
+        player2?: import("../../types/game").RoomPlayerSummary | null;
+        player1Symbol?: import("../../types/game").PlayerSymbol;
+        player2Symbol?: import("../../types/game").PlayerSymbol;
+        winnerId?: number | null;
+        startedAt?: string | null;
+      };
+    }) {
+      const game = data?.game;
+      if (game?.status === "ABANDONED" && game.boardState && game.yourSymbol) {
+        // Show the forfeit result instead of redirecting
+        dispatch({
+          type: "ROOM_JOINED",
+          game: {
+            boardState: game.boardState,
+            currentTurn: game.yourSymbol,
+            status: "ABANDONED" as const,
+            yourSymbol: game.yourSymbol,
+            player1: game.player1 ?? { id: 0, username: "Player 1", avatarUrl: null },
+            player2: game.player2 ?? null,
+            player1Symbol: game.player1Symbol ?? "X",
+            player2Symbol: game.player2Symbol ?? "O",
+            startedAt: game.startedAt ?? null,
+          },
+        });
+        // Determine if this player won
+        const didWin =
+          game.winnerId != null &&
+          ((game.player1?.id === game.winnerId && game.yourSymbol === game.player1Symbol) ||
+            (game.player2?.id === game.winnerId && game.yourSymbol === game.player2Symbol));
+        const winnerPlayer =
+          game.winnerId === game.player1?.id ? game.player1 : game.player2;
+        const loserPlayer =
+          game.winnerId === game.player1?.id ? game.player2 : game.player1;
+        const winnerSymbol =
+          game.winnerId === game.player1?.id ? game.player1Symbol : game.player2Symbol;
+        const loserSymbol =
+          game.winnerId === game.player1?.id ? game.player2Symbol : game.player1Symbol;
+        dispatch({
+          type: "GAME_FORFEITED",
+          payload: {
+            gameId: data?.gameId ?? gameId,
+            finalBoard: game.boardState,
+            result: "win",
+            winner: winnerPlayer
+              ? { id: winnerPlayer.id, username: winnerPlayer.username, symbol: winnerSymbol ?? "X" }
+              : undefined,
+            loser: loserPlayer
+              ? { id: loserPlayer.id, username: loserPlayer.username, symbol: loserSymbol ?? "O" }
+              : undefined,
+          },
+          didWin,
+        });
+        return;
+      }
       if (import.meta.env.DEV)
         console.log("[Game] Game already ended, redirecting to lobby");
       void navigate("/lobby");
