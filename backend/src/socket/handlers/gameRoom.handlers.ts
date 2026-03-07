@@ -362,7 +362,6 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
       }
     },
   );
-  //
 }
 
 export function handleGameRoomDisconnect(_io: Server, socket: Socket) {

@@ -44,7 +44,6 @@ class DisconnectionService {
 
     const timeout = setTimeout(() => {
       void this.handleForfeit(io, gameId, disconnectedUser, opponent, roomName);
-      this.forfeitTimers.delete(key);
     }, remaining);
     timeout.unref?.();
 
@@ -104,6 +103,18 @@ class DisconnectionService {
     roomName: string,
   ) {
     try {
+      /* --------- #255 │ FIX1: Forfeit can happen twice ------*/
+      this.cancelAllTimersForGame(gameId);
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { id: true, status: true, winnerId: true, finishedAt: true },
+      });
+      if (!game) return;
+      if (game.status != "IN_PROGRESS") return;
+      /* timer callback no longer tries to manage duplicate resolution on its own
+         That should stop the double forfeit.
+         --------- #255 │ END -------------------- -----------*/
+
       // 1. Mise à jour de la base de données
       await prisma.game.update({
         where: { id: gameId },
