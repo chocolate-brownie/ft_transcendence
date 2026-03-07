@@ -1,5 +1,5 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Matchmaking from "../../src/pages/Matchmaking";
 
@@ -64,6 +64,10 @@ vi.mock("../../src/context/SocketContext", () => ({
 }));
 
 describe("Matchmaking", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     navigateMock.mockReset();
     useSocketMock.mockReset();
@@ -157,5 +161,34 @@ describe("Matchmaking", () => {
 
     expect(screen.getByText(/connection lost/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it("emits cancel_search exactly once when cancel is clicked and component unmounts", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockImplementation(() => ({ socket }));
+
+    const { unmount } = render(<Matchmaking />);
+
+    // Confirm we're in searching state
+    act(() => {
+      socket.trigger("searching", { position: 1 });
+    });
+
+    // Click "Back to Lobby" — triggers leaveMatchmaking() which emits cancel_search
+    const backButtons = screen.getAllByText(/back to lobby/i);
+    fireEvent.click(backButtons[0]);
+
+    const cancelsBefore = socket.emit.mock.calls.filter(
+      (call) => call[0] === "cancel_search",
+    );
+    expect(cancelsBefore).toHaveLength(1);
+
+    // Unmount triggers cleanup effect — cancelledRef prevents second emit
+    unmount();
+
+    const cancelsAfter = socket.emit.mock.calls.filter(
+      (call) => call[0] === "cancel_search",
+    );
+    expect(cancelsAfter).toHaveLength(1);
   });
 });

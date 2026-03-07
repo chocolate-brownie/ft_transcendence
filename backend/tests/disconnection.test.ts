@@ -172,4 +172,36 @@ describeDb("Disconnection & Forfeit System", () => {
 
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it("Should skip game disconnection when user has another active socket (multi-tab)", (done) => {
+    // Open a second socket for Alice (simulates a second browser tab)
+    const aliceSocket2 = Client(`http://localhost:${port}`, {
+      transports: ["websocket"],
+      forceNew: true,
+      auth: { token: `Bearer ${aliceToken}` },
+    });
+
+    aliceSocket2.on("connect", () => {
+      aliceSocket2.emit("join_game_room", { gameId: game.id });
+
+      setTimeout(() => {
+        let disconnectReceived = false;
+        bobSocket.on("opponent_disconnected", () => {
+          disconnectReceived = true;
+        });
+
+        // Disconnect the first tab — Alice still has aliceSocket2 open
+        aliceSocket.disconnect();
+
+        setTimeout(() => {
+          try {
+            expect(disconnectReceived).toBe(false);
+          } finally {
+            aliceSocket2.disconnect();
+          }
+          done();
+        }, 300);
+      }, 200);
+    });
+  }, 10000);
 });
