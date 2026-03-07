@@ -1,6 +1,5 @@
 import type { PlayerSymbol, RoomPlayerSummary } from "../../types/game";
-
-type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
+import type { ServerStatus } from "../../pages/game/types";
 
 interface ScoreboardProps {
   player1: RoomPlayerSummary | null;
@@ -88,7 +87,10 @@ export default function Scoreboard({
           }`}
         >
           <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 2</p>
-          <div data-testid="scoreboard-player2-row" className="mt-2 flex flex-row-reverse items-center gap-3">
+          <div
+            data-testid="scoreboard-player2-row"
+            className="mt-2 flex flex-row-reverse items-center gap-3"
+          >
             <Avatar player={player2} testId="player2-avatar" />
             <div className="min-w-0 text-right">
               <p className="truncate text-sm font-semibold text-pong-text">

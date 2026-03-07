@@ -58,8 +58,7 @@ export type GameAction =
   | { type: "RETRY_READY" }
   | { type: "OPEN_GAME_OVER_MODAL" }
   | { type: "CLOSE_GAME_OVER_MODAL" }
-  | { type: "RESET_FOR_ROUTE_CHANGE" }
-  ;
+  | { type: "RESET_FOR_ROUTE_CHANGE" };
 
 export const initialGameState: GameViewState = {
   status: "idle",
@@ -98,7 +97,8 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         const line = findWinningLine(game.boardState);
         const winnerSymbol = line ? game.boardState[line[0]] : null;
         if (winnerSymbol === game.yourSymbol) gameResultText = "You won";
-        else if (winnerSymbol === "X" || winnerSymbol === "O") gameResultText = "You lost";
+        else if (winnerSymbol === "X" || winnerSymbol === "O")
+          gameResultText = "You lost";
       }
 
       return {
@@ -143,7 +143,11 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
         gameResultText:
-          action.payload.result === "draw" ? "Draw game" : action.didWin ? "You won" : "You lost",
+          action.payload.result === "draw"
+            ? "Draw game"
+            : action.didWin
+              ? "You won"
+              : "You lost",
         serverWinningLine: action.payload.winningLine ?? null,
         gameOverPayload: action.payload,
         showGameOverModal: true,

@@ -57,8 +57,7 @@ export const createGame = async (req: AuthRequest, res: Response) => {
       error?.message === CREATE_ERRORS.REMATCH_UNAUTHORIZED ||
       error?.message === CREATE_ERRORS.REMATCH_OPPONENT_MISMATCH
     ) {
-      const status =
-        error.message === CREATE_ERRORS.REMATCH_UNAUTHORIZED ? 403 : 400;
+      const status = error.message === CREATE_ERRORS.REMATCH_UNAUTHORIZED ? 403 : 400;
       return res.status(status).json({ error: error.message });
     }
 

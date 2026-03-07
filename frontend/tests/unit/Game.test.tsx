@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Game from "../../src/pages/Game";
+import { __resetJoinStateForTests } from "../../src/pages/game/useGameSocketController";
 import { gamesService } from "../../src/services/games.service";
 
 type Handler = (...args: unknown[]) => void;
@@ -90,6 +91,7 @@ describe("Game page socket wiring", () => {
     navigateMock.mockReset();
     useSocketMock.mockReset();
     vi.mocked(gamesService.createGame).mockReset();
+    __resetJoinStateForTests();
   });
 
   function joinRoom(socket: MockSocket) {
@@ -203,12 +205,9 @@ describe("Game page socket wiring", () => {
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
   });
 
-  it("creates rematch and navigates to new game when Play Again is clicked", async () => {
+  it("navigates to matchmaking when Play Again is clicked", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    vi.mocked(gamesService.createGame).mockResolvedValue({
-      id: 77,
-    } as never);
 
     render(<Game />);
     joinRoom(socket);
@@ -226,14 +225,7 @@ describe("Game page socket wiring", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: /play again/i }));
-
-    await waitFor(() => {
-      expect(gamesService.createGame).toHaveBeenCalledWith({
-        player2Id: 2,
-        sourceGameId: 42,
-      });
-      expect(navigateMock).toHaveBeenCalledWith("/game/77");
-    });
+    expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
   });
 
   it("reopens modal after closing when another game_over event arrives", () => {
@@ -365,15 +357,9 @@ describe("Game page socket wiring", () => {
     expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
 
-  it("prevents duplicate rematch requests on rapid Play Again clicks", async () => {
+  it("navigates to matchmaking only once on rapid Play Again clicks", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-
-    let resolveCreateGame: ((value: { id: number }) => void) | null = null;
-    const createGamePromise = new Promise<{ id: number }>((resolve) => {
-      resolveCreateGame = resolve;
-    });
-    vi.mocked(gamesService.createGame).mockReturnValue(createGamePromise as never);
 
     render(<Game />);
     joinRoom(socket);
@@ -394,12 +380,7 @@ describe("Game page socket wiring", () => {
     fireEvent.click(playAgainButton);
     fireEvent.click(playAgainButton);
 
-    expect(gamesService.createGame).toHaveBeenCalledTimes(1);
-
-    resolveCreateGame?.({ id: 88 });
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith("/game/88");
-    });
+    expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
   });
 
   it("disables local rematch action when opponent rematch event is received", () => {
@@ -714,7 +695,7 @@ describe("Game page socket wiring", () => {
     expect(navigateMock).toHaveBeenCalledWith("/");
   });
 
-  it("emits leave_game_room only once when navigating away", () => {
+  it("navigates to lobby when New Game (Lobby) is clicked after game over", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -735,10 +716,5 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
-
-    const leaveCalls = socket.emit.mock.calls.filter(
-      (call) => call[0] === "leave_game_room",
-    );
-    expect(leaveCalls).toHaveLength(1);
   });
 });

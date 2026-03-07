@@ -2,7 +2,10 @@ import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals
 import prisma from "../src/lib/prisma";
 import { registerGameRoomHandlers } from "../src/socket/handlers/gameRoom.handlers";
 
-type JoinHandler = (payload: { gameId?: unknown }, callback?: (response: any) => void) => void;
+type JoinHandler = (
+  payload: { gameId?: unknown },
+  callback?: (response: any) => void,
+) => void;
 
 function createMockSocket() {
   const handlers = new Map<string, JoinHandler>();
@@ -68,7 +71,9 @@ describe("gameRoom join sync snapshot", () => {
       currentTurn: "O",
     };
 
-    findUniqueSpy.mockResolvedValueOnce(staleGame as any).mockResolvedValueOnce(freshGame as any);
+    findUniqueSpy
+      .mockResolvedValueOnce(staleGame as any)
+      .mockResolvedValueOnce(freshGame as any);
 
     const socket = createMockSocket();
     registerGameRoomHandlers({} as any, socket as any);
@@ -78,7 +83,9 @@ describe("gameRoom join sync snapshot", () => {
 
     await joinHandler?.({ gameId: 1 });
 
-    const roomJoinedCall = socket.emit.mock.calls.find((call) => call[0] === "room_joined");
+    const roomJoinedCall = socket.emit.mock.calls.find(
+      (call) => call[0] === "room_joined",
+    );
     const roomJoinedPayload = roomJoinedCall?.[1] as any;
     expect(roomJoinedCall).toBeDefined();
     expect(roomJoinedPayload?.game?.boardState).toEqual(freshGame.boardState);

@@ -23,6 +23,35 @@ type UseGameSocketControllerParams = {
   stateRef: React.MutableRefObject<GameViewState>;
 };
 
+const LEAVE_DEBOUNCE_MS = 150;
+
+/* Module-level state — intentionally lives outside the hook.
+
+WHY: React StrictMode double-invokes effects in development. If this state
+lived inside the hook (e.g. a useRef), each mount/unmount cycle would reset
+it, causing a second join_game_room emit before the first completes. By
+keeping it at module scope it survives the StrictMode unmount and prevents
+duplicate join/leave events.
+
+RISK: stale gameId across navigations. Mitigated by the joinRevision and
+gameId change effects which both reset pendingGameId/joinedGameId explicitly.
+Revisit with a proper context or ref-forwarding approach in Phase 5. */
+const joinState = {
+  pendingGameId: null as number | null,
+  joinedGameId: null as number | null,
+  leaveTimeout: null as ReturnType<typeof setTimeout> | null,
+};
+
+/** Reset module-level join state — only for use in tests. */
+export function __resetJoinStateForTests() {
+  joinState.pendingGameId = null;
+  joinState.joinedGameId = null;
+  if (joinState.leaveTimeout) {
+    clearTimeout(joinState.leaveTimeout);
+    joinState.leaveTimeout = null;
+  }
+}
+
 export function useGameSocketController({
   socket,
   gameId,
@@ -31,28 +60,63 @@ export function useGameSocketController({
   dispatch,
   stateRef,
 }: UseGameSocketControllerParams) {
-  const joinedRef = useRef(false);
-  const leftRoomRef = useRef(false);
   const activeRoomIdRef = useRef<number | null>(null);
   const lastJoinRevisionRef = useRef(joinRevision);
+  const receivedEventsRef = useRef({
+    roomJoined: false,
+    opponentJoined: false,
+  });
 
+  // ── Cancel pending leave ──
+  const cancelPendingLeave = useCallback(() => {
+    if (joinState.leaveTimeout) {
+      clearTimeout(joinState.leaveTimeout);
+      joinState.leaveTimeout = null;
+    }
+  }, []);
+
+  // ── Leave with debounce ──
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
-    if (leftRoomRef.current) return;
 
     const roomId = activeRoomIdRef.current ?? gameId;
     if (!roomId) return;
 
-    leftRoomRef.current = true;
-    socket.emit("leave_game_room", { gameId: roomId });
-  }, [socket, gameId]);
+    cancelPendingLeave();
 
+    joinState.leaveTimeout = setTimeout(() => {
+      // Vérifier qu'on n'a pas rejoint entre temps
+      if (joinState.joinedGameId === roomId && joinState.pendingGameId === roomId) {
+        // On veut toujours cette room, ne pas leave
+        return;
+      }
+
+      socket.emit("leave_game_room", { gameId: roomId });
+
+      if (joinState.joinedGameId === roomId) {
+        joinState.joinedGameId = null;
+      }
+      joinState.leaveTimeout = null;
+    }, LEAVE_DEBOUNCE_MS);
+  }, [socket, gameId, cancelPendingLeave]);
+
+  // ── Event listeners ──
   useEffect(() => {
     if (!socket) return;
 
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
+
+      // Ignorer les doublons
+      if (receivedEventsRef.current.roomJoined) {
+        if (import.meta.env.DEV)
+          console.log("[Game] Ignoring duplicate room_joined for game", joinedId);
+        return;
+      }
+
+      receivedEventsRef.current.roomJoined = true;
       activeRoomIdRef.current = joinedId;
+      joinState.joinedGameId = joinedId;
       dispatch({ type: "ROOM_JOINED", game });
     }
 
@@ -71,7 +135,13 @@ export function useGameSocketController({
       dispatch({ type: "MOVE_ERROR", error });
     }
 
-    function onError({ gameId: eventGameId, message }: { gameId?: number; message?: string }) {
+    function onError({
+      gameId: eventGameId,
+      message,
+    }: {
+      gameId?: number;
+      message?: string;
+    }) {
       if (typeof eventGameId === "number" && eventGameId !== gameId) return;
       const userMessage = message || "Something went wrong.";
       const asMoveError = stateRef.current.status === "ready";
@@ -109,11 +179,21 @@ export function useGameSocketController({
     };
   }, [socket, gameId, navigate, dispatch, stateRef]);
 
+  // ── Opponent events ──
   useEffect(() => {
     if (!socket) return;
 
     function onOpponentJoined({ opponent }: OpponentJoined) {
       if (!opponent) return;
+
+      // Ignorer les doublons
+      if (receivedEventsRef.current.opponentJoined) {
+        if (import.meta.env.DEV) console.log("[Game] Ignoring duplicate opponent_joined");
+        return;
+      }
+
+      receivedEventsRef.current.opponentJoined = true;
+
       const normalizedOpponent: RoomPlayerSummary = {
         id: opponent.id,
         username: opponent.username,
@@ -218,40 +298,35 @@ export function useGameSocketController({
     };
   }, [socket, gameId, dispatch, stateRef]);
 
+  // ── Reset on joinRevision change ──
   useEffect(() => {
     if (joinRevision === lastJoinRevisionRef.current) return;
     lastJoinRevisionRef.current = joinRevision;
-    joinedRef.current = false;
-    leftRoomRef.current = false;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
+    joinState.joinedGameId = null;
+    joinState.pendingGameId = null;
   }, [joinRevision]);
 
+  // ── Reset on gameId change ──
   useEffect(() => {
     if (!socket || !gameId) return;
 
     const previousRoomId = activeRoomIdRef.current;
     if (previousRoomId && previousRoomId !== gameId) {
+      cancelPendingLeave();
       socket.emit("leave_game_room", { gameId: previousRoomId });
+      joinState.joinedGameId = null;
     }
 
-    joinedRef.current = false;
-    leftRoomRef.current = false;
     activeRoomIdRef.current = null;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
     dispatch({ type: "RESET_FOR_ROUTE_CHANGE" });
-  }, [socket, gameId, dispatch]);
+  }, [socket, gameId, dispatch, cancelPendingLeave]);
 
+  // ══════════════════════════════════════════════════════════════════════
+  // JOIN LOGIC — avec déduplication via état module
+  // ══════════════════════════════════════════════════════════════════════
   useEffect(() => {
-    function startJoin() {
-      if (!socket || joinedRef.current) return;
-
-      joinedRef.current = true;
-      leftRoomRef.current = false;
-
-      dispatch({ type: "JOIN_START" });
-      socket.emit("join_game_room", { gameId });
-    }
-
-    if (joinedRef.current) return;
-
     if (!gameId) {
       dispatch({ type: "INVALID_GAME_ID", message: "Invalid game id in URL." });
       return;
@@ -260,6 +335,25 @@ export function useGameSocketController({
     if (!socket) {
       dispatch({ type: "JOIN_CONNECTING" });
       return;
+    }
+
+    function startJoin() {
+      if (!socket) return;
+
+      // Annuler tout leave en attente
+      cancelPendingLeave();
+
+      // ══ DÉDUPLICATION CLÉ ══
+      // Si on a déjà un join pending ou complété pour ce gameId, skip
+      if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
+        if (import.meta.env.DEV)
+          console.log("[Game] Join already pending/completed for game", gameId, "— skipping");
+        return;
+      }
+
+      joinState.pendingGameId = gameId;
+      dispatch({ type: "JOIN_START" });
+      socket.emit("join_game_room", { gameId });
     }
 
     if (!socket.connected) {
@@ -272,8 +366,9 @@ export function useGameSocketController({
     }
 
     startJoin();
-  }, [socket, gameId, joinRevision, dispatch]);
+  }, [socket, gameId, joinRevision, dispatch, cancelPendingLeave]);
 
+  // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
       emitLeaveRoomOnce();

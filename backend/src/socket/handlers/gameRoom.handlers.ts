@@ -58,7 +58,7 @@ function buildJoinedPayload(game: {
   };
 }
 
-export function registerGameRoomHandlers(_io: Server, socket: Socket) {
+export function registerGameRoomHandlers(io: Server, socket: Socket) {
   socket.on(
     "join_game_room",
     async (payload: JoinGameRoomPayload, callback?: AckCallback) => {
@@ -166,10 +166,49 @@ export function registerGameRoomHandlers(_io: Server, socket: Socket) {
       await socket.leave(roomName);
       gameRoomService.removePlayerFromRoom(gameId, user.id);
 
-      socket.to(roomName).emit("opponent_left", {
-        userId: user.id,
-        username: user.username,
+      // Check if the game is still in progress
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: {
+          player1: { select: { id: true, username: true } },
+          player2: { select: { id: true, username: true } },
+        },
       });
+
+      if (game && game.status === "IN_PROGRESS") {
+        const isPlayer1 = game.player1Id === user.id;
+        const isPlayer2 = game.player2Id === user.id;
+
+        if ((isPlayer1 || isPlayer2) && game.player1 && game.player2) {
+          const opponent = isPlayer1 ? game.player2 : game.player1;
+          const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
+          const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
+
+          // Notify the opponent
+          socket.to(roomName).emit("opponent_disconnected", {
+            gameId,
+            userId: user.id,
+            username: user.username,
+            waitTime: 30,
+            message: "Opponent left the game, waiting for reconnection...",
+          });
+
+          // Start forfeit timer (same logic as network disconnect)
+          await disconnectionService.startForfeitTimer(
+            io,
+            gameId,
+            { id: user.id, username: user.username, symbol: disconnectedSymbol },
+            { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
+            roomName,
+          );
+        }
+      } else {
+        // Game terminée ou pas trouvée → simple notification
+        socket.to(roomName).emit("opponent_left", {
+          userId: user.id,
+          username: user.username,
+        });
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to leave room";
       socket.emit("error", { message });

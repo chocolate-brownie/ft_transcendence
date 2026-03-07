@@ -1,3 +1,5 @@
+// backend/src/socket/handlers/disconnection.handlers.ts
+
 import { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { disconnectionService } from "../../services/disconnection.service";
@@ -7,7 +9,20 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
   if (!user) return;
 
   try {
-    // Trouver les parties en cours du joueur
+    // Skip game disconnection if the user has other active sockets (multi-tab)
+    const allSockets = await io.fetchSockets();
+    const userOtherSockets = allSockets.filter(
+      (s) => s.data.user?.id === user.id && s.id !== socket.id,
+    );
+
+    if (userOtherSockets.length > 0) {
+      console.log(
+        `[Disconnect Handler] User ${user.username} has ${userOtherSockets.length} other socket(s) active — skipping game disconnection`,
+      );
+      return;
+    }
+
+    // Find active games for this player
     const activeGames = await prisma.game.findMany({
       where: {
         status: "IN_PROGRESS",
@@ -30,15 +45,16 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
 
       if (!opponent) continue;
 
-      // Alerte l'adversaire
+      // Notify the opponent
       socket.to(roomName).emit("opponent_disconnected", {
+        gameId: game.id,
         userId: user.id,
         username: user.username,
         waitTime: 30,
         message: "Opponent disconnected, waiting for reconnection...",
       });
 
-      // Démarre le chrono de 30s
+      // Start 30s forfeit timer
       await disconnectionService.startForfeitTimer(
         io,
         game.id,
