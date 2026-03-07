@@ -166,9 +166,16 @@ export default function Profile() {
       });
     };
 
+    const handleFriendRemoved = (payload: { userId: number; friendId: number }) => {
+      const removedId = payload.userId === user.id ? payload.friendId : payload.userId;
+      setFriends((prev) => prev.filter((f) => f.id !== removedId));
+    };
+
     socket.on("friend_request_accepted", handleFriendRequestAccepted);
+    socket.on("friend_removed", handleFriendRemoved);
     return () => {
       socket.off("friend_request_accepted", handleFriendRequestAccepted);
+      socket.off("friend_removed", handleFriendRemoved);
     };
   }, [socket, user]);
 
