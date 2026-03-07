@@ -357,7 +357,11 @@ export function useGameSocketController({
       // Si on a déjà un join pending ou complété pour ce gameId, skip
       if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
         if (import.meta.env.DEV)
-          console.log("[Game] Join already pending/completed for game", gameId, "— skipping");
+          console.log(
+            "[Game] Join already pending/completed for game",
+            gameId,
+            "— skipping",
+          );
         return;
       }
 
