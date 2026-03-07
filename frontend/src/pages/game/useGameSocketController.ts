@@ -60,6 +60,8 @@ export function useGameSocketController({
   dispatch,
   stateRef,
 }: UseGameSocketControllerParams) {
+  const socketRef = useRef(socket);
+  socketRef.current = socket;
   const activeRoomIdRef = useRef<number | null>(null);
   const lastJoinRevisionRef = useRef(joinRevision);
   const receivedEventsRef = useRef({
@@ -160,6 +162,12 @@ export function useGameSocketController({
       void navigate(`/game/${newGameId}`);
     }
 
+    function onGameAlreadyEnded() {
+      if (import.meta.env.DEV)
+        console.log("[Game] Game already ended, redirecting to lobby");
+      void navigate("/lobby");
+    }
+
     socket.on("room_joined", onRoomJoined);
     socket.on("game_update", onGameUpdate);
     socket.on("game_over", onGameOver);
@@ -167,6 +175,7 @@ export function useGameSocketController({
     socket.on("error", onError);
     socket.on("disconnect", onDisconnect);
     socket.on("rematch_received", onRematchReceived);
+    socket.on("game_already_ended", onGameAlreadyEnded);
 
     return () => {
       socket.off("room_joined", onRoomJoined);
@@ -176,6 +185,7 @@ export function useGameSocketController({
       socket.off("error", onError);
       socket.off("disconnect", onDisconnect);
       socket.off("rematch_received", onRematchReceived);
+      socket.off("game_already_ended", onGameAlreadyEnded);
     };
   }, [socket, gameId, navigate, dispatch, stateRef]);
 
@@ -371,9 +381,20 @@ export function useGameSocketController({
   // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
-      emitLeaveRoomOnce();
+      // On unmount, emit leave_game_room synchronously — bypass the debounce
+      // because the component is being destroyed and a debounced call may
+      // never fire.
+      if (joinState.leaveTimeout) {
+        clearTimeout(joinState.leaveTimeout);
+        joinState.leaveTimeout = null;
+      }
+      const roomId = joinState.joinedGameId;
+      if (roomId && socketRef.current) {
+        socketRef.current.emit("leave_game_room", { gameId: roomId });
+        joinState.joinedGameId = null;
+      }
     };
-  }, [emitLeaveRoomOnce]);
+  }, []);
 
   return { emitLeaveRoomOnce };
 }
