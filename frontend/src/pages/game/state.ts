@@ -17,6 +17,7 @@ export type GameViewState = {
   showGameOverModal: boolean;
   isCreatingRematch: boolean;
   rematchError: string | null;
+  isForfeit: boolean;
   player1: RoomPlayerSummary | null;
   player2: RoomPlayerSummary | null;
   player1Symbol: PlayerSymbol;
@@ -75,6 +76,7 @@ export const initialGameState: GameViewState = {
   showGameOverModal: false,
   isCreatingRematch: false,
   rematchError: null,
+  isForfeit: false,
   player1: null,
   player2: null,
   player1Symbol: "X",
@@ -117,6 +119,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         showGameOverModal: false,
         isCreatingRematch: false,
         rematchError: null,
+        isForfeit: false,
         player1: game.player1,
         player2: game.player2,
         player1Symbol: game.player1Symbol,
@@ -140,6 +143,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
     case "GAME_OVER":
       return {
         ...state,
+        isForfeit: false,
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
         gameResultText:
@@ -226,8 +230,9 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
     case "GAME_FORFEITED":
       return {
         ...state,
+        isForfeit: true,
         board: action.payload.finalBoard,
-        serverStatus: "FINISHED",
+        serverStatus: "ABANDONED",
         gameResultText: action.didWin ? "You won" : "You lost",
         gameOverPayload: action.payload,
         showGameOverModal: true,

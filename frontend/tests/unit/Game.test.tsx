@@ -553,7 +553,7 @@ describe("Game page socket wiring", () => {
     });
   });
 
-  it("maps game_forfeited payload to game over state and winner message", () => {
+  it("maps game_forfeited payload to game over state with forfeit styling", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -563,14 +563,66 @@ describe("Game page socket wiring", () => {
     act(() => {
       socket.trigger("game_forfeited", {
         gameId: 42,
-        forfeitedBy: { id: 2, username: "bob" },
-        winner: { id: 1, username: "alice" },
+        forfeitedBy: { id: 2, username: "bob", symbol: "O" },
+        winner: { id: 1, username: "alice", symbol: "X" },
+        winnerSymbol: "X",
+        loserSymbol: "O",
       });
     });
 
-    expect(screen.getByText("Game over: You won")).toBeInTheDocument();
-    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
-    expect(screen.getAllByText("You Won! 🎉").length).toBeGreaterThan(0);
+    expect(screen.getByText(/game over:.*forfeit/i)).toBeInTheDocument();
+    const modal = screen.getByTestId("game-over-modal");
+    expect(modal).toBeInTheDocument();
+
+    // Forfeit modal shows warning emoji title, forfeit subtitle, and "Find New Game" button
+    expect(within(modal).getByText("You Won! ⚠️")).toBeInTheDocument();
+    expect(
+      within(modal).getByText("Opponent disconnected for too long."),
+    ).toBeInTheDocument();
+    expect(
+      within(modal).getByRole("button", { name: /find new game/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows forfeit loss modal with correct text when loser views forfeited game", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    // Join as player2 (O) — the loser in this scenario
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "IN_PROGRESS",
+          yourSymbol: "O",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: { id: 2, username: "bob", avatarUrl: null },
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    act(() => {
+      socket.trigger("game_forfeited", {
+        gameId: 42,
+        forfeitedBy: { id: 2, username: "bob", symbol: "O" },
+        winner: { id: 1, username: "alice", symbol: "X" },
+        winnerSymbol: "X",
+        loserSymbol: "O",
+      });
+    });
+
+    const modal = screen.getByTestId("game-over-modal");
+    expect(within(modal).getByText("You Lost ⚠️")).toBeInTheDocument();
+    expect(
+      within(modal).getByText("You were disconnected for too long."),
+    ).toBeInTheDocument();
   });
 
   it("rejoins the room when Try again is clicked while socket is still connected", async () => {
