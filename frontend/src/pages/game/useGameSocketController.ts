@@ -395,8 +395,10 @@ export function useGameSocketController({
       const roomId = joinState.joinedGameId;
       if (roomId && socketRef.current) {
         socketRef.current.emit("leave_game_room", { gameId: roomId });
-        joinState.joinedGameId = null;
       }
+      // Reset both so a remount for the same gameId triggers a fresh join.
+      joinState.joinedGameId = null;
+      joinState.pendingGameId = null;
     };
   }, []);
 

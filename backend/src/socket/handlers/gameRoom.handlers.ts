@@ -201,16 +201,8 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
           const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
           const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
 
-          // Notify the opponent
-          socket.to(roomName).emit("opponent_disconnected", {
-            gameId,
-            userId: user.id,
-            username: user.username,
-            waitTime: 30,
-            message: "Opponent left the game, waiting for reconnection...",
-          });
-
-          // Start forfeit timer (same logic as network disconnect)
+          // Start (or resume) forfeit timer — must happen before emitting so
+          // getRemainingTime reflects the correct value.
           await disconnectionService.startForfeitTimer(
             io,
             gameId,
@@ -218,6 +210,20 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
             { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
             roomName,
           );
+
+          // Notify the opponent with actual remaining time
+          const remainingWait = disconnectionService.getRemainingTime(gameId, user.id);
+          socket.to(roomName).emit("opponent_disconnected", {
+            gameId,
+            userId: user.id,
+            username: user.username,
+            waitTime: remainingWait > 0 ? remainingWait : 30,
+            message: "Opponent left the game, waiting for reconnection...",
+          });
+
+          // Let the leaving player know they still have an active game
+          // so the frontend can show the rejoin banner immediately.
+          socket.emit("active_game", { gameId });
         }
       } else {
         // Game terminée ou pas trouvée → simple notification
