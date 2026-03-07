@@ -235,7 +235,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         serverStatus: "ABANDONED",
         gameResultText: action.didWin ? "You won" : "You lost",
         gameOverPayload: action.payload,
-        showGameOverModal: true,
+        showGameOverModal: action.didWin,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,

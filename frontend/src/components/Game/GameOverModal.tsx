@@ -68,8 +68,8 @@ export default function GameOverModal({
   const didIWin = result === "win" && winner?.symbol === mySymbol;
   const title = isForfeit
     ? didIWin
-      ? "You Won! (Forfeit)"
-      : "You Lost (Forfeit)"
+      ? "You Won! ⚠️"
+      : "You Lost ⚠️"
     : result === "draw"
       ? "It's a Draw! 🤝"
       : didIWin
@@ -104,11 +104,7 @@ export default function GameOverModal({
       <div
         className={`relative w-full max-w-md rounded-xl border bg-gradient-to-b ${headerToneClass} bg-pong-surface p-6 shadow-xl`}
       >
-        {isForfeit ? (
-          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-lg opacity-80">
-            ⚠️
-          </div>
-        ) : didIWin ? (
+        {isForfeit ? null : didIWin ? (
           <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-lg opacity-80">
             ✨ 🎉 ✨
           </div>
