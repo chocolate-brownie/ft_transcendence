@@ -94,11 +94,6 @@ export default function Game() {
     void navigate("/lobby");
   }
 
-  function goHome() {
-    emitLeaveRoomOnce();
-    void navigate("/");
-  }
-
   function handlePlayAgain() {
     emitLeaveRoomOnce();
     void navigate("/matchmaking");
@@ -174,11 +169,6 @@ export default function Game() {
     : gameState.gameResultText
       ? `Game over: ${gameState.gameResultText}`
       : "Game over";
-  const player1Score =
-    gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
-  const player2Score =
-    gameState.gameOverPayload?.winner?.symbol === gameState.player2Symbol ? 1 : 0;
-
   return (
     <div className="flex flex-col items-center gap-6">
       <h1 className="text-2xl font-bold text-pong-text -mb-4">
@@ -262,8 +252,6 @@ export default function Game() {
         player2Symbol={gameState.player2Symbol}
         currentTurn={gameState.currentTurn}
         serverStatus={gameState.serverStatus}
-        player1Score={player1Score}
-        player2Score={player2Score}
       />
 
       <div className="flex items-center gap-3 text-xs text-pong-text/60">
@@ -347,7 +335,6 @@ export default function Game() {
           void handlePlayAgain();
         }}
         onGoLobby={backToLobby}
-        onGoHome={goHome}
         onClose={() => dispatch({ type: "CLOSE_GAME_OVER_MODAL" })}
       />
     </div>

@@ -8,8 +8,6 @@ interface ScoreboardProps {
   player2Symbol: PlayerSymbol;
   currentTurn: PlayerSymbol;
   serverStatus: ServerStatus;
-  player1Score: number;
-  player2Score: number;
 }
 
 function Avatar({
@@ -42,8 +40,6 @@ export default function Scoreboard({
   player2Symbol,
   currentTurn,
   serverStatus,
-  player1Score,
-  player2Score,
 }: ScoreboardProps) {
   const player1Active = serverStatus === "IN_PROGRESS" && currentTurn === player1Symbol;
   const player2Active = serverStatus === "IN_PROGRESS" && currentTurn === player2Symbol;
@@ -67,7 +63,6 @@ export default function Scoreboard({
                 {player1?.username ?? "Waiting..."}{" "}
                 <span className="text-pong-accent">({player1Symbol})</span>
               </p>
-              <p className="text-2xl font-bold text-pong-accent">{player1Score}</p>
             </div>
           </div>
         </div>
@@ -99,7 +94,6 @@ export default function Scoreboard({
                   ({player2 ? player2Symbol : "?"})
                 </span>
               </p>
-              <p className="text-2xl font-bold text-pong-secondary">{player2Score}</p>
             </div>
           </div>
         </div>
