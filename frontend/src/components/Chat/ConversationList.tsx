@@ -98,9 +98,17 @@ export function ConversationList({
       });
     };
 
+    const handleFriendRemoved = (payload: { userId: number; friendId: number }) => {
+      const removedUserId =
+        payload.userId === user.id ? payload.friendId : payload.userId;
+      setConversations((prev) => prev.filter((c) => c.user.id !== removedUserId));
+    };
+
     socket.on("receive_message", handleReceiveMessage);
+    socket.on("friend_removed", handleFriendRemoved);
     return () => {
       socket.off("receive_message", handleReceiveMessage);
+      socket.off("friend_removed", handleFriendRemoved);
     };
   }, [socket, user, activeUserId]);
 
