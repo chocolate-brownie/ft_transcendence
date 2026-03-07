@@ -1,5 +1,12 @@
 // The bridge between React world and socket services
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react";
 import type { Socket } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import { connectSocket, disconnectSocket } from "../services/socket.service";

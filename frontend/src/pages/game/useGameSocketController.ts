@@ -196,8 +196,10 @@ export function useGameSocketController({
         // Determine if this player won
         const didWin =
           game.winnerId != null &&
-          ((game.player1?.id === game.winnerId && game.yourSymbol === game.player1Symbol) ||
-            (game.player2?.id === game.winnerId && game.yourSymbol === game.player2Symbol));
+          ((game.player1?.id === game.winnerId &&
+            game.yourSymbol === game.player1Symbol) ||
+            (game.player2?.id === game.winnerId &&
+              game.yourSymbol === game.player2Symbol));
         const winnerPlayer =
           game.winnerId === game.player1?.id ? game.player1 : game.player2;
         const loserPlayer =
@@ -213,10 +215,18 @@ export function useGameSocketController({
             finalBoard: game.boardState,
             result: "win",
             winner: winnerPlayer
-              ? { id: winnerPlayer.id, username: winnerPlayer.username, symbol: winnerSymbol ?? "X" }
+              ? {
+                  id: winnerPlayer.id,
+                  username: winnerPlayer.username,
+                  symbol: winnerSymbol ?? "X",
+                }
               : undefined,
             loser: loserPlayer
-              ? { id: loserPlayer.id, username: loserPlayer.username, symbol: loserSymbol ?? "O" }
+              ? {
+                  id: loserPlayer.id,
+                  username: loserPlayer.username,
+                  symbol: loserSymbol ?? "O",
+                }
               : undefined,
           },
           didWin,
