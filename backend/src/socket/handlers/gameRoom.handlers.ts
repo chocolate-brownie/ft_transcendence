@@ -86,6 +86,23 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
           return;
         }
 
+        // If the game has already ended, notify the client and do not join the room
+        const terminalStatuses = ["ABANDONED", "FINISHED", "DRAW", "CANCELLED"];
+        if (terminalStatuses.includes(game.status)) {
+          const endedPayload = buildJoinedPayload(game);
+          const yourSymbol =
+            game.player1Id === user.id ? game.player1Symbol : game.player2Symbol;
+          socket.emit("game_already_ended", {
+            ...endedPayload,
+            game: {
+              ...(endedPayload.game as Record<string, unknown>),
+              yourSymbol,
+            },
+          });
+          callback?.({ error: "Game has already ended", status: game.status });
+          return;
+        }
+
         const roomName = getGameRoomName(gameId);
 
         const cancelled = disconnectionService.cancelForfeitTimer(gameId, user.id);

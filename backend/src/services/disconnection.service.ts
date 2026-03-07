@@ -65,7 +65,7 @@ class DisconnectionService {
   }
 
   // Exécute la logique de forfait en DB et prévient les clients
-  private async handleForfeit(
+  async handleForfeit(
     io: Server,
     gameId: number,
     loser: { id: number; username: string; symbol: string },

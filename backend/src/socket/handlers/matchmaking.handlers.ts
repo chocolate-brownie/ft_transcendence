@@ -2,6 +2,9 @@ import type { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { matchmakingService } from "../services/matchmaking.service";
 import { createGameInDb } from "../../services/games.service";
+import { gameRoomService } from "../services/gameRoom.service";
+import { disconnectionService } from "../../services/disconnection.service";
+import { getGameRoomName } from "../helpers";
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   const userId: number = socket.data.user.id;
@@ -18,9 +21,57 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
           OR: [{ player1Id: userId }, { player2Id: userId }],
           status: "IN_PROGRESS",
         },
+        include: {
+          player1: { select: { id: true, username: true } },
+          player2: { select: { id: true, username: true } },
+        },
       });
       if (activeGame) {
-        return socket.emit("error", { message: "Already in an active game" });
+        // Check if the player is actually in the game room
+        const playersInRoom = gameRoomService.getPlayersInRoom(activeGame.id);
+        const isInRoom = playersInRoom.some((p) => p.userId === userId);
+
+        if (isInRoom) {
+          return socket.emit("error", { message: "Already in an active game" });
+        }
+
+        // Player is not in the room — auto-forfeit the stale game
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `[Matchmaking] Auto-forfeiting stale game ${activeGame.id} for user ${userId}`,
+          );
+        }
+
+        const isPlayer1 = activeGame.player1Id === userId;
+        const opponent = isPlayer1 ? activeGame.player2 : activeGame.player1;
+
+        if (opponent) {
+          const disconnectedSymbol = isPlayer1
+            ? activeGame.player1Symbol
+            : activeGame.player2Symbol;
+          const opponentSymbol = isPlayer1
+            ? activeGame.player2Symbol
+            : activeGame.player1Symbol;
+          const roomName = getGameRoomName(activeGame.id);
+
+          await disconnectionService.handleForfeit(
+            io,
+            activeGame.id,
+            {
+              id: userId,
+              username: socket.data.user.username,
+              symbol: disconnectedSymbol,
+            },
+            { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
+            roomName,
+          );
+        } else {
+          // No opponent — just mark as abandoned
+          await prisma.game.update({
+            where: { id: activeGame.id },
+            data: { status: "ABANDONED", finishedAt: new Date() },
+          });
+        }
       }
 
       matchmakingService.addToQueue({

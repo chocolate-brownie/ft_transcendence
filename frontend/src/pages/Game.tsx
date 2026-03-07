@@ -37,6 +37,18 @@ export default function Game() {
     stateRef,
   });
 
+  // Emit leave_game_room on tab close / refresh so the server cleans up
+  // immediately rather than waiting for the socket disconnect timeout.
+  useEffect(() => {
+    function handleBeforeUnload() {
+      if (socket && gameId) {
+        socket.emit("leave_game_room", { gameId });
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [socket, gameId]);
+
   useEffect(() => {
     if (gameState.startedAtMs === null || gameState.serverStatus !== "IN_PROGRESS") {
       return;
