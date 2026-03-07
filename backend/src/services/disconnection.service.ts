@@ -5,13 +5,16 @@ interface ForfeitTimer {
   gameId: number;
   disconnectedUserId: number;
   timeout: NodeJS.Timeout;
+  startedAt: number; // Date.now() when the original timer was created
 }
 
 class DisconnectionService {
   private forfeitTimers: Map<string, ForfeitTimer> = new Map();
   private readonly FORFEIT_DELAY = 30000; // 30 seconds
 
-  // Démarre le compte à rebours avant forfait
+  // Start (or resume) the forfeit countdown for a disconnected player.
+  // If a timer already existed for this key we use the *original* startedAt
+  // so that reconnecting then disconnecting again does NOT reset the 30s window.
   async startForfeitTimer(
     io: Server,
     gameId: number,
@@ -20,23 +23,51 @@ class DisconnectionService {
     roomName: string,
   ) {
     const key = `${gameId}-${disconnectedUser.id}`;
-    this.cancelForfeitTimer(gameId, disconnectedUser.id);
+    const existing = this.forfeitTimers.get(key);
+
+    // Preserve the original start time if a timer was already running
+    const startedAt = existing?.startedAt ?? Date.now();
+    const elapsed = Date.now() - startedAt;
+    const remaining = this.FORFEIT_DELAY - elapsed;
+
+    // Clear any existing JS timeout (but keep startedAt via the variable above)
+    if (existing) {
+      clearTimeout(existing.timeout);
+      this.forfeitTimers.delete(key);
+    }
+
+    if (remaining <= 0) {
+      // Time already expired — forfeit immediately
+      void this.handleForfeit(io, gameId, disconnectedUser, opponent, roomName);
+      return;
+    }
 
     const timeout = setTimeout(() => {
       void this.handleForfeit(io, gameId, disconnectedUser, opponent, roomName);
       this.forfeitTimers.delete(key);
-    }, this.FORFEIT_DELAY);
+    }, remaining);
     timeout.unref?.();
 
     this.forfeitTimers.set(key, {
       gameId,
       disconnectedUserId: disconnectedUser.id,
       timeout,
+      startedAt,
     });
 
+    const remainingSec = Math.ceil(remaining / 1000);
     console.log(
-      `[Timer] Forfeit started for ${disconnectedUser.username} in game ${gameId}`,
+      `[Timer] Forfeit started for ${disconnectedUser.username} in game ${gameId} (${remainingSec}s remaining)`,
     );
+  }
+
+  /** How many seconds remain on a player's forfeit timer (0 if none). */
+  getRemainingTime(gameId: number, userId: number): number {
+    const key = `${gameId}-${userId}`;
+    const timer = this.forfeitTimers.get(key);
+    if (!timer) return 0;
+    const remaining = this.FORFEIT_DELAY - (Date.now() - timer.startedAt);
+    return Math.max(0, Math.ceil(remaining / 1000));
   }
 
   // Annule le timer (Reconnexion réussie)

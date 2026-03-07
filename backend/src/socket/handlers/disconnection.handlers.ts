@@ -45,16 +45,8 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
 
       if (!opponent) continue;
 
-      // Notify the opponent
-      socket.to(roomName).emit("opponent_disconnected", {
-        gameId: game.id,
-        userId: user.id,
-        username: user.username,
-        waitTime: 30,
-        message: "Opponent disconnected, waiting for reconnection...",
-      });
-
-      // Start 30s forfeit timer
+      // Start (or resume) forfeit timer — must happen before emitting so
+      // getRemainingTime reflects the correct value.
       await disconnectionService.startForfeitTimer(
         io,
         game.id,
@@ -62,6 +54,16 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
         { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
         roomName,
       );
+
+      // Notify the opponent with the *actual* remaining time (not always 30)
+      const remainingWait = disconnectionService.getRemainingTime(game.id, user.id);
+      socket.to(roomName).emit("opponent_disconnected", {
+        gameId: game.id,
+        userId: user.id,
+        username: user.username,
+        waitTime: remainingWait > 0 ? remainingWait : 30,
+        message: "Opponent disconnected, waiting for reconnection...",
+      });
     }
   } catch (error) {
     console.error("[Disconnect Handler] Error:", error);
