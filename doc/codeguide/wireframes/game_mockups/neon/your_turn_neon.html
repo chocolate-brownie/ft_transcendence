@@ -1,0 +1,162 @@
+<!-- Everywhere -->
+<!-- "text-pong-accent" replaced by "text-white" -->
+<!-- "text-neon-cyan" replaced by "text-neon-cyan" -->
+<!-- "text-pong-accent" replaced by "text-neon-pink" -->
+
+<!-- In the TurnIndicator
+    "text-white" must be this player's color - pink/cyan
+ -->
+
+<!-- In the GameBoard -->
+<!-- 
+    • the bg is absent in the class
+    • All the button's class was:
+      "aspect-square rounded-lg bg-white text-6xl transition-colors duration-200 cursor-pointer hover:bg-pong-accent/10"
+
+      And became:
+      "neon-button text-6xl aspect-square transition-colors duration-200 cursor-pointer"
+    • Inside the button, span changes when X/O are inside:
+      "text-neon-pink font-sans font-bold"
+      Becomes : 
+      "text-neon-pink font-sans font-bold" OR
+      "text-neon-cyan font-sans font-bold"
+ -->
+
+<!-- In the ScoreBoard -->
+<!-- 
+    • "bg-pong-surface" replaced by "bg-neon-bg"
+    • <div data-testid="scoreboard-player1-card"
+           class="rounded-lg border px-3 py-3 transition-all duration-200 [ border-black/10 bg-white/40 ]">
+      Changed its class :
+      "rounded-lg border px-3 py-3 text-right transition-all duration-200 [ neon-player-1-selected ]"
+      (it is selected when it is its turn)
+ -->
+
+<!-- In the H1
+    "text-white" became "text-white/50"
+ -->
+
+
+<!-- "bg-neon-bg" added instead of nothing -->
+<div class="flex flex-col items-center gap-6 bg-neon-bg">
+  <h1 class="text-2xl font-bold text-white/50 -mb-4">Game #4</h1>
+
+<!-- TurnIndicator -->
+  <div class="text-center py-3 text-lg font-semibold text-neon-pink animate-pulse -mb-6">
+    Your turn (X)
+  </div>
+<!-- TurnIndicator -->
+
+<!-- Scoreboard -->
+  <!-- Modified size in the class for this mockup only: 
+       "max-w-xl" into "max-w-96"
+  -->
+  <div class="w-full max-w-96 rounded-xl border border-black/10 bg-neon-bg p-4 shadow-sm">
+    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <!-- Player 1 card -->
+      <div data-testid="scoreboard-player1-card"
+           class="rounded-lg border px-3 py-3 transition-all duration-200 neon-player-1-selected">
+        <p class="text-xs uppercase tracking-wide text-white/50">Player 1</p>
+        <div class="mt-2 flex items-center gap-3">
+          <img alt="user_1 avatar"
+               class="h-11 w-11 rounded-full border border-black/10 object-cover"
+               data-testid="player1-avatar-image"
+               src="/default-avatar.png">
+          <div class="min-w-0">
+            <p class="truncate text-sm font-semibold text-white">
+              user_1 <span class="text-neon-pink">(X)</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- VS separator -->
+      <div class="flex flex-col items-center px-2">
+        <span class="text-sm font-semibold uppercase tracking-wide text-white/40">VS</span>
+      </div>
+
+      <!-- Player 2 card -->
+      <div data-testid="scoreboard-player2-card"
+           class="rounded-lg border px-3 py-3 text-right transition-all duration-200 neon-player-2">
+        <p class="text-xs uppercase tracking-wide text-white/50">Player 2</p>
+        <div data-testid="scoreboard-player2-row"
+             class="mt-2 flex flex-row-reverse items-center gap-3">
+          <img alt="user_2 avatar"
+               class="h-11 w-11 rounded-full border border-black/10 object-cover"
+               data-testid="player2-avatar-image"
+               src="/default-avatar.png">
+          <div class="min-w-0 text-right">
+            <p class="truncate text-sm font-semibold text-white">
+              user_2 <span class="text-neon-cyan">(O)</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Scoreboard -->
+
+<!-- Timer and move counter -->
+  <div class="flex items-center gap-3 text-xs text-white/60">
+    <span>Move 0 / 9</span>
+    <span class="opacity-40">·</span>
+    <span>⏱ 0:18</span>
+  </div>
+<!-- Timer and move counter -->
+
+<!-- GameBoard -->
+  <div class="inline-block rounded-lg p-2.5 shadow-sm">
+    <div class="grid grid-cols-3 gap-2.5 w-[min(80vw,360px)]">
+      <button aria-label="Cell 1"
+              class="neon-button text-6xl aspect-square transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 2"
+              class="neon-button text-6xl aspect-square transition-colors duration-200 cursor-pointer">
+        <span class="text-neon-pink font-sans font-bold">
+          X
+        </span>
+      </button>
+
+      <button aria-label="Cell 3"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 4"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="text-neon-cyan font-sans font-bold">
+          O
+        </span>
+      </button>
+
+      <button aria-label="Cell 5"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 6"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 7"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 8"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+
+      <button aria-label="Cell 9"
+              class="neon-button text-6xl aspect-square rounded-lg transition-colors duration-200 cursor-pointer">
+        <span class="font-sans font-bold"></span>
+      </button>
+    </div>
+  </div>
+<!-- GameBoard -->
+
+</div>

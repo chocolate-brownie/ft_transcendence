@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* win/lose modals */
+.neon-win-modal {
+  box-shadow: 0 0 10px #65f796,
+              0 0 20px #65f796, 
+              inset 0 0 15px #65f796;
+  border-color: #65f796;
+}
+
+.neon-lose-modal {
+  box-shadow: 0 0 10px #f1516c,
+              0 0 20px #f1516c, 
+              inset 0 0 15px #f1516c;
+  border-color: #f1516c;
+  background-color: #1a1a2e;
+}
+
+.neon-lost-play-again {
+  box-shadow: 0 0 5px #f8bb38,
+              0 0 5px #f8bb38, 
+              inset 0 0 5px #f8bb38;
+  border-color: #f8bb38;
+}
+
+.neon-lost-play-again:hover {
+  box-shadow: 0 0 8px #f8bb38,
+              0 0 8px #f8bb38, 
+              inset 0 0 8px #f8bb38;
+}
+
+.neon-won-play-again {
+  box-shadow: 0 0 5px #00d9ff,
+              0 0 5px #00d9ff, 
+              inset 0 0 5px #00d9ff;
+  border-color: #00d9ff;
+}
+
+.neon-won-play-again:hover {
+  box-shadow: 0 0 8px #00d9ff,
+              0 0 8px #00d9ff, 
+              inset 0 0 8px #00d9ff;
+}
+
+.neon-lobby {
+  box-shadow: 0 0 2px #c4e6ec7a,
+              0 0 2px #c4e6ec7a,
+              inset 0 0 2px #c4e6ec7a;
+  border-color: #c4e6ec7a;
+}
+
+.neon-lobby:hover {
+  box-shadow: 0 0 5px #c4e6ec7a,
+              0 0 5px #c4e6ec, 
+              inset 0 0 5px #c4e6ec;
+  border-color: #c4e6ec;
+}
+
+
+/* During the game */
+.neon-player-1-selected {
+  box-shadow: 0 0 20px #ff006e,
+              0 0 40px #ff006e, 
+              inset 0 0 15px #ff006e;
+  border-color: #ff006e;
+  /* background-color: #1a1a2e; */
+}
+
+.neon-player-1 {
+  box-shadow: 0 0 10px #ff006e,
+              0 0 10px #ff006e, 
+              inset 0 0 10px #ff006e;
+  border-color: #ff006e;
+  background-color: #1a1a2e;
+}
+
+.neon-player-2-selected {
+  box-shadow: 0 0 20px #00d9ff,
+              0 0 40px #00d9ff, 
+              inset 0 0 15px #00d9ff;
+  border-color: #00d9ff;
+}
+
+.neon-player-2 {
+  box-shadow: 0 0 10px #00d9ff,
+              0 0 10px #00d9ff, 
+              inset 0 0 10px #00d9ff;
+  border-color: #00d9ff;
+  background-color: #1a1a2e;
+}
+
+.neon-button {
+  border: 0.25px solid #00d9ff;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0.15em 0.05px #00d9ff,
+              0 0 0.15em 0.05px #00d9ff;
+  transition: all 0.3s;
+}
+
+.neon-button-inactive {
+  border: 0.25px solid #00d9ff;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0.5em 0.125px #00d9ff,
+              0 0 0.25em 1px #00d9ff;
+  transition: all 0.3s;
+}
+
+.neon-button:hover {
+  box-shadow: 0 0 0.5em 0.25px #00d9ff,
+              0 0 0.35em 1px #00d9ff,
+              inset 0 0 0.1em 0.25px #00d9ff;
+}
+
+.neon-button:active {
+  box-shadow: 0 0 0.5em 0.5px #00d9ff,
+              0 0 0.35em 1px #00d9ff,
+              inset 0 0 0.2em 1px #00d9ff;
+}

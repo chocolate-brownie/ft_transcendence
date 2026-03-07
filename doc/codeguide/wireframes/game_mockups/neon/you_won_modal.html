@@ -1,0 +1,104 @@
+<!-- Everywhere: -->
+<!-- "text-pong-text" replaced by "text-white" -->
+<!-- "bg-pong-accent" and "ring-pong-accent" replaced by "white" -->
+<!-- "text-pong-accent" must be replaced by this user's color :
+      neon-cyan/ping -->
+
+<!-- Modal div class:
+    "relative w-full max-w-md rounded-xl border bg-gradient-to-b from-emerald-500/20 to-emerald-300/10 border-emerald-300/30 bg-pong-surface p-6 shadow-xl neon-win-modal"
+
+    Becomes:
+
+    "relative w-full max-w-md rounded-xl border bg-gradient-to-b from-emerald-500/20 p-6 shadow-xl neon-win-modal"
+ -->
+
+<!-- "Play again" button:
+    "px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 bg-pong-accent text-pong-background hover:bg-pong-accentDark w-full"
+
+    Becomes:
+
+    "px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-pong-background w-full neon-play-again"
+ -->
+
+<!-- New Game (Lobby):
+    "px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 bg-black/10 text-white hover:bg-black/20 border border-black/10 w-full"
+
+    Becomes:
+    "px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-white neon-lobby w-full"
+-->
+
+<!-- General div only for the mockup -->
+<div class="flex justify-center items-center h-screen bg-neon-bg">
+
+<div class="relative w-full max-w-md rounded-xl border bg-gradient-to-b from-emerald-500/20 p-6 shadow-xl neon-win-modal">
+
+  <!-- Decorative icon -->
+  <div class="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-lg opacity-80">
+    ✨ 🎉 ✨
+  </div>
+
+  <!-- Modal header -->
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h2 id="game-over-title" class="text-3xl font-bold text-white ">
+        You Won! 🎉
+      </h2>
+      <p class="mt-1 text-sm text-white/70">
+        user_1 wins with X.
+      </p>
+    </div>
+
+    <!-- Close button -->
+    <button type="button"
+            class="rounded-md px-2 py-1 text-white/60 hover:white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:white/50"
+            aria-label="Close game over modal">
+      ✕
+    </button>
+  </div>
+
+  <!-- Game statistics -->
+  <div class="mt-5 grid grid-cols-2 gap-3 rounded-lg bg-black/15 p-4">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-white/60">Total Moves</p>
+      <p class="text-2xl font-bold text-white">5</p>
+    </div>
+
+    <div>
+      <p class="text-xs uppercase tracking-wide text-white/60">Duration</p>
+      <p class="text-2xl font-bold text-white">89:42</p>
+    </div>
+
+    <div>
+      <p class="text-xs uppercase tracking-wide text-white/60">Winner</p>
+      <p class="text-lg font-semibold text-white">
+        user_1 <span class="font-bold text-neon-pink">(X)</span>
+      </p>
+    </div>
+
+    <div>
+      <p class="text-xs uppercase tracking-wide text-white/60">Opponent</p>
+      <div class="mt-1 flex items-center gap-2">
+        <img alt="user_2 avatar"
+             class="h-7 w-7 flex-shrink-0 rounded-full border border-black/10 object-cover"
+             src="/default-avatar.png">
+        <p class="truncate text-base font-semibold text-white">
+          user_2 (O)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="mt-5 space-y-3">
+    <button class="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-pong-background w-full neon-won-play-again">
+      Play Again
+    </button>
+
+    <button class="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-white neon-lobby w-full">
+      New Game (Lobby)
+    </button>
+  </div>
+</div>
+
+
+</div>
