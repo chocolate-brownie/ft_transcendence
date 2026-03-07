@@ -220,6 +220,10 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
             waitTime: remainingWait > 0 ? remainingWait : 30,
             message: "Opponent left the game, waiting for reconnection...",
           });
+
+          // Let the leaving player know they still have an active game
+          // so the frontend can show the rejoin banner immediately.
+          socket.emit("active_game", { gameId });
         }
       } else {
         // Game terminée ou pas trouvée → simple notification
