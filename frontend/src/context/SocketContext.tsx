@@ -43,15 +43,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   // Listen for active_game / game end events at the context level so the
-  // state survives route changes.
+  // state survives route changes. Use functional updater in onGameEnd so
+  // the callback only clears when the event's gameId matches the current
+  // activeGameId (avoids stale closures and unrelated events).
   useEffect(() => {
     if (!socket) return;
 
     function onActiveGame({ gameId }: { gameId: number }) {
       setActiveGameId(gameId);
     }
-    function onGameEnd() {
-      setActiveGameId(null);
+    function onGameEnd({ gameId }: { gameId?: number }) {
+      setActiveGameId((current) => {
+        if (gameId !== undefined && gameId !== current) return current;
+        return null;
+      });
     }
 
     socket.on("active_game", onActiveGame);
