@@ -18,7 +18,6 @@ interface GameOverModalProps {
   rematchError?: string | null;
   onPlayAgain: () => void;
   onGoLobby: () => void;
-  onGoHome: () => void;
   onClose: () => void;
 }
 
@@ -46,7 +45,6 @@ export default function GameOverModal({
   rematchError = null,
   onPlayAgain,
   onGoLobby,
-  onGoHome,
   onClose,
 }: GameOverModalProps) {
   useEffect(() => {
@@ -207,9 +205,6 @@ export default function GameOverModal({
           </Button>
           <Button variant="secondary" className="w-full" onClick={onGoLobby}>
             New Game (Lobby)
-          </Button>
-          <Button variant="danger" className="w-full" onClick={onGoHome}>
-            Back to Home
           </Button>
         </div>
       </div>

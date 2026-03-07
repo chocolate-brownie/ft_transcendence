@@ -709,7 +709,7 @@ describe("Game page socket wiring", () => {
     });
   });
 
-  it("navigates to lobby and home from modal actions", () => {
+  it("navigates to lobby from modal New Game (Lobby) button", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -730,21 +730,6 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
-
-    act(() => {
-      socket.trigger("game_over", {
-        gameId: 42,
-        result: "draw",
-        winner: null,
-        loser: null,
-        totalMoves: 9,
-        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
-        winningLine: null,
-      });
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /back to home/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/");
   });
 
   it("navigates to lobby when New Game (Lobby) is clicked after game over", () => {
