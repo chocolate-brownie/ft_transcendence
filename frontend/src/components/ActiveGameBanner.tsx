@@ -1,32 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 
 /**
- * Listens for the `active_game` socket event (emitted on connect when the
- * user has an IN_PROGRESS game) and shows a small banner offering to rejoin.
- * Hidden when already on the game page for that game.
+ * Shows a persistent banner when the user has an active IN_PROGRESS game.
+ * The activeGameId lives in SocketContext so it survives route changes.
+ * Cleared when: user dismisses, rejoins, game ends (forfeit/over), or logout.
  */
 export default function ActiveGameBanner() {
-  const { socket } = useSocket();
+  const { activeGameId, clearActiveGame } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeGameId, setActiveGameId] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    function onActiveGame({ gameId }: { gameId: number }) {
-      setActiveGameId(gameId);
-      setDismissed(false);
-    }
-
-    socket.on("active_game", onActiveGame);
-    return () => {
-      socket.off("active_game", onActiveGame);
-    };
-  }, [socket]);
 
   // Hide if already on that game's page
   const isOnGamePage =
@@ -53,7 +38,10 @@ export default function ActiveGameBanner() {
       <button
         type="button"
         className="text-pong-text/40 hover:text-pong-text/70 transition-colors"
-        onClick={() => setDismissed(true)}
+        onClick={() => {
+          setDismissed(true);
+          clearActiveGame();
+        }}
         aria-label="Dismiss"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
