@@ -114,8 +114,10 @@ class DisconnectionService {
         },
       });
 
-      // 2. Notification Socket.io
-      io.to(roomName).emit("game_forfeited", {
+      // 2. Notification Socket.io — emit to the game room (for the winner
+      // who is still in it) AND to the loser's personal room (they already
+      // left the game room so they wouldn't receive it otherwise).
+      const forfeitPayload = {
         gameId,
         forfeitedBy: { id: loser.id, username: loser.username, symbol: loser.symbol },
         winner: { id: winner.id, username: winner.username, symbol: winner.symbol },
@@ -123,7 +125,9 @@ class DisconnectionService {
         loserSymbol: loser.symbol,
         reason: "Player disconnected for too long",
         timestamp: new Date().toISOString(),
-      });
+      };
+      io.to(roomName).emit("game_forfeited", forfeitPayload);
+      io.to(`user:${loser.id}`).emit("game_forfeited", forfeitPayload);
 
       console.log(`[Game Over] Game ${gameId} forfeited. Winner: ${winner.username}`);
     } catch (error) {
