@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useState,
-  useCallback,
   ReactNode,
 } from "react";
 import type { Socket } from "socket.io-client";
@@ -14,7 +13,6 @@ import { connectSocket, disconnectSocket } from "../services/socket.service";
 type SocketContextType = {
   socket: Socket | null;
   activeGameId: number | null;
-  clearActiveGame: () => void;
 };
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -23,8 +21,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [activeGameId, setActiveGameId] = useState<number | null>(null);
-
-  const clearActiveGame = useCallback(() => setActiveGameId(null), []);
 
   // Depend on the user's id (stable primitive) rather than the user object reference
   // to avoid spurious disconnect/reconnect cycles on re-renders.
@@ -80,7 +76,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [socket]);
 
   return (
-    <SocketContext.Provider value={{ socket, activeGameId, clearActiveGame }}>
+    <SocketContext.Provider value={{ socket, activeGameId }}>
       {children}
     </SocketContext.Provider>
   );
