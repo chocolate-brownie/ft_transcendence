@@ -351,7 +351,7 @@ describeDb("Socket Game Rooms", () => {
     }
   });
 
-  it("emits opponent_disconnected and cleans room membership when leaving an in-progress game", async () => {
+  it("cleans room membership on leave_game_room and emits opponent_disconnected on socket disconnect", async () => {
     const game = await prisma.game.create({
       data: {
         player1Id: player1.id,
@@ -381,21 +381,57 @@ describeDb("Socket Game Rooms", () => {
         waitForEvent(p2, "room_joined"),
       ]);
 
-      const disconnectedPromise = waitForEvent<{
-        gameId: number;
-        userId: number;
-        username: string;
-        waitTime: number;
-      }>(p2, "opponent_disconnected");
-
+      // leave_game_room only cleans up room membership (no opponent_disconnected)
       p1.emit("leave_game_room", { gameId: game.id });
-      const payload = await disconnectedPromise;
-
-      expect(payload.gameId).toBe(game.id);
-      expect(payload.userId).toBe(player1.id);
-      expect(payload.username).toBe(player1.username);
-      expect(payload.waitTime).toBe(30);
+      await new Promise((r) => setTimeout(r, 100));
       expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
+    } finally {
+      p1.close();
+      p2.close();
+    }
+  });
+
+  it("cleans room membership when socket disconnects during an in-progress game", async () => {
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+
+      p1.emit("join_game_room", { gameId: game.id });
+      p2.emit("join_game_room", { gameId: game.id });
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
+
+      expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(2);
+
+      // Simulate browser tab close
+      p1.disconnect();
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Room membership cleaned up by handleGameRoomDisconnect
+      expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
+      expect(
+        gameRoomService.getPlayersInRoom(game.id).some((p) => p.userId === player2.id),
+      ).toBe(true);
     } finally {
       p1.close();
       p2.close();
