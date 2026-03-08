@@ -244,6 +244,10 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
             message: "Opponent disconnected, waiting for reconnection...",
           });
         }
+
+        // Tell the leaving player they still have an active game so the
+        // ActiveGameBanner appears and they can rejoin.
+        socket.emit("active_game", { gameId });
       }
 
       await socket.leave(roomName);
