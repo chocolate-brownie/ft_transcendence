@@ -70,24 +70,24 @@ This lets the team focus on delivering polished auth, chat, profiles, and tourna
 
 ### Core Modules (14 Points — MUST complete)
 
-| #   | Module                                       | Pts | Days | Owner(s)                   | Dependencies |
-| :-- | :------------------------------------------- | :-- | :--- | :------------------------- | :----------- |
-| 1   | Web frameworks (React + Express)             | 2   | 1    | All                        | None         |
-| 2   | Prisma ORM                                   | 1   | 1    | mamahtal, tzizi            | None         |
-| 3   | Real-time WebSockets                         | 2   | 3–5  | mgodawat                   | #1           |
-| 4   | User interaction (chat + profiles + friends) | 2   | 3–4  | zamgar, mgodawat           | #1, #5       |
-| 5   | Standard user management                     | 2   | 2–3  | mgodawat, mamahtal, tzizi  | #1, #2       |
-| 6   | Web-based Tic-Tac-Toe game                   | 2   | 4–6  | zamgar, jayzatov, mgodawat | #1           |
-| 7   | Remote players                               | 2   | 5–6  | mgodawat                   | #3, #6       |
-| 8   | Tournament system                            | 1   | 7–8  | mamahtal, tzizi, mgodawat  | #6           |
+| #   | Module                                       | Pts | Days | Owner(s)                   | Dependencies | Status         |
+| :-- | :------------------------------------------- | :-- | :--- | :------------------------- | :----------- | :------------- |
+| 1   | Web frameworks (React + Express)             | 2   | 1    | All                        | None         | ✅ Completed   |
+| 2   | Prisma ORM                                   | 1   | 1    | mamahtal, tzizi            | None         | ✅ Completed   |
+| 3   | Real-time WebSockets                         | 2   | 3–5  | mgodawat                   | #1           | ✅ Completed   |
+| 4   | User interaction (chat + profiles + friends) | 2   | 3–4  | zamgar, mgodawat           | #1, #5       | ✅ Completed   |
+| 5   | Standard user management                     | 2   | 2–3  | mgodawat, mamahtal, tzizi  | #1, #2       | ✅ Completed   |
+| 6   | Web-based Tic-Tac-Toe game                   | 2   | 4–6  | zamgar, jayzatov, mgodawat | #1           | ✅ Completed   |
+| 7   | Remote players                               | 2   | 5–6  | mgodawat                   | #3, #6       | ✅ Completed   |
+| 8   | Tournament system                            | 1   | 7–8  | mamahtal, tzizi, mgodawat  | #6           | 🔧 In Progress |
 
 ### Bonus Modules (4 Points — implement after core is stable)
 
-| #   | Module                          | Pts | Days | Owner(s)                          | Dependencies |
-| :-- | :------------------------------ | :-- | :--- | :-------------------------------- | :----------- |
-| 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi                   | #6           |
-| 10  | Game customization              | 1   | 8–9  | zamgar, jayzatov                  | #6           |
-| 11  | Game statistics & match history | 1   | 9–10 | zamgar, jayzatov, mamahtal, tzizi | #5, #6       |
+| #   | Module                          | Pts | Days | Owner(s)                          | Dependencies | Status         |
+| :-- | :------------------------------ | :-- | :--- | :-------------------------------- | :----------- | :------------- |
+| 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi                   | #6           | 🔲 Not Started |
+| 10  | Game customization              | 1   | 8–9  | zamgar, jayzatov                  | #6           | 🔲 Not Started |
+| 11  | Game statistics & match history | 1   | 9–10 | zamgar, jayzatov, mamahtal, tzizi | #5, #6       | 🔲 Not Started |
 
 ### Drop Strategy
 
@@ -258,7 +258,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Verify game rules work correctly (all win conditions, draw detection)
 - Update task tracker
 
-**Modules progressed:** #3 (Real-time WebSockets), #6 (completed), #7 (Remote players)
+**Modules progressed:** #3 (Real-time WebSockets — ✅), #6 (✅ completed), #7 (Remote players)
 
 ---
 
@@ -291,7 +291,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Test multiplayer from two different browsers
 - Verify game rules work correctly (all win conditions, draw detection)
 
-**Modules progressed:** #6 (completed), #7 (Remote players)
+**Modules progressed:** #6 (✅ completed), #7 (Remote players)
 
 ---
 
@@ -305,7 +305,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Cross-test each other's features (each person tests a feature they didn't build)
 - Verify the full user flow works end-to-end: signup → login → edit profile → add friend → chat → play game
 
-**Modules progressed:** #7 (completed)
+**Modules progressed:** #7 (✅ completed)
 
 ---
 
@@ -330,7 +330,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Tournament WebSocket events: notify when it's your turn in the bracket
 - Test tournament flow end-to-end
 
-**Modules progressed:** #8 (Tournament system)
+**Modules progressed:** #8 (Tournament system — 🔧 in progress)
 
 ---
 
