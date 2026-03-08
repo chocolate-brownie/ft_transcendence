@@ -66,6 +66,11 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
         const user = getSocketUser(socket);
         const gameId = assertGameId(payload?.gameId);
 
+        // Cancel forfeit timer BEFORE any async work — prevents the timer
+        // callback from firing during a Prisma await and forfeiting the game
+        // while this handler is still running.
+        const cancelled = disconnectionService.cancelForfeitTimer(gameId, user.id);
+
         const game = await prisma.game.findUnique({
           where: { id: gameId },
           include: gamePlayersSelect,
@@ -105,7 +110,6 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
 
         const roomName = getGameRoomName(gameId);
 
-        const cancelled = disconnectionService.cancelForfeitTimer(gameId, user.id);
         if (cancelled) {
           socket.to(roomName).emit("opponent_reconnected", {
             userId: user.id,

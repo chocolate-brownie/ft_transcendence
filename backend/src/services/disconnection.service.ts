@@ -167,6 +167,12 @@ class DisconnectionService {
       /* timer callback no longer tries to manage duplicate resolution on its own
          That should stop the double forfeit. */
       const playersInRoom = gameRoomService.getPlayersInRoom(gameId);
+      const loserInRoom = playersInRoom.some((p) => p.userId === loser.id);
+      if (loserInRoom) {
+        // Loser reconnected before the timer callback could be cancelled —
+        // skip the forfeit (join_game_room already cleared the timer).
+        return;
+      }
       const winnerInRoom = playersInRoom.some((p) => p.userId === winner.id);
       if (!winnerInRoom) {
         await this.handleBothDisconnected(io, gameId, roomName);
