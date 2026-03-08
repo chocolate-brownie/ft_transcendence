@@ -4,7 +4,7 @@ import { useSocket } from "../context/SocketContext";
 /**
  * Shows a persistent banner when the user has an active IN_PROGRESS game.
  * The activeGameId lives in SocketContext so it survives route changes.
- * Cleared when: user dismisses, rejoins, game ends (forfeit/over), or logout.
+ * Cleared when: game ends (forfeit/over), game is already ended, or logout.
  */
 export default function ActiveGameBanner() {
   const { activeGameId } = useSocket();
