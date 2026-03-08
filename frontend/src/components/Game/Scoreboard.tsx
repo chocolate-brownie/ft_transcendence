@@ -1,6 +1,5 @@
 import type { PlayerSymbol, RoomPlayerSummary } from "../../types/game";
-
-type ServerStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "DRAW" | "CANCELLED";
+import type { ServerStatus } from "../../pages/game/types";
 
 interface ScoreboardProps {
   player1: RoomPlayerSummary | null;
@@ -9,41 +8,28 @@ interface ScoreboardProps {
   player2Symbol: PlayerSymbol;
   currentTurn: PlayerSymbol;
   serverStatus: ServerStatus;
-  player1Score: number;
-  player2Score: number;
 }
 
 function Avatar({
   player,
-  fallback,
   testId,
 }: {
   player: RoomPlayerSummary | null;
-  fallback: string;
   testId: string;
 }) {
-  if (player?.avatarUrl) {
-    return (
-      <img
-        src={player.avatarUrl}
-        alt={`${player.username} avatar`}
-        className="h-11 w-11 rounded-full border border-black/10 object-cover"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";
-        }}
-        data-testid={`${testId}-image`}
-      />
-    );
-  }
+  const avatarSrc = player?.avatarUrl || "/default-avatar.png";
+  const avatarLabel = player?.username ?? "Player";
 
   return (
-    <div
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/70 text-sm font-bold text-pong-text/70"
-      aria-label={`${player?.username ?? "Player"} avatar placeholder`}
-      data-testid={`${testId}-fallback`}
-    >
-      {fallback}
-    </div>
+    <img
+      src={avatarSrc}
+      alt={`${avatarLabel} avatar`}
+      className="h-11 w-11 rounded-full border border-black/10 object-cover"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";
+      }}
+      data-testid={`${testId}-image`}
+    />
   );
 }
 
@@ -54,8 +40,6 @@ export default function Scoreboard({
   player2Symbol,
   currentTurn,
   serverStatus,
-  player1Score,
-  player2Score,
 }: ScoreboardProps) {
   const player1Active = serverStatus === "IN_PROGRESS" && currentTurn === player1Symbol;
   const player2Active = serverStatus === "IN_PROGRESS" && currentTurn === player2Symbol;
@@ -73,13 +57,12 @@ export default function Scoreboard({
         >
           <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 1</p>
           <div className="mt-2 flex items-center gap-3">
-            <Avatar player={player1} fallback="P1" testId="player1-avatar" />
+            <Avatar player={player1} testId="player1-avatar" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-pong-text">
                 {player1?.username ?? "Waiting..."}{" "}
                 <span className="text-pong-accent">({player1Symbol})</span>
               </p>
-              <p className="text-2xl font-bold text-pong-accent">{player1Score}</p>
             </div>
           </div>
         </div>
@@ -99,8 +82,11 @@ export default function Scoreboard({
           }`}
         >
           <p className="text-xs uppercase tracking-wide text-pong-text/50">Player 2</p>
-          <div data-testid="scoreboard-player2-row" className="mt-2 flex flex-row-reverse items-center gap-3">
-            <Avatar player={player2} fallback="P2" testId="player2-avatar" />
+          <div
+            data-testid="scoreboard-player2-row"
+            className="mt-2 flex flex-row-reverse items-center gap-3"
+          >
+            <Avatar player={player2} testId="player2-avatar" />
             <div className="min-w-0 text-right">
               <p className="truncate text-sm font-semibold text-pong-text">
                 {player2?.username ?? "Waiting..."}{" "}
@@ -108,7 +94,6 @@ export default function Scoreboard({
                   ({player2 ? player2Symbol : "?"})
                 </span>
               </p>
-              <p className="text-2xl font-bold text-pong-secondary">{player2Score}</p>
             </div>
           </div>
         </div>

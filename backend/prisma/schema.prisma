@@ -65,6 +65,7 @@ model Game {
   startedAt     DateTime? @map("started_at")
   createdAt    DateTime   @default(now()) @map("created_at")
   finishedAt   DateTime?  @map("finished_at")
+  winningLine  Json?      @map("winning_line")
 
   // Tournament link (nullable: not all games are tournament games)
   tournamentId Int?       @map("tournament_id")

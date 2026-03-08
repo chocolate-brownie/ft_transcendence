@@ -12,12 +12,12 @@ interface GameOverModalProps {
   mySymbol: PlayerSymbol;
   totalMoves: number;
   durationSeconds?: number;
+  isForfeit?: boolean;
   opponentAvatarUrl?: string | null;
   rematchLoading?: boolean;
   rematchError?: string | null;
   onPlayAgain: () => void;
   onGoLobby: () => void;
-  onGoHome: () => void;
   onClose: () => void;
 }
 
@@ -39,12 +39,12 @@ export default function GameOverModal({
   mySymbol,
   totalMoves,
   durationSeconds,
+  isForfeit = false,
   opponentAvatarUrl = null,
   rematchLoading = false,
   rematchError = null,
   onPlayAgain,
   onGoLobby,
-  onGoHome,
   onClose,
 }: GameOverModalProps) {
   useEffect(() => {
@@ -64,16 +64,27 @@ export default function GameOverModal({
   if (!open) return null;
 
   const didIWin = result === "win" && winner?.symbol === mySymbol;
-  const title =
-    result === "draw" ? "It's a Draw! 🤝" : didIWin ? "You Won! 🎉" : "You Lost 😢";
-  const subtitle =
-    result === "draw"
+  const title = isForfeit
+    ? didIWin
+      ? "You Won! ⚠️"
+      : "You Lost ⚠️"
+    : result === "draw"
+      ? "It's a Draw! 🤝"
+      : didIWin
+        ? "You Won! 🎉"
+        : "You Lost 😢";
+  const subtitle = isForfeit
+    ? didIWin
+      ? "Opponent disconnected for too long."
+      : "You were disconnected for too long."
+    : result === "draw"
       ? "Well played by both players."
       : `${winner?.username ?? "Unknown"} wins with ${winner?.symbol ?? "?"}.`;
   const derivedOpponent = didIWin ? loser : winner;
   const shownOpponent = opponent ?? derivedOpponent;
-  const headerToneClass =
-    result === "draw"
+  const headerToneClass = isForfeit
+    ? "from-amber-500/20 to-amber-300/10 border-amber-300/30"
+    : result === "draw"
       ? "from-slate-500/20 to-slate-300/10 border-slate-300/30"
       : didIWin
         ? "from-emerald-500/20 to-emerald-300/10 border-emerald-300/30"
@@ -91,7 +102,7 @@ export default function GameOverModal({
       <div
         className={`relative w-full max-w-md rounded-xl border bg-gradient-to-b ${headerToneClass} bg-pong-surface p-6 shadow-xl`}
       >
-        {didIWin ? (
+        {isForfeit ? null : didIWin ? (
           <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-lg opacity-80">
             ✨ 🎉 ✨
           </div>
@@ -167,7 +178,9 @@ export default function GameOverModal({
                 )
               ) : null}
               <p className="truncate text-base font-semibold text-pong-text">
-                {shownOpponent ? `${shownOpponent.username} (${shownOpponent.symbol})` : "N/A"}
+                {shownOpponent
+                  ? `${shownOpponent.username} (${shownOpponent.symbol})`
+                  : "N/A"}
               </p>
             </div>
           </div>
@@ -184,13 +197,14 @@ export default function GameOverModal({
             onClick={onPlayAgain}
             disabled={rematchLoading}
           >
-            {rematchLoading ? "Creating rematch..." : "Play Again"}
+            {rematchLoading
+              ? "Creating rematch..."
+              : isForfeit
+                ? "Find New Game"
+                : "Play Again"}
           </Button>
           <Button variant="secondary" className="w-full" onClick={onGoLobby}>
             New Game (Lobby)
-          </Button>
-          <Button variant="danger" className="w-full" onClick={onGoHome}>
-            Back to Home
           </Button>
         </div>
       </div>

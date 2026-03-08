@@ -36,6 +36,22 @@ export function registerPresenceHandlers(io: Server, socket: Socket) {
     .catch((error) => console.error("Failed to set user online:", error));
 
   notifyFriends(io, userId, "user_online").catch(console.error);
+
+  // Notify client if they have an active (IN_PROGRESS) game they can rejoin
+  prisma.game
+    .findFirst({
+      where: {
+        status: "IN_PROGRESS",
+        OR: [{ player1Id: userId }, { player2Id: userId }],
+      },
+      select: { id: true },
+    })
+    .then((game) => {
+      if (game) {
+        socket.emit("active_game", { gameId: game.id });
+      }
+    })
+    .catch((error) => console.error("Failed to check active games:", error));
 }
 
 export function handlePresenceDisconnect(io: Server, socket: Socket) {

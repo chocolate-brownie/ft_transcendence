@@ -1,3 +1,5 @@
+// backend/src/socket/handlers/disconnection.handlers.ts
+
 import { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { disconnectionService } from "../../services/disconnection.service";
@@ -7,7 +9,20 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
   if (!user) return;
 
   try {
-    // Trouver les parties en cours du joueur
+    // Skip game disconnection if the user has other active sockets (multi-tab)
+    const allSockets = await io.fetchSockets();
+    const userOtherSockets = allSockets.filter(
+      (s) => s.data.user?.id === user.id && s.id !== socket.id,
+    );
+
+    if (userOtherSockets.length > 0) {
+      console.log(
+        `[Disconnect Handler] User ${user.username} has ${userOtherSockets.length} other socket(s) active — skipping game disconnection`,
+      );
+      return;
+    }
+
+    // Find active games for this player
     const activeGames = await prisma.game.findMany({
       where: {
         status: "IN_PROGRESS",
@@ -26,25 +41,29 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
       const isPlayer1 = game.player1Id === user.id;
       const opponent = isPlayer1 ? game.player2 : game.player1;
       const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
+      const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
 
       if (!opponent) continue;
 
-      // Alerte l'adversaire
-      socket.to(roomName).emit("opponent_disconnected", {
-        userId: user.id,
-        username: user.username,
-        waitTime: 30,
-        message: "Opponent disconnected, waiting for reconnection...",
-      });
-
-      // Démarre le chrono de 30s
+      // Start (or resume) forfeit timer — must happen before emitting so
+      // getRemainingTime reflects the correct value.
       await disconnectionService.startForfeitTimer(
         io,
         game.id,
-        { id: user.id, username: user.username },
+        { id: user.id, username: user.username, symbol: disconnectedSymbol },
         { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
         roomName,
       );
+
+      // Notify the opponent with the *actual* remaining time (not always 30)
+      const remainingWait = disconnectionService.getRemainingTime(game.id, user.id);
+      socket.to(roomName).emit("opponent_disconnected", {
+        gameId: game.id,
+        userId: user.id,
+        username: user.username,
+        waitTime: remainingWait > 0 ? remainingWait : 30,
+        message: "Opponent disconnected, waiting for reconnection...",
+      });
     }
   } catch (error) {
     console.error("[Disconnect Handler] Error:", error);

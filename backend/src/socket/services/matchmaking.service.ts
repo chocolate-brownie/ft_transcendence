@@ -2,10 +2,13 @@
 // In-memory FIFO queue that pairs players for random matches.
 // Phase 4: simple first-come-first-served. Phase 5: Redis + Elo.
 
+import type { BoardSize } from "../../types/game";
+
 interface QueuedPlayer {
   userId: number;
   socketId: string;
   joinedAt: Date;
+  boardSize: BoardSize;
 }
 
 class MatchmakingService {
@@ -52,16 +55,42 @@ class MatchmakingService {
 
   // 1-based position in queue (0 = not in queue).
   getQueuePosition(userId: number): number {
-    return this.queue.findIndex((p) => p.userId === userId) + 1;
+    const player = this.queue.find((p) => p.userId === userId);
+    if (!player) return 0;
+
+    let position = 0;
+
+    for (const queuedPlayer of this.queue) {
+      if (queuedPlayer.boardSize === player.boardSize) {
+        position++;
+      }
+      if (queuedPlayer.userId === userId) {
+        return position;
+      }
+    }
+
+    return 0;
   }
 
   // Try to dequeue two players for a match (FIFO).
   // Returns the pair or null if fewer than 2 players are waiting.
   dequeueMatch(): { player1: QueuedPlayer; player2: QueuedPlayer } | null {
     if (this.queue.length < 2) return null;
-    const player1 = this.queue.shift()!;
-    const player2 = this.queue.shift()!;
-    return { player1, player2 };
+
+    for (let i = 0; i < this.queue.length; i++) {
+      for (let j = i + 1; j < this.queue.length; j++) {
+        if (this.queue[i].boardSize !== this.queue[j].boardSize) {
+          continue;
+        }
+
+        const player2 = this.queue.splice(j, 1)[0];
+        const player1 = this.queue.splice(i, 1)[0];
+
+        return { player1, player2 };
+      }
+    }
+
+    return null;
   }
 
   // Re-insert a player at the front of the queue.
