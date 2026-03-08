@@ -338,7 +338,9 @@ describe("Game page socket wiring", () => {
     render(<Game />);
     joinRoom(socket);
 
-    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /view result/i }),
+    ).not.toBeInTheDocument();
 
     act(() => {
       socket.trigger("game_over", {
@@ -352,7 +354,9 @@ describe("Game page socket wiring", () => {
       });
     });
 
-    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /view result/i }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
@@ -498,7 +502,11 @@ describe("Game page socket wiring", () => {
           status: "IN_PROGRESS",
           yourSymbol: "O",
           player1: { id: 1, username: "admin", avatarUrl: "/uploads/avatars/admin.png" },
-          player2: { id: 2, username: "admin2", avatarUrl: "/uploads/avatars/admin2.png" },
+          player2: {
+            id: 2,
+            username: "admin2",
+            avatarUrl: "/uploads/avatars/admin2.png",
+          },
           player1Symbol: "X",
           player2Symbol: "O",
           startedAt: null,
@@ -549,7 +557,9 @@ describe("Game page socket wiring", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByTestId("opponent-disconnected-banner")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("opponent-disconnected-banner"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -658,7 +668,9 @@ describe("Game page socket wiring", () => {
     const { rerender } = render(<Game />);
     joinRoom(socket);
 
-    const joinCallsBefore = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+    const joinCallsBefore = socket.emit.mock.calls.filter(
+      (call) => call[0] === "join_game_room",
+    );
     expect(joinCallsBefore).toHaveLength(1);
     expect(joinCallsBefore[0][1]).toEqual({ gameId: 42 });
 
@@ -666,8 +678,12 @@ describe("Game page socket wiring", () => {
     rerender(<Game />);
 
     await waitFor(() => {
-      const leaveCalls = socket.emit.mock.calls.filter((call) => call[0] === "leave_game_room");
-      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+      const leaveCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "leave_game_room",
+      );
+      const joinCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "join_game_room",
+      );
       expect(leaveCalls.some((call) => call[1]?.gameId === 42)).toBe(true);
       expect(joinCalls.some((call) => call[1]?.gameId === 77)).toBe(true);
     });
