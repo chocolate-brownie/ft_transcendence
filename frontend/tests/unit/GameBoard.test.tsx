@@ -57,7 +57,9 @@ describe("GameBoard", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Cell 1").className).toContain("hover:bg-pong-accent/10");
+    expect(screen.getByLabelText("Cell 1").className).toContain(
+      "hover:bg-pong-accent/10",
+    );
 
     rerender(
       <GameBoard
@@ -67,7 +69,9 @@ describe("GameBoard", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Cell 1").className).toContain("hover:bg-pong-secondary/10");
+    expect(screen.getByLabelText("Cell 1").className).toContain(
+      "hover:bg-pong-secondary/10",
+    );
   });
 
   it("does not show actionable hover style when board is disabled", () => {

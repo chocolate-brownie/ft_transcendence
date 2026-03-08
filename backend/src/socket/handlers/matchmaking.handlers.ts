@@ -65,12 +65,14 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
             { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
             roomName,
           );
+          disconnectionService.cancelAllTimersForGame(activeGame.id);
         } else {
           // No opponent — just mark as abandoned
           await prisma.game.update({
             where: { id: activeGame.id },
             data: { status: "ABANDONED", finishedAt: new Date() },
           });
+          disconnectionService.cancelAllTimersForGame(activeGame.id);
         }
       }
 
