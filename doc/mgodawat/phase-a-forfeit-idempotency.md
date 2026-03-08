@@ -1,8 +1,24 @@
 # Phase A: Forfeit Idempotency — Learning-Oriented Bug Fix Guide
 
-**Issues:** #255, #249, #248
+**Issues:** #255 (CLOSED), #248, #256
 **Branch:** `fix/forfeit-idempotency`
-**Status:** NOT STARTED
+**Status:** IN PROGRESS — Fix 1 done (#255 closed), Fixes 2–4 remaining
+
+### Progress
+| Fix | Issue(s) | Status |
+|-----|----------|--------|
+| Fix 1: Idempotency guard in `handleForfeit()` | #255 | DONE |
+| Fix 2: Cancel sibling timers after forfeit fires | #255 (defense-in-depth) | DONE (included in Fix 1) |
+| Fix 3: Cancel timers in matchmaking auto-forfeit | #255 (defense-in-depth) | TODO |
+| Fix 4: Handle "both players disconnected" as abandoned | #248 | TODO |
+
+### Closed / Duplicate Issues
+| Issue | Reason |
+|-------|--------|
+| #255 | Fixed — idempotency guard + `cancelAllTimersForGame` |
+| #249 | Closed as duplicate of #248 |
+| #257 | Closed as duplicate of #254 |
+| #259 | Closed as duplicate of #251 |
 
 ---
 
@@ -237,26 +253,20 @@ Handler B should re-read the game status. If it's already ABANDONED, it should b
 
 Now that you understand the WHY, here's the WHAT. Three fixes, applied in order.
 
-### Fix 1: Idempotency Guard in `handleForfeit()` (Defense-in-depth)
+### Fix 1: Idempotency Guard in `handleForfeit()` (Defense-in-depth) — DONE
 
 **File:** `backend/src/services/disconnection.service.ts`
 **Where:** Inside `handleForfeit()`, at the very top of the `try` block (before `prisma.game.update`)
 
-**What to add:** Before the existing `prisma.game.update()` call:
-1. `findUnique` the game by ID, selecting only `status`
-2. If game is null OR status is in `["ABANDONED", "FINISHED", "DRAW", "CANCELLED"]`, call `this.cancelAllTimersForGame(gameId)` and return
-3. Otherwise, proceed with the existing update logic
+**What was added:**
+1. `cancelAllTimersForGame(gameId)` — kills all sibling timers immediately
+2. `findUnique` the game by ID, selecting `status`
+3. If game is null OR status is not `IN_PROGRESS`, return early (no-op)
+4. Otherwise, proceed with the existing update logic
 
-**Why first:** This single guard prevents ALL three bugs. Even if timers aren't cancelled properly, the second call is a no-op.
+**Terminal states:** `FINISHED`, `DRAW`, `CANCELLED`, `ABANDONED` — all covered by the `!== "IN_PROGRESS"` check.
 
-### Fix 2: Cancel Sibling Timers After Forfeit Fires
-
-**File:** `backend/src/services/disconnection.service.ts`
-**Where:** Timer callback (line ~46-47) and immediate forfeit path (line ~39-42)
-
-**What to change:** After `handleForfeit()` resolves, replace `this.forfeitTimers.delete(key)` with `this.cancelAllTimersForGame(gameId)`. This kills sibling timers too (e.g., the other player's timer for the same game).
-
-**Why:** Prevents the second timer from even firing. Fix 1 is the safety net if this somehow misses.
+**Also included Fix 2:** Removed the standalone `this.forfeitTimers.delete(key)` from the timer callback — `cancelAllTimersForGame` inside `handleForfeit` now handles all cleanup.
 
 ### Fix 3: Cancel Timers in Matchmaking Auto-Forfeit
 
@@ -322,7 +332,7 @@ If lint passes, commit and create PR targeting `main`. PR title suggestion:
 fix(game): add idempotency guard to handleForfeit and cancel sibling timers
 ```
 
-Closes: #255, #249, #248
+Closes: #255, #248, #256
 
 ---
 
@@ -340,7 +350,11 @@ After completing Phase A, you should be able to explain:
 
 ## What's Next
 
-After this PR is merged, this file will be updated with:
-- **Phase B:** Reconnection State Restoration (Issues #254, #222, #221)
-- **Phase C:** Avatar 404 Fix (Issues #251, #250)
-- **Phase D:** Form Accessibility (Issues #253, #252)
+### Remaining in Phase A
+1. **Fix 3** — Add `cancelAllTimersForGame()` in `matchmaking.handlers.ts` after auto-forfeit
+2. **Fix 4** — Handle "both players disconnected" → `ABANDONED` with `winnerId: null` (#248)
+
+### After Phase A PR is merged
+- **Phase B:** Reconnection State Restoration (Issues #254, #258, #256, #222, #221)
+- **Phase C:** Avatar 404 Fix (Issues #251, #250) — assigned to frontend dev
+- **Phase D:** UI Polish & Accessibility (Issues #260, #261, #262, #253, #252) — assigned to frontend dev
