@@ -142,11 +142,30 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
             : syncedGame.player2Symbol;
         const payloadForClient = buildJoinedPayload(syncedGame);
 
+        // Check if the opponent has an active forfeit timer (i.e. they are
+        // disconnected).  Include this in the payload so the frontend can
+        // restore the disconnect warning after a refresh or navigation.
+        const opponentId =
+          syncedGame.player1Id === user.id ? syncedGame.player2Id : syncedGame.player1Id;
+        const opponentUser =
+          syncedGame.player1Id === user.id ? syncedGame.player2 : syncedGame.player1;
+        const opponentRemaining = opponentId
+          ? disconnectionService.getRemainingTime(gameId, opponentId)
+          : 0;
+
         socket.emit("room_joined", {
           ...payloadForClient,
           game: {
             ...(payloadForClient.game as Record<string, unknown>),
             yourSymbol,
+            ...(opponentRemaining > 0 && opponentUser
+              ? {
+                  opponentDisconnected: {
+                    username: opponentUser.username,
+                    remainingTime: opponentRemaining,
+                  },
+                }
+              : {}),
           },
         });
 
