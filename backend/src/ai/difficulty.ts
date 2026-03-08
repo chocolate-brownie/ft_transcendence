@@ -19,7 +19,7 @@ export function getAIMove(board: Board, aiSymbol: Player, difficulty: Difficulty
 }
 
 
-export function findBestMove(board: Board, aiSymbol: Player): number
+function findBestMove(board: Board, aiSymbol: Player): number
 {
     let bestScore = -Infinity;
     let bestMove = -1;
