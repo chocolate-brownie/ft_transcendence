@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .me()
       .then((data) => setUser(data.user))
       .catch((err) => {
-        if (err instanceof ApiError && err.status === 401 || err.status === 404) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 404)) {
           // Token is invalid or expired — clear it
           localStorage.removeItem("token");
           setUser(null);
