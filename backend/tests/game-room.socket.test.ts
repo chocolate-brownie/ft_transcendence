@@ -391,7 +391,7 @@ describeDb("Socket Game Rooms", () => {
     }
   });
 
-  it("emits opponent_disconnected when a player socket disconnects during an in-progress game", async () => {
+  it("cleans room membership when socket disconnects during an in-progress game", async () => {
     const game = await prisma.game.create({
       data: {
         player1Id: player1.id,
@@ -421,21 +421,17 @@ describeDb("Socket Game Rooms", () => {
         waitForEvent(p2, "room_joined"),
       ]);
 
-      // Simulate browser tab close — disconnect without leave_game_room
-      const disconnectedPromise = waitForEvent<{
-        gameId: number;
-        userId: number;
-        username: string;
-        waitTime: number;
-      }>(p2, "opponent_disconnected");
+      expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(2);
 
+      // Simulate browser tab close
       p1.disconnect();
-      const payload = await disconnectedPromise;
+      await new Promise((r) => setTimeout(r, 200));
 
-      expect(payload.gameId).toBe(game.id);
-      expect(payload.userId).toBe(player1.id);
-      expect(payload.username).toBe(player1.username);
-      expect(payload.waitTime).toBe(30);
+      // Room membership cleaned up by handleGameRoomDisconnect
+      expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
+      expect(
+        gameRoomService.getPlayersInRoom(game.id).some((p) => p.userId === player2.id),
+      ).toBe(true);
     } finally {
       p1.close();
       p2.close();
