@@ -301,9 +301,15 @@ export function useGameSocketController({
       });
     }
 
-    function onOpponentReconnected({ gameId: reconnectedGameId }: { gameId?: number }) {
+    function onOpponentReconnected({
+      gameId: reconnectedGameId,
+      username,
+    }: {
+      gameId?: number;
+      username?: string;
+    }) {
       if (typeof reconnectedGameId === "number" && reconnectedGameId !== gameId) return;
-      dispatch({ type: "OPPONENT_RECONNECTED" });
+      dispatch({ type: "OPPONENT_RECONNECTED", username });
     }
 
     function onGameForfeited({

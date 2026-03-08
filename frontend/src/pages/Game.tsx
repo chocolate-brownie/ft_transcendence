@@ -77,6 +77,18 @@ export default function Game() {
     return () => window.clearTimeout(timer);
   }, [gameState.opponentConnection, gameState.disconnectCountdown]);
 
+  useEffect(() => {
+    if (!gameState.reconnectedOpponentName) return;
+
+    const timeoutId = window.setTimeout(() => {
+      dispatch({ type: "DISMISS_RECONNECTED_NOTICE" });
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [gameState.reconnectedOpponentName, dispatch]);
+
   function handleCellClick(index: number) {
     if (gameState.board[index] !== null) return;
     if (!socket) return;
@@ -237,6 +249,30 @@ export default function Game() {
               ? ` (${gameState.disconnectCountdown}s)`
               : ""}
             .
+          </p>
+        </div>
+      ) : null}
+
+      {gameState.reconnectedOpponentName ? (
+        <div
+          className="w-full max-w-xl rounded-lg border border-emerald-300/50 bg-emerald-400/10 px-5 py-3 text-pong-text"
+          data-testid="opponent-reconnected-banner"
+        >
+          <p className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
+            <svg
+              className="h-4 w-4 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            {gameState.reconnectedOpponentName} reconnected.
           </p>
         </div>
       ) : null}

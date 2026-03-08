@@ -528,7 +528,7 @@ describe("Game page socket wiring", () => {
     expect(within(player2Card).getByTestId("player2-avatar-image")).toBeInTheDocument();
   });
 
-  it("shows disconnection banner, disables board, and clears on opponent_reconnected", async () => {
+  it("shows a success notification when the opponent reconnects", async () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -544,23 +544,50 @@ describe("Game page socket wiring", () => {
     });
 
     expect(screen.getByTestId("opponent-disconnected-banner")).toBeInTheDocument();
-    expect(screen.getByText(/bob disconnected/i)).toBeInTheDocument();
-    expect(screen.getByText(/waiting for reconnection \(30s\)/i)).toBeInTheDocument();
-
-    const cellButtons = screen
-      .getAllByRole("button")
-      .filter((btn) => btn.getAttribute("aria-label")?.startsWith("Cell"));
-    expect(cellButtons.every((cell) => cell.hasAttribute("disabled"))).toBe(true);
 
     act(() => {
-      socket.trigger("opponent_reconnected", { gameId: 42 });
+      socket.trigger("opponent_reconnected", {
+        gameId: 42,
+        username: "bob",
+      });
     });
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("opponent-disconnected-banner"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("opponent-disconnected-banner")).not.toBeInTheDocument();
     });
+
+    expect(screen.getByTestId("opponent-reconnected-banner")).toBeInTheDocument();
+    expect(screen.getByText(/bob reconnected\./i)).toBeInTheDocument();
+  });
+
+  it("auto-dismisses the opponent reconnected notification after 4 seconds", async () => {
+    vi.useFakeTimers();
+
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+    joinRoom(socket);
+
+    act(() => {
+      socket.trigger("opponent_reconnected", {
+        gameId: 42,
+        username: "bob",
+      });
+    });
+
+    expect(screen.getByTestId("opponent-reconnected-banner")).toBeInTheDocument();
+    expect(screen.getByText(/bob reconnected\./i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("opponent-reconnected-banner")).not.toBeInTheDocument();
+    });
+
+    vi.useRealTimers();
   });
 
   it("maps game_forfeited payload to game over state with forfeit styling", () => {
