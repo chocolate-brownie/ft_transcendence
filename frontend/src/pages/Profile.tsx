@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -10,6 +10,9 @@ import Button from "../components/Button";
 import FriendsList from "../components/FriendsList";
 import PendingRequests from "../components/PendingRequests";
 import FriendRequestButton from "../components/Friends/FriendRequestButton";
+import ProfileStats from "../components/Profile/ProfileStats";
+import AvatarUpload from "../components/Profile/AvatarUpload";
+import DisplayNameForm from "../components/Profile/DisplayNameForm";
 
 export default function Profile() {
   const { id } = useParams();
@@ -32,14 +35,6 @@ export default function Profile() {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const avatarSavingRef = useRef(false);
-
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Friends
@@ -50,9 +45,6 @@ export default function Profile() {
   // Pending requests
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [pendingLoading, setPendingLoading] = useState<boolean>(true);
-
-  const [avatarSaving, setAvatarSaving] = useState(false);
-  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   // ── Fetch profile
   useEffect(() => {
@@ -71,9 +63,8 @@ export default function Profile() {
     doFetch();
 
     // Re-fetch when the tab regains focus so isOnline stays fresh
-    // Skip during avatar upload — file picker triggers visibilitychange
     const onVisible = () => {
-      if (document.visibilityState === "visible" && !avatarSavingRef.current) doFetch();
+      if (document.visibilityState === "visible") doFetch();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -210,103 +201,6 @@ export default function Profile() {
   }
   if (!profile) return null;
 
-  // ── Handlers: display name
-  function handleEditClick() {
-    if (!profile) return;
-
-    const initialName = profile.displayName || profile.username;
-
-    setEditError(null);
-    setSuccessMessage(null);
-    setEditDisplayName(initialName);
-    setIsEditing(true);
-  }
-
-  function handleCancelEdit() {
-    setIsEditing(false);
-  }
-
-  function handleDisplayNameChange(e: any) {
-    setEditDisplayName(e.target.value);
-  }
-
-  function handleSave() {
-    const trimmed = editDisplayName.trim().replace(/<[^>]*>/g, "");
-    if (trimmed.length < 3 || trimmed.length > 50) {
-      setEditError("Display name must be between 3 and 50 characters.");
-      return;
-    }
-
-    setSaving(true);
-    setEditError(null);
-
-    usersService
-      .updateMe({ displayName: trimmed })
-      .then((data) => {
-        if (!profile) {
-          setIsEditing(false);
-          return;
-        }
-
-        const updatedProfile: User = {
-          ...profile,
-          displayName: data.displayName ? data.displayName : profile.displayName,
-        };
-
-        setProfile(updatedProfile);
-        updateUser({ displayName: updatedProfile.displayName ?? trimmed });
-        setIsEditing(false);
-        setSuccessMessage("Profile updated");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      })
-      .catch((err) =>
-        setEditError(err instanceof Error ? err.message : "Failed to update profile"),
-      )
-      .finally(() => setSaving(false));
-  }
-
-  // ── Handlers: avatar
-  function handleAvatarChange(e: any) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setAvatarError(null);
-
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setAvatarError("File is too large (max 5MB).");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-
-    handleAvatarUpload(file);
-  }
-
-  function handleAvatarUpload(file: File) {
-    avatarSavingRef.current = true;
-    setAvatarSaving(true);
-    setAvatarError(null);
-
-    usersService
-      .uploadAvatar(file)
-      .then((data) => {
-        setProfile((prev) =>
-          prev ? { ...prev, avatarUrl: data.avatarUrl ?? prev.avatarUrl } : prev,
-        );
-        updateUser({ avatarUrl: data.avatarUrl ?? "" });
-        setSuccessMessage("Avatar updated");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      })
-      .catch((err) =>
-        setAvatarError(err instanceof Error ? err.message : "Failed to upload avatar"),
-      )
-      .finally(() => {
-        avatarSavingRef.current = false;
-        setAvatarSaving(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      });
-  }
-
   // ── Handlers: friends
   async function handleRemoveFriend(friendId: number) {
     try {
@@ -346,6 +240,11 @@ export default function Profile() {
     }
   }
 
+  function showSuccess(msg: string) {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  }
+
   // ── Derived values
   const isMine = !!(user && user.id != null && user.id === profile.id);
   // If viewing own profile the user is clearly online — don't let a stale
@@ -380,58 +279,17 @@ export default function Profile() {
           <Card variant="elevated">
             <div className="text-center">
               <div className="relative mx-auto mb-3 h-24 w-24">
-                {/* Avatar */}
-                <button
-                  type="button"
-                  className="group relative h-full w-full overflow-hidden rounded-full bg-black/10 focus:outline-none"
-                  onClick={() => {
-                    if (!isMine || avatarSaving) return;
-                    // Set flag BEFORE file picker opens — visibilitychange
-                    // fires before onChange, so we must guard early.
-                    avatarSavingRef.current = true;
-                    if (fileInputRef.current) {
-                      // Reset guard if the user dismisses without selecting a file.
-                      // The 'cancel' event fires on the input but isn't in React's
-                      // type definitions, so we wire it up natively.
-                      fileInputRef.current.addEventListener(
-                        "cancel",
-                        () => {
-                          avatarSavingRef.current = false;
-                        },
-                        { once: true },
-                      );
-                      fileInputRef.current.click();
-                    }
+                <AvatarUpload
+                  avatarSrc={avatarSrc}
+                  isMine={isMine}
+                  onUploadSuccess={(url) => {
+                    setProfile((prev) =>
+                      prev ? { ...prev, avatarUrl: url || prev.avatarUrl } : prev,
+                    );
+                    updateUser({ avatarUrl: url });
+                    showSuccess("Avatar updated");
                   }}
-                  disabled={!isMine || avatarSaving}
-                >
-                  <img
-                    src={avatarSrc}
-                    alt="Avatar"
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/default-avatar.png";
-                    }}
-                  />
-
-                  {isMine && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                      <span className="text-xs font-semibold text-white">
-                        {avatarSaving ? "Uploading..." : "Change avatar"}
-                      </span>
-                    </div>
-                  )}
-                </button>
-
-                {isMine && (
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
-                )}
+                />
 
                 {/* Online dot */}
                 <span
@@ -454,58 +312,17 @@ export default function Profile() {
                 Joined {joined}
               </p>
 
-              {avatarError && <p className="mt-1 text-xs text-red-400">{avatarError}</p>}
-
-              {/* View mode */}
-              {isMine && !isEditing && (
-                <div className="mt-4">
-                  <Button variant="primary" className="w-full" onClick={handleEditClick}>
-                    Edit Profile
-                  </Button>
-                </div>
-              )}
-
-              {/* Edit mode */}
-              {isMine && isEditing && (
-                <div className="mt-4 space-y-3 text-left">
-                  <div>
-                    <label
-                      htmlFor="display-name"
-                      className="mb-1 block text-xs font-medium text-pong-text/60"
-                    >
-                      Display name
-                    </label>
-                    <input
-                      id="display-name"
-                      name="display-name"
-                      type="text"
-                      className="w-full rounded-md border border-black/10 bg-black/10 px-3 py-2 text-sm outline-none focus:border-pong-accent"
-                      value={editDisplayName}
-                      onChange={handleDisplayNameChange}
-                    />
-                  </div>
-
-                  {editError && <p className="text-xs text-red-400">{editError}</p>}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={handleSave}
-                      disabled={saving}
-                    >
-                      {saving ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      type="button"
-                      className="flex-1"
-                      onClick={handleCancelEdit}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
+              {isMine && (
+                <DisplayNameForm
+                  currentName={displayName}
+                  onSaveSuccess={(newName) => {
+                    setProfile((prev) =>
+                      prev ? { ...prev, displayName: newName } : prev,
+                    );
+                    updateUser({ displayName: newName });
+                    showSuccess("Profile updated");
+                  }}
+                />
               )}
 
               {/* Friendship action — only when viewing another user's profile */}
@@ -526,44 +343,11 @@ export default function Profile() {
           </Card>
 
           {/* Stats card */}
-          <Card variant="elevated">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
-              Stats
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
-                <p className="text-xs text-pong-text/50">Wins</p>
-                <p className="text-lg font-bold text-pong-text/100">
-                  {profile.wins ? profile.wins : 0}
-                </p>
-              </div>
-              <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
-                <p className="text-xs text-pong-text/50">Losses</p>
-                <p className="text-lg font-bold text-pong-text/100">
-                  {profile.losses ? profile.losses : 0}
-                </p>
-              </div>
-              <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
-                <p className="text-xs text-pong-text/50">Draws</p>
-                <p className="text-lg font-bold text-pong-text/100">
-                  {profile.draws ? profile.draws : 0}
-                </p>
-              </div>
-              <div className="rounded-lg bg-white/20 border border-black/10 p-3 text-center">
-                <p className="text-xs text-pong-text/50">Win Rate</p>
-                <p className="text-lg font-bold text-pong-text/100">
-                  {profile.wins + profile.losses + profile.draws > 0
-                    ? Math.round(
-                        (profile.wins / (profile.wins + profile.losses + profile.draws)) *
-                          100,
-                      )
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-          </Card>
+          <ProfileStats
+            wins={profile.wins}
+            losses={profile.losses}
+            draws={profile.draws}
+          />
         </div>
 
         {/* RIGHT */}
