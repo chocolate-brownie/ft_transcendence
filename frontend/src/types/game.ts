@@ -1,4 +1,5 @@
 export type CellValue = "X" | "O" | null;
+export type BoardSize = 3 | 4 | 5;
 export type PlayerSymbol = "X" | "O";
 
 export type Board = CellValue[];
@@ -23,4 +24,5 @@ export interface GameBoardProps {
   winnerSymbol?: "X" | "O" | null;
   playerSymbol?: "X" | "O" | null;
   gameOver?: boolean;
+  boardSize?: BoardSize;
 }
