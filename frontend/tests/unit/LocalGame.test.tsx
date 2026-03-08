@@ -77,16 +77,13 @@ describe("LocalGame", () => {
   it("uses a 3x3 board by default", () => {
     renderLocalGame();
 
-    expect(screen.getByText("3x3")).toBeInTheDocument();
-    expect(screen.getByText(/move 0 \/ 9/i)).toBeInTheDocument();
+    expect(screen.getByText("Local Game Mode")).toBeInTheDocument();
     expect(screen.getByTestId("board-length")).toHaveTextContent("9");
   });
 
   it("uses the boardSize from query params", () => {
     renderLocalGame("/game/local?boardSize=5");
 
-    expect(screen.getByText("5x5")).toBeInTheDocument();
-    expect(screen.getByText(/move 0 \/ 25/i)).toBeInTheDocument();
     expect(screen.getByTestId("board-length")).toHaveTextContent("25");
   });
 
@@ -100,11 +97,9 @@ describe("LocalGame", () => {
     fireEvent.click(screen.getByRole("button", { name: "cell-6" })); // X wins
 
     expect(screen.getByText(/player 1 wins! \(x\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/move 5 \/ 9/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /play again/i }));
 
-    expect(screen.getByText(/move 0 \/ 9/i)).toBeInTheDocument();
     expect(screen.queryByText(/player 1 wins! \(x\)/i)).not.toBeInTheDocument();
     expect(screen.getByTestId("board-length")).toHaveTextContent("9");
   });

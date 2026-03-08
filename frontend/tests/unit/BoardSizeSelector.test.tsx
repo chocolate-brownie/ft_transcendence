@@ -9,39 +9,45 @@ afterEach(() => {
 });
 
 describe("BoardSizeSelector", () => {
-  it("renders the 3 board size options", () => {
+  it("renders the selected size and reveals others on click", () => {
     const onSelect = vi.fn();
 
     render(<BoardSizeSelector selected={3} onSelect={onSelect} />);
 
-    expect(screen.getByRole("button", { name: /3x3/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /4x4/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /5x5/i })).toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: /selected board size: 3x3/i });
+    expect(trigger).toBeInTheDocument();
+
+    // Other options are hidden until the trigger is clicked
+    expect(screen.queryByRole("button", { name: /^4x4$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^5x5$/i })).not.toBeInTheDocument();
+
+    fireEvent.click(trigger);
+
+    expect(screen.getByRole("button", { name: /^4x4$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^5x5$/i })).toBeInTheDocument();
   });
 
-  it("calls onSelect with 3, 4 and 5", () => {
+  it("calls onSelect with the chosen size", () => {
     const onSelect = vi.fn();
 
     render(<BoardSizeSelector selected={3} onSelect={onSelect} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /3x3/i }));
-    fireEvent.click(screen.getByRole("button", { name: /4x4/i }));
-    fireEvent.click(screen.getByRole("button", { name: /5x5/i }));
+    // Open dropdown
+    fireEvent.click(screen.getByRole("button", { name: /selected board size: 3x3/i }));
 
-    expect(onSelect).toHaveBeenNthCalledWith(1, 3);
-    expect(onSelect).toHaveBeenNthCalledWith(2, 4);
-    expect(onSelect).toHaveBeenNthCalledWith(3, 5);
+    fireEvent.click(screen.getByRole("button", { name: /^4x4$/i }));
+    expect(onSelect).toHaveBeenCalledWith(4);
   });
 
-  it("highlights the selected size", () => {
+  it("marks the trigger with aria-expanded when open", () => {
     const onSelect = vi.fn();
 
     render(<BoardSizeSelector selected={4} onSelect={onSelect} />);
 
-    const selectedButton = screen.getByRole("button", { name: /4x4/i });
-    const otherButton = screen.getByRole("button", { name: /3x3/i });
+    const trigger = screen.getByRole("button", { name: /selected board size: 4x4/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    expect(selectedButton).toHaveClass("border-blue-600");
-    expect(otherButton).toHaveClass("border-gray-300");
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
   });
 });
