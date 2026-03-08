@@ -52,7 +52,10 @@ function emitError(socket: Socket, message: string, callback?: AckCallback) {
 /** Build the payload sent with room_joined / game_already_ended.
  *  Accepts the raw Prisma result (with gamePlayersSelect included). */
 function buildJoinedPayload(
-  game: Awaited<ReturnType<typeof prisma.game.findUnique>> & { player1: unknown; player2: unknown },
+  game: Awaited<ReturnType<typeof prisma.game.findUnique>> & {
+    player1: unknown;
+    player2: unknown;
+  },
 ): Record<string, unknown> {
   return {
     gameId: game.id,
@@ -72,6 +75,7 @@ function buildJoinedPayload(
       createdAt: game.createdAt,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
+      winningLine: game.winningLine,
     },
   };
 }
@@ -166,7 +170,11 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
 
         const isPlayer = game.player1Id === user.id || game.player2Id === user.id;
         if (!isPlayer) {
-          emitError(socket, "Unauthorized: You are not a participant in this game", callback);
+          emitError(
+            socket,
+            "Unauthorized: You are not a participant in this game",
+            callback,
+          );
           return;
         }
 
@@ -217,8 +225,12 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
           return;
         }
 
-        const { yourSymbol, opponentId, opponent: opponentUser, role } =
-          resolveRoles(syncedGame, user.id);
+        const {
+          yourSymbol,
+          opponentId,
+          opponent: opponentUser,
+          role,
+        } = resolveRoles(syncedGame, user.id);
         const payloadForClient = buildJoinedPayload(syncedGame);
 
         // Check if the opponent has an active forfeit timer (i.e. they are
