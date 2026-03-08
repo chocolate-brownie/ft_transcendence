@@ -148,10 +148,7 @@ export default function Game() {
     gameState.status === "ready" &&
     gameState.serverStatus === "IN_PROGRESS" &&
     gameState.currentTurn === gameState.yourSymbol;
-  const boardDisabled =
-    !isYourTurn ||
-    gameState.isSendingMove ||
-    gameState.opponentConnection === "disconnected";
+  const boardDisabled = !isYourTurn || gameState.isSendingMove;
   const winningLine = gameState.serverWinningLine || findWinningLine(gameState.board);
   const moveCount = gameState.board.filter((cell) => cell !== null).length;
   const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
