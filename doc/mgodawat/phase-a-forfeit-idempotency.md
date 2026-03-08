@@ -1,24 +1,64 @@
 # Phase A: Forfeit Idempotency — Learning-Oriented Bug Fix Guide
 
-**Issues:** #255 (CLOSED), #248, #256
+**Issues:** #255 (CLOSED), #248 (CLOSED), #256
 **Branch:** `fix/forfeit-idempotency`
-**Status:** IN PROGRESS — Fix 1 done (#255 closed), Fixes 2–4 remaining
+**Status:** IN PROGRESS — #255 and #248 done, #256 remaining
 
 ### Progress
 | Fix | Issue(s) | Status |
 |-----|----------|--------|
 | Fix 1: Idempotency guard in `handleForfeit()` | #255 | DONE |
-| Fix 2: Cancel sibling timers after forfeit fires | #255 (defense-in-depth) | DONE (included in Fix 1) |
-| Fix 3: Cancel timers in matchmaking auto-forfeit | #255 (defense-in-depth) | TODO |
-| Fix 4: Handle "both players disconnected" as abandoned | #248 | TODO |
+| Fix 2: Cancel sibling timers after forfeit fires | #255 | DONE |
+| Fix 3: Cancel timers in matchmaking auto-forfeit | #255 | DONE |
+| Fix 4: Both-disconnect → abandoned with no winner | #248 | DONE |
+| Fix 5: Deduplicate `opponent_disconnected` emit | #256 | TODO |
 
 ### Closed / Duplicate Issues
 | Issue | Reason |
 |-------|--------|
 | #255 | Fixed — idempotency guard + `cancelAllTimersForGame` |
+| #248 | Fixed — game room presence check instead of socket presence |
 | #249 | Closed as duplicate of #248 |
 | #257 | Closed as duplicate of #254 |
 | #259 | Closed as duplicate of #251 |
+
+---
+
+## Fix 5: Deduplicate `opponent_disconnected` emit (#256)
+
+### Problem
+When a player closes their browser tab during a game, the remaining player receives `opponent_disconnected` **twice**. This happens because two independent handlers both fire on disconnect and both emit the event.
+
+### Root Cause — Two Callers, One Event
+
+When a socket disconnects, `socket.on("disconnect")` in `backend/src/socket/index.ts:22-26` fires three handlers:
+
+1. `handleGameRoomDisconnect` → cleans up room membership
+2. `handleGameDisconnection` (`disconnection.handlers.ts:7`) → finds active games, starts forfeit timer, **emits `opponent_disconnected`** (line 60)
+
+But ALSO, the `leave_game_room` event in `gameRoom.handlers.ts:183` fires when the player leaves the game page. When a browser tab closes, Socket.io fires `disconnect` which triggers `handleGameRoomDisconnect` — and if the player was in a game room, the `leave_game_room` logic at line 195-222 also starts a timer and **emits `opponent_disconnected`** (line 216).
+
+So the same disconnect triggers two code paths that both emit the same event.
+
+### Files to Touch
+
+| File | What to change |
+|------|---------------|
+| `backend/src/socket/handlers/gameRoom.handlers.ts` | Lines 195-222: the `leave_game_room` handler's disconnect notification |
+| `backend/src/socket/handlers/disconnection.handlers.ts` | Lines 50-66: the socket disconnect handler's notification |
+
+### Fix Strategy
+
+**Option A (recommended):** Remove the `opponent_disconnected` emit from `gameRoom.handlers.ts` (the `leave_game_room` path). Let `disconnection.handlers.ts` be the **single source** for disconnect notifications. The `leave_game_room` handler should only: leave the socket room, remove from `gameRoomService`, and start the forfeit timer.
+
+**Why this option:** `disconnection.handlers.ts` already has multi-tab detection (`userOtherSockets.length > 0` guard at line 18). The `leave_game_room` handler doesn't — so it emits even if the player has other tabs open.
+
+**What to keep in `gameRoom.handlers.ts`:** The `startForfeitTimer` call stays (it's idempotent — calling it twice just preserves the original `startedAt`). The `active_game` emit to the leaving player (line 226) also stays.
+
+### Verification
+1. Start a game between Alice and Bob
+2. Close Alice's tab
+3. Bob should receive exactly ONE `opponent_disconnected` event in DevTools WS inspector
 
 ---
 
