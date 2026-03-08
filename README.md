@@ -228,23 +228,23 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 
 ## Features List
 
-| Feature                              | Status     | Owner(s)                          | Description                                                    |
-| :----------------------------------- | :--------- | :-------------------------------- | :------------------------------------------------------------- |
-| Project Setup & Dockerization        | ✅ Done    | mgodawat                          | Docker Compose with frontend, backend, and database containers |
-| User Authentication (email/password) | ✅ Done    | mamahtal, tzizi                   | Signup, login, JWT tokens, password hashing with bcrypt        |
-| User Profiles (view/edit/avatar)     | ✅ Done    | zamgar, mamahtal, tzizi           | Profile page, avatar upload, display name editing              |
-| Friends System                       | ✅ Done    | mamahtal, tzizi                   | Add/remove friends, online status, friend requests             |
-| Real-Time Chat                       | ✅ Done    | mgodawat                          | Direct messages via WebSockets, chat history                   |
-| HTTPS Configuration                  | ✅ Done    | mgodawat                          | SSL/TLS for all backend communication                          |
-| Tic-Tac-Toe Game (local)             | ✅ Done     | zamgar, jayzatov, mgodawat        | React component grid, game logic, win detection                |
-| Remote Multiplayer                   | ✅ Done     | mgodawat, DarkWhiteOff            | Online 1v1 via WebSockets with turn synchronization            |
-| Disconnection & Reconnection        | ✅ Done     | mgodawat, DarkWhiteOff            | Forfeit timer, state restore, opponent notifications           |
-| Tournament System                    | 🔧 In Progress | mamahtal, mgodawat             | Bracket generation, matchmaking, progression                   |
-| AI Opponent                          | 🔲 Planned | mamahtal, tzizi                   | Minimax algorithm with adjustable difficulty                   |
-| Game Customization                   | 🔲 Planned | zamgar, jayzatov                  | Board themes, X/O symbols, grid size variants                  |
-| Game Statistics & Match History      | 🔲 Planned | zamgar, jayzatov, mamahtal, tzizi | Wins/losses, rankings, match history, leaderboard              |
-| Privacy Policy Page                  | ✅ Done     | mgodawat                          | Accessible from footer, relevant content                       |
-| Terms of Service Page                | ✅ Done     | mgodawat                          | Accessible from footer, relevant content                       |
+| Feature                              | Status         | Owner(s)                          | Description                                                    |
+| :----------------------------------- | :------------- | :-------------------------------- | :------------------------------------------------------------- |
+| Project Setup & Dockerization        | ✅ Done        | mgodawat                          | Docker Compose with frontend, backend, and database containers |
+| User Authentication (email/password) | ✅ Done        | mamahtal, tzizi                   | Signup, login, JWT tokens, password hashing with bcrypt        |
+| User Profiles (view/edit/avatar)     | ✅ Done        | zamgar, mamahtal, tzizi           | Profile page, avatar upload, display name editing              |
+| Friends System                       | ✅ Done        | mamahtal, tzizi                   | Add/remove friends, online status, friend requests             |
+| Real-Time Chat                       | ✅ Done        | mgodawat                          | Direct messages via WebSockets, chat history                   |
+| HTTPS Configuration                  | ✅ Done        | mgodawat                          | SSL/TLS for all backend communication                          |
+| Tic-Tac-Toe Game (local)             | ✅ Done        | zamgar, jayzatov, mgodawat        | React component grid, game logic, win detection                |
+| Remote Multiplayer                   | ✅ Done        | mgodawat, DarkWhiteOff            | Online 1v1 via WebSockets with turn synchronization            |
+| Disconnection & Reconnection         | ✅ Done        | mgodawat, DarkWhiteOff            | Forfeit timer, state restore, opponent notifications           |
+| Tournament System                    | 🔧 In Progress | mamahtal, mgodawat                | Bracket generation, matchmaking, progression                   |
+| AI Opponent                          | 🔲 Planned     | mamahtal, tzizi                   | Minimax algorithm with adjustable difficulty                   |
+| Game Customization                   | 🔲 Planned     | zamgar, jayzatov                  | Board themes, X/O symbols, grid size variants                  |
+| Game Statistics & Match History      | 🔲 Planned     | zamgar, jayzatov, mamahtal, tzizi | Wins/losses, rankings, match history, leaderboard              |
+| Privacy Policy Page                  | ✅ Done        | mgodawat                          | Accessible from footer, relevant content                       |
+| Terms of Service Page                | ✅ Done        | mgodawat                          | Accessible from footer, relevant content                       |
 
 ## Modules (18 Points Target — 4-Point Safety Buffer)
 
@@ -258,7 +258,7 @@ The subject requires a minimum of 14 points. We target 18 points to provide a sa
 | 4   | Web       | User interaction (chat + profiles + friends) | Major     | 2      | zamgar, mgodawat                  | Chat system, profile pages, friends list               |
 | 5   | User Mgmt | Standard user management                     | Major     | 2      | mgodawat, mamahtal, tzizi         | Auth, avatars, profiles, online status                 |
 | 6   | Gaming    | Web-based Tic-Tac-Toe game                   | Major     | 2      | zamgar, jayzatov, mgodawat        | React component grid with game logic and win detection |
-| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | mgodawat                          | WebSocket turn sync, reconnection logic                |
+| 7   | Gaming    | Remote players (online 1v1)                  | Major     | 2      | mgodawat, mamahtal, tzizi         | WebSocket turn sync, reconnection logic                |
 | 8   | Gaming    | Tournament system                            | Minor     | 1      | mamahtal, tzizi, mgodawat         | Bracket system, matchmaking, registration              |
 | 9   | AI        | AI Opponent                                  | Major     | 2      | mamahtal, tzizi                   | Minimax algorithm with human-like imperfection         |
 | 10  | Gaming    | Game customization                           | Minor     | 1      | zamgar, jayzatov                  | Board themes, custom symbols, grid size options        |
@@ -283,7 +283,7 @@ The subject requires a minimum of 14 points. We target 18 points to provide a sa
 
 _(This section will be updated throughout development. Each team member must be able to explain their contributions during evaluation.)_
 
-- **mgodawat:** Project init, Docker setup, HTTPS configuration, architecture, JWT auth middleware, Socket.io infrastructure, complete real-time chat system (Phase 3: `send_message`/`receive_message`/`user_typing` events, cursor-based pagination, unread tracking), profile/validation bug fixes (Issue #64), Phase 4 multiplayer game infrastructure (matchmaking, game rooms, real-time moves, disconnection/reconnection handling, forfeit timers), `winningLine` DB persistence, `game_already_ended` state restoration, StrictMode race condition fix, Makefile Prisma rules, tournament frontend (list + bracket UI + registration), GitHub Issues management, PR reviews.
+- **mgodawat:** Project init, Docker setup, HTTPS configuration, architecture, Socket.io infrastructure.
 
 - **mamahtal:** Backend API throughout — Express routes, Prisma queries, auth endpoints, user management, friends API, message persistence, tournament backend (bracket generation, match progression), PR reviews and approvals.
 
