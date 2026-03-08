@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, useState } from "react";
+import { InputHTMLAttributes, useId, useState } from "react";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
@@ -12,6 +12,9 @@ export default function Input({
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
+  const generatedId = useId();
+  const inputId = props.id || generatedId;
+  const inputName = props.name || inputId;
 
   // Determine the actual input type to render
   // If it was "password", toggle between "text" and "password" based on state
@@ -19,9 +22,15 @@ export default function Input({
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      {label && <label className="text-sm text-pong-text/60">{label}</label>}
+      {label && (
+        <label htmlFor={inputId} className="text-sm text-pong-text/60">
+          {label}
+        </label>
+      )}
       <div className="relative">
         <input
+          id={inputId}
+          name={inputName}
           type={inputType}
           className={`w-full bg-white/40 border border-black/10 rounded-lg px-4 py-2 text-pong-text placeholder:text-pong-text/30 focus:outline-none focus:border-pong-accent ${
             isPassword ? "pr-10" : ""

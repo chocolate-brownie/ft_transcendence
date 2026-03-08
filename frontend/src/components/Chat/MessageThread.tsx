@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
-import { apiClient } from "../../lib/apiClient";
+import { apiClient, ApiError } from "../../lib/apiClient";
 import type { MessageWithSender, ChatHistoryResponse } from "../../types";
 import { MessageBubble } from "./MessageBubble";
 
@@ -73,7 +73,13 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
       })
-      .catch(() => setFetchError(true))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 403) {
+          setNotFriend(true);
+        } else {
+          setFetchError(true);
+        }
+      })
       .finally(() => setIsLoading(false));
   }, [otherUserId]);
 
@@ -165,11 +171,18 @@ export function MessageThread({ otherUserId, otherUsername }: MessageThreadProps
         setNotFriend(true);
       }
     };
+    const handleFriendRemoved = (payload: { userId: number; friendId: number }) => {
+      if (payload.userId === otherUserId || payload.friendId === otherUserId) {
+        setNotFriend(true);
+      }
+    };
     socket.on("message_error", handleMessageError);
+    socket.on("friend_removed", handleFriendRemoved);
     return () => {
       socket.off("message_error", handleMessageError);
+      socket.off("friend_removed", handleFriendRemoved);
     };
-  }, [socket]);
+  }, [socket, otherUserId]);
 
   // Scroll to bottom when the typing indicator appears
   useEffect(() => {

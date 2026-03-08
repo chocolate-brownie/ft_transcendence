@@ -16,6 +16,7 @@ import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
+import ActiveGameBanner from "./components/ActiveGameBanner";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -31,6 +32,7 @@ function HomeLayout() {
       </main>
       <Footer />
       <ChatWidget />
+      <ActiveGameBanner />
     </div>
   );
 }
@@ -52,6 +54,7 @@ function Layout() {
       </main>
       <Footer />
       <ChatWidget />
+      <ActiveGameBanner />
     </div>
   );
 }

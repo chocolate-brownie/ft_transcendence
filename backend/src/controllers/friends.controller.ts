@@ -132,6 +132,14 @@ export async function deleteFriend(req: AuthRequest, res: Response): Promise<voi
 
     await removeFriend(friendId, currentUserId);
 
+    // Notify both users so the frontend can clean up chat state in real time
+    const io: SocketIOServer | undefined = req.app.get("io");
+    if (io) {
+      const payload = { userId: currentUserId, friendId };
+      io.to(`user:${currentUserId}`).emit("friend_removed", payload);
+      io.to(`user:${friendId}`).emit("friend_removed", payload);
+    }
+
     res.status(204).send();
   } catch (error: any) {
     if (error.status) {

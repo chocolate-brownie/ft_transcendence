@@ -23,8 +23,9 @@ export default function TurnIndicator({
     textOverride !== ""
       ? "text-pong-text/60"
       : isYourTurn
-        ? "text-pong-secondary animate-pulse"
-        : "text-pong-text/50";
+        ? (currentPlayer === "X" ? "text-pong-accent" : "text-pong-secondary") +
+          " animate-pulse"
+        : "text-pong-text/60";
 
   return (
     <div
