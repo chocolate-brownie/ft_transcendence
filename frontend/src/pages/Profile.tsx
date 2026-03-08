@@ -469,9 +469,12 @@ export default function Profile() {
               {isMine && isEditing && (
                 <div className="mt-4 space-y-3 text-left">
                   <div>
-                    <p className="mb-1 block text-xs font-medium text-pong-text/60">
+                    <label
+                      htmlFor="display-name"
+                      className="mb-1 block text-xs font-medium text-pong-text/60"
+                    >
                       Display name
-                    </p>
+                    </label>
                     <input
                       id="display-name"
                       name="display-name"
