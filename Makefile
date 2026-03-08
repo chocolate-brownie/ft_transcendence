@@ -78,8 +78,13 @@ shell-db:			## Open psql in database container
 
 # ── Database ────────────────────────────────────────────────────────────────
 
-db-migrate:			## Run Prisma migrations
+db-migrate:			## Run Prisma migrations + regenerate client (container + host)
 	$(COMPOSE) exec backend npx prisma migrate dev
+	cd backend && npx prisma generate
+
+db-generate:		## Regenerate Prisma client (container + host)
+	$(COMPOSE) exec backend npx prisma generate
+	cd backend && npx prisma generate
 
 db-studio:			## Open Prisma Studio (DB browser)
 	$(COMPOSE) exec backend npx prisma studio
@@ -96,4 +101,4 @@ help:				## Show this help
 .PHONY: all build up down stop start clean fclean re \
         logs logs-back logs-front logs-db ps \
         shell-back shell-front shell-db \
-        db-migrate db-studio db-seed help
+        db-migrate db-generate db-studio db-seed help
