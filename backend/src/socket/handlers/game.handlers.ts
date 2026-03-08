@@ -21,6 +21,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       if (
         cellIndex === null ||
         cellIndex < 0 ||
+        cellIndex > 24 ||
         !Number.isInteger(cellIndex)
       ) {
         socket.emit("move_error", { error: "Invalid cell index", cellIndex });

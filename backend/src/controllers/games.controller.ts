@@ -97,7 +97,8 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
       cellIndex === undefined ||
       typeof cellIndex !== "number" ||
       !Number.isInteger(cellIndex) ||
-      cellIndex < 0
+      cellIndex < 0 ||
+      cellIndex > 24
     ) {
       return res.status(400).json({ error: "Invalid cell index" });
     }
