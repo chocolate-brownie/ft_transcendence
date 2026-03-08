@@ -102,7 +102,8 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         const line = findWinningLine(game.boardState);
         const winnerSymbol = line ? game.boardState[line[0]] : null;
         if (winnerSymbol === game.yourSymbol) gameResultText = "You won";
-        else if (winnerSymbol === "X" || winnerSymbol === "O") gameResultText = "You lost";
+        else if (winnerSymbol === "X" || winnerSymbol === "O")
+          gameResultText = "You lost";
       }
 
       return {
@@ -152,7 +153,12 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         isForfeit: false,
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
-        gameResultText: action.payload.result === "draw" ? "Draw game" : action.didWin ? "You won" : "You lost",
+        gameResultText:
+          action.payload.result === "draw"
+            ? "Draw game"
+            : action.didWin
+              ? "You won"
+              : "You lost",
         gameOverPayload: action.payload,
         showGameOverModal: true,
         opponentConnection: "online",

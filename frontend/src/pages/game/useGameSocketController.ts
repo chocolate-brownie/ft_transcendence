@@ -3,7 +3,11 @@ import type { Socket } from "socket.io-client";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { RoomPlayerSummary } from "../../types/game";
-import { buildRoomJoinedGame, resolveWinnerLoser, didPlayerWin } from "./gameEndedHelpers";
+import {
+  buildRoomJoinedGame,
+  resolveWinnerLoser,
+  didPlayerWin,
+} from "./gameEndedHelpers";
 import type { EndedGameData } from "./gameEndedHelpers";
 import type {
   GameForfeited,
@@ -92,7 +96,11 @@ export function useGameSocketController({
     // Si on a déjà un join pending ou complété pour ce gameId, skip
     if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
       if (import.meta.env.DEV) {
-        console.log("[Game] Join already pending/completed for game", gameId, "— skipping");
+        console.log(
+          "[Game] Join already pending/completed for game",
+          gameId,
+          "— skipping",
+        );
       }
       return;
     }
@@ -201,7 +209,8 @@ export function useGameSocketController({
       }
 
       const id = data?.gameId ?? gameId;
-      const { winnerPlayer, loserPlayer, winnerSymbol, loserSymbol } = resolveWinnerLoser(game);
+      const { winnerPlayer, loserPlayer, winnerSymbol, loserSymbol } =
+        resolveWinnerLoser(game);
 
       // Restore board state for any terminal status
       dispatch({ type: "ROOM_JOINED", game: buildRoomJoinedGame(game, game.status!) });
@@ -214,10 +223,18 @@ export function useGameSocketController({
             finalBoard: game.boardState,
             result: "win",
             winner: winnerPlayer
-              ? { id: winnerPlayer.id, username: winnerPlayer.username, symbol: winnerSymbol }
+              ? {
+                  id: winnerPlayer.id,
+                  username: winnerPlayer.username,
+                  symbol: winnerSymbol,
+                }
               : undefined,
             loser: loserPlayer
-              ? { id: loserPlayer.id, username: loserPlayer.username, symbol: loserSymbol }
+              ? {
+                  id: loserPlayer.id,
+                  username: loserPlayer.username,
+                  symbol: loserSymbol,
+                }
               : undefined,
           },
           didWin: didPlayerWin(game),
@@ -230,7 +247,9 @@ export function useGameSocketController({
         const duration =
           game.startedAt && game.finishedAt
             ? Math.round(
-                (new Date(game.finishedAt).getTime() - new Date(game.startedAt).getTime()) / 1000,
+                (new Date(game.finishedAt).getTime() -
+                  new Date(game.startedAt).getTime()) /
+                  1000,
               )
             : undefined;
         dispatch({
@@ -239,12 +258,22 @@ export function useGameSocketController({
             gameId: id,
             finalBoard: game.boardState,
             result: isDraw ? "draw" : "win",
-            winner: !isDraw && winnerPlayer
-              ? { id: winnerPlayer.id, username: winnerPlayer.username, symbol: winnerSymbol }
-              : undefined,
-            loser: !isDraw && loserPlayer
-              ? { id: loserPlayer.id, username: loserPlayer.username, symbol: loserSymbol }
-              : undefined,
+            winner:
+              !isDraw && winnerPlayer
+                ? {
+                    id: winnerPlayer.id,
+                    username: winnerPlayer.username,
+                    symbol: winnerSymbol,
+                  }
+                : undefined,
+            loser:
+              !isDraw && loserPlayer
+                ? {
+                    id: loserPlayer.id,
+                    username: loserPlayer.username,
+                    symbol: loserSymbol,
+                  }
+                : undefined,
             winningLine: game.winningLine ?? null,
             duration,
           },
@@ -443,7 +472,7 @@ export function useGameSocketController({
     if (!socket.connected) {
       dispatch({ type: "JOIN_CONNECTING" });
       socket.connect();
-      return ;
+      return;
     }
 
     startJoin();

@@ -16,7 +16,11 @@ export interface EndedGameData {
   winningLine?: number[] | null;
 }
 
-const DEFAULT_PLAYER: RoomPlayerSummary = { id: 0, username: "Player 1", avatarUrl: null };
+const DEFAULT_PLAYER: RoomPlayerSummary = {
+  id: 0,
+  username: "Player 1",
+  avatarUrl: null,
+};
 
 /** Build the game object expected by the ROOM_JOINED dispatch. */
 export function buildRoomJoinedGame(game: EndedGameData, status: ServerStatus) {
@@ -39,8 +43,10 @@ export function resolveWinnerLoser(game: EndedGameData) {
   return {
     winnerPlayer: isP1Winner ? game.player1 : game.player2,
     loserPlayer: isP1Winner ? game.player2 : game.player1,
-    winnerSymbol: (isP1Winner ? game.player1Symbol : game.player2Symbol) ?? ("X" as PlayerSymbol),
-    loserSymbol: (isP1Winner ? game.player2Symbol : game.player1Symbol) ?? ("O" as PlayerSymbol),
+    winnerSymbol:
+      (isP1Winner ? game.player1Symbol : game.player2Symbol) ?? ("X" as PlayerSymbol),
+    loserSymbol:
+      (isP1Winner ? game.player2Symbol : game.player1Symbol) ?? ("O" as PlayerSymbol),
   };
 }
 
