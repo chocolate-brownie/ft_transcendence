@@ -203,25 +203,36 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
       const gameId = assertGameId(payload?.gameId);
       const roomName = getGameRoomName(gameId);
 
-      // If the game is IN_PROGRESS, start the forfeit timer and notify the
-      // opponent BEFORE leaving the socket room (so socket.to still reaches
-      // them).  This covers the navigate-away case where the socket stays
-      // connected and the disconnect handler never fires.
-      const game = await prisma.game.findUnique({
-        where: { id: gameId },
-        select: {
-          status: true,
-          player1Id: true,
-          player2Id: true,
-          player1Symbol: true,
-          player2Symbol: true,
-          player1: { select: { id: true, username: true } },
-          player2: { select: { id: true, username: true } },
-        },
-      });
+      // Leave the room and clean up membership immediately.
+      await socket.leave(roomName);
+      gameRoomService.removePlayerFromRoom(gameId, user.id);
 
-      if (game && game.status === "IN_PROGRESS") {
-        const isPlayer1 = game.player1Id === user.id;
+      // Delay the forfeit timer start to distinguish page refresh (socket
+      // disconnects within ~1s) from SPA navigate-away (socket stays alive).
+      // If the socket disconnects, the disconnect handler starts the timer
+      // instead — no duplicate because it checks alreadyRunning.
+      const LEAVE_GRACE_MS = 1500;
+      const capturedUser = { id: user.id, username: user.username };
+
+      setTimeout(() => void (async () => {
+        if (!socket.connected) return; // refresh or close — disconnect handler covers it
+
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: {
+            status: true,
+            player1Id: true,
+            player2Id: true,
+            player1Symbol: true,
+            player2Symbol: true,
+            player1: { select: { id: true, username: true } },
+            player2: { select: { id: true, username: true } },
+          },
+        });
+
+        if (!game || game.status !== "IN_PROGRESS") return;
+
+        const isPlayer1 = game.player1Id === capturedUser.id;
         const opponent = isPlayer1 ? game.player2 : game.player1;
         const disconnectedSymbol = isPlayer1 ? game.player1Symbol : game.player2Symbol;
         const opponentSymbol = isPlayer1 ? game.player2Symbol : game.player1Symbol;
@@ -230,16 +241,16 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
           await disconnectionService.startForfeitTimer(
             io,
             gameId,
-            { id: user.id, username: user.username, symbol: disconnectedSymbol },
+            { id: capturedUser.id, username: capturedUser.username, symbol: disconnectedSymbol },
             { id: opponent.id, username: opponent.username, symbol: opponentSymbol },
             roomName,
           );
 
-          const remainingWait = disconnectionService.getRemainingTime(gameId, user.id);
-          socket.to(roomName).emit("opponent_disconnected", {
+          const remainingWait = disconnectionService.getRemainingTime(gameId, capturedUser.id);
+          io.to(roomName).emit("opponent_disconnected", {
             gameId,
-            userId: user.id,
-            username: user.username,
+            userId: capturedUser.id,
+            username: capturedUser.username,
             waitTime: remainingWait > 0 ? remainingWait : 30,
             message: "Opponent disconnected, waiting for reconnection...",
           });
@@ -248,10 +259,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
         // Tell the leaving player they still have an active game so the
         // ActiveGameBanner appears and they can rejoin.
         socket.emit("active_game", { gameId });
-      }
-
-      await socket.leave(roomName);
-      gameRoomService.removePlayerFromRoom(gameId, user.id);
+      })(), LEAVE_GRACE_MS);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to leave room";
       socket.emit("error", { message });
