@@ -45,8 +45,11 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
 
       if (!opponent) continue;
 
-      // Start (or resume) forfeit timer — must happen before emitting so
-      // getRemainingTime reflects the correct value.
+      // If leave_game_room already started a timer for this player, skip the
+      // duplicate emit — just resume the timer (startForfeitTimer preserves
+      // the original startedAt).
+      const alreadyRunning = disconnectionService.getRemainingTime(game.id, user.id) > 0;
+
       await disconnectionService.startForfeitTimer(
         io,
         game.id,
@@ -55,15 +58,17 @@ export async function handleGameDisconnection(io: Server, socket: Socket) {
         roomName,
       );
 
-      // Notify the opponent with the *actual* remaining time (not always 30)
-      const remainingWait = disconnectionService.getRemainingTime(game.id, user.id);
-      socket.to(roomName).emit("opponent_disconnected", {
-        gameId: game.id,
-        userId: user.id,
-        username: user.username,
-        waitTime: remainingWait > 0 ? remainingWait : 30,
-        message: "Opponent disconnected, waiting for reconnection...",
-      });
+      // Only emit opponent_disconnected if leave_game_room didn't already
+      if (!alreadyRunning) {
+        const remainingWait = disconnectionService.getRemainingTime(game.id, user.id);
+        socket.to(roomName).emit("opponent_disconnected", {
+          gameId: game.id,
+          userId: user.id,
+          username: user.username,
+          waitTime: remainingWait > 0 ? remainingWait : 30,
+          message: "Opponent disconnected, waiting for reconnection...",
+        });
+      }
     }
   } catch (error) {
     console.error("[Disconnect Handler] Error:", error);
