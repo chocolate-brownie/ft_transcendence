@@ -351,7 +351,7 @@ describeDb("Socket Game Rooms", () => {
     }
   });
 
-  it("cleans room membership when leaving an in-progress game and emits opponent_disconnected on socket disconnect", async () => {
+  it("cleans room membership on leave_game_room and emits opponent_disconnected on socket disconnect", async () => {
     const game = await prisma.game.create({
       data: {
         player1Id: player1.id,
@@ -381,13 +381,47 @@ describeDb("Socket Game Rooms", () => {
         waitForEvent(p2, "room_joined"),
       ]);
 
-      // leave_game_room only cleans up room membership
+      // leave_game_room only cleans up room membership (no opponent_disconnected)
       p1.emit("leave_game_room", { gameId: game.id });
-      // Wait briefly for the leave to be processed
       await new Promise((r) => setTimeout(r, 100));
       expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
+    } finally {
+      p1.close();
+      p2.close();
+    }
+  });
 
-      // opponent_disconnected fires when the socket actually disconnects
+  it("emits opponent_disconnected when a player socket disconnects during an in-progress game", async () => {
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+
+      p1.emit("join_game_room", { gameId: game.id });
+      p2.emit("join_game_room", { gameId: game.id });
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
+
+      // Simulate browser tab close — disconnect without leave_game_room
       const disconnectedPromise = waitForEvent<{
         gameId: number;
         userId: number;
@@ -395,7 +429,7 @@ describeDb("Socket Game Rooms", () => {
         waitTime: number;
       }>(p2, "opponent_disconnected");
 
-      p1.close();
+      p1.disconnect();
       const payload = await disconnectedPromise;
 
       expect(payload.gameId).toBe(game.id);
