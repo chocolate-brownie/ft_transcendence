@@ -205,7 +205,7 @@ export default function Game() {
         <p className="animate-pulse text-sm text-pong-text/60">Loading game…</p>
       ) : null}
 
-      {gameState.serverStatus === "WAITING" ? (
+      {!gameState.error && gameState.serverStatus === "WAITING" ? (
         <div className="w-full max-w-xl rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
           <p className="text-base font-semibold text-pong-text">{waitingText}</p>
           <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
@@ -283,11 +283,13 @@ export default function Game() {
         isYourTurn={isYourTurn}
         className="-mb-6"
         textOverride={
-          gameState.serverStatus === "WAITING"
-            ? waitingText
-            : isGameOver
-              ? gameOverText
-              : undefined
+          gameState.error
+            ? "Reconnecting…"
+            : gameState.serverStatus === "WAITING"
+              ? waitingText
+              : isGameOver
+                ? gameOverText
+                : undefined
         }
       />
 

@@ -77,6 +77,28 @@ export function useGameSocketController({
     }
   }, []);
 
+  const resetJoinTracking = useCallback(() => {
+    activeRoomIdRef.current = null;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
+    joinState.joinedGameId = null;
+    joinState.pendingGameId = null;
+  }, []);
+  const startJoin = useCallback(() => {
+    if (!socket || !gameId) return;
+    // Annuler tout leave en attente
+    cancelPendingLeave();
+    // Si on a déjà un join pending ou complété pour ce gameId, skip
+    if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
+      if (import.meta.env.DEV) {
+        console.log("[Game] Join already pending/completed for game", gameId, "— skipping");
+      }
+      return;
+    }
+    joinState.pendingGameId = gameId;
+    dispatch({ type: "JOIN_START" });
+    socket.emit("join_game_room", { gameId });
+  }, [socket, gameId, dispatch, cancelPendingLeave]);
+
   // ── Leave with debounce ──
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
@@ -105,6 +127,10 @@ export function useGameSocketController({
   // ── Event listeners ──
   useEffect(() => {
     if (!socket) return;
+
+    function onConnect() {
+      startJoin();
+    }
 
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
@@ -151,6 +177,7 @@ export function useGameSocketController({
     }
 
     function onDisconnect() {
+      resetJoinTracking();
       dispatch({
         type: "SOCKET_DISCONNECT",
         message: "Connection lost. Please check your network and try again.",
@@ -238,6 +265,7 @@ export function useGameSocketController({
       void navigate("/lobby");
     }
 
+    socket.on("connect", onConnect);
     socket.on("room_joined", onRoomJoined);
     socket.on("game_update", onGameUpdate);
     socket.on("game_over", onGameOver);
@@ -248,6 +276,7 @@ export function useGameSocketController({
     socket.on("game_already_ended", onGameAlreadyEnded);
 
     return () => {
+      socket.off("connect", onConnect);
       socket.off("room_joined", onRoomJoined);
       socket.off("game_update", onGameUpdate);
       socket.off("game_over", onGameOver);
@@ -257,7 +286,7 @@ export function useGameSocketController({
       socket.off("rematch_received", onRematchReceived);
       socket.off("game_already_ended", onGameAlreadyEnded);
     };
-  }, [socket, gameId, navigate, dispatch, stateRef]);
+  }, [socket, gameId, navigate, dispatch, stateRef, startJoin, resetJoinTracking]);
 
   // ── Opponent events ──
   useEffect(() => {
@@ -423,40 +452,14 @@ export function useGameSocketController({
       return;
     }
 
-    function startJoin() {
-      if (!socket) return;
-
-      // Annuler tout leave en attente
-      cancelPendingLeave();
-
-      // ══ DÉDUPLICATION CLÉ ══
-      // Si on a déjà un join pending ou complété pour ce gameId, skip
-      if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
-        if (import.meta.env.DEV)
-          console.log(
-            "[Game] Join already pending/completed for game",
-            gameId,
-            "— skipping",
-          );
-        return;
-      }
-
-      joinState.pendingGameId = gameId;
-      dispatch({ type: "JOIN_START" });
-      socket.emit("join_game_room", { gameId });
-    }
-
     if (!socket.connected) {
       dispatch({ type: "JOIN_CONNECTING" });
-      socket.once("connect", startJoin);
       socket.connect();
-      return () => {
-        socket.off("connect", startJoin);
-      };
+      return ;
     }
 
     startJoin();
-  }, [socket, gameId, joinRevision, dispatch, cancelPendingLeave]);
+  }, [socket, gameId, joinRevision, dispatch, startJoin]);
 
   // ── Cleanup on unmount ──
   useEffect(() => {
