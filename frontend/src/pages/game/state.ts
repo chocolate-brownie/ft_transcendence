@@ -125,9 +125,10 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         player1Symbol: game.player1Symbol,
         player2Symbol: game.player2Symbol,
         startedAtMs: game.startedAt ? new Date(game.startedAt).getTime() : null,
-        opponentConnection: "online",
-        disconnectCountdown: null,
-        disconnectedOpponentName: null,
+        // Restore disconnect warning if the opponent has an active forfeit timer
+        opponentConnection: game.opponentDisconnected ? "disconnected" : "online",
+        disconnectCountdown: game.opponentDisconnected?.remainingTime ?? null,
+        disconnectedOpponentName: game.opponentDisconnected?.username ?? null,
       };
     }
     case "GAME_UPDATE":

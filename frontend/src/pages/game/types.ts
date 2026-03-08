@@ -27,6 +27,10 @@ export type RoomJoined = {
     player1Symbol: PlayerSymbol;
     player2Symbol: PlayerSymbol;
     startedAt: string | null;
+    opponentDisconnected?: {
+      username: string;
+      remainingTime: number;
+    };
   };
 };
 
