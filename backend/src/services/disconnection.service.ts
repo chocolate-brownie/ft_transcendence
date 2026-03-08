@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import prisma from "../lib/prisma";
+import { gameRoomService } from "../socket/services/gameRoom.service";
 
 interface ForfeitTimer {
   gameId: number;
@@ -12,9 +13,65 @@ class DisconnectionService {
   private forfeitTimers: Map<string, ForfeitTimer> = new Map();
   private readonly FORFEIT_DELAY = 30000; // 30 seconds
 
-  // Start (or resume) the forfeit countdown for a disconnected player.
-  // If a timer already existed for this key we use the *original* startedAt
-  // so that reconnecting then disconnecting again does NOT reset the 30s window.
+  /* #255, #248: Helper function: shared guard — returns the game only if
+   * still IN_PROGRESS */
+  private async getInProgressGameOrNull(gameId: number) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!game || game.status !== "IN_PROGRESS") {
+      return null;
+    }
+
+    return game;
+  }
+
+  /* #248: Helper function: both players disconnected — abandon with no winner */
+  private async handleBothDisconnected(io: Server, gameId: number, roomName: string) {
+    try {
+      await prisma.game.update({
+        where: { id: gameId },
+        data: {
+          status: "ABANDONED",
+          winnerId: null,
+          finishedAt: new Date(),
+        },
+      });
+
+      const payload = {
+        gameId,
+        winner: null,
+        reason: "Both players disconnected",
+        timestamp: new Date().toISOString(),
+      };
+
+      io.to(roomName).emit("game_abandoned", payload);
+
+      console.log(
+        `[Game Over] Game ${gameId} abandoned. Reason: both players disconnected`,
+      );
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2025"
+      ) {
+        return;
+      }
+
+      console.error(`[Error] Failed to abandon game ${gameId}:`, error);
+    }
+  }
+
+  /* Start (or resume) the forfeit countdown for a disconnected player.
+     If a timer already existed for this key we use the *original* startedAt
+     so that reconnecting then disconnecting again does NOT reset the 30s window */
   async startForfeitTimer(
     io: Server,
     gameId: number,
@@ -44,7 +101,6 @@ class DisconnectionService {
 
     const timeout = setTimeout(() => {
       void this.handleForfeit(io, gameId, disconnectedUser, opponent, roomName);
-      this.forfeitTimers.delete(key);
     }, remaining);
     timeout.unref?.();
 
@@ -104,6 +160,20 @@ class DisconnectionService {
     roomName: string,
   ) {
     try {
+      /* --------- #255, #248 │ FIX: Centralized disconnect resolution ------*/
+      const game = await this.getInProgressGameOrNull(gameId);
+      if (!game) return;
+      this.cancelAllTimersForGame(gameId);
+      /* timer callback no longer tries to manage duplicate resolution on its own
+         That should stop the double forfeit. */
+      const playersInRoom = gameRoomService.getPlayersInRoom(gameId);
+      const winnerInRoom = playersInRoom.some((p) => p.userId === winner.id);
+      if (!winnerInRoom) {
+        await this.handleBothDisconnected(io, gameId, roomName);
+        return;
+      }
+      /* --------- #255, #248 │ FIX END -------------------- -----------*/
+
       // 1. Mise à jour de la base de données
       await prisma.game.update({
         where: { id: gameId },
