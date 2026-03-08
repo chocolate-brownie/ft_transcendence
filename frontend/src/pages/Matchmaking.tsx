@@ -35,6 +35,7 @@ export default function Matchmaking() {
 
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   function clearRedirectTimer() {
     if (!redirectTimerRef.current) return;
@@ -48,35 +49,38 @@ export default function Matchmaking() {
   }
 
   function handleRetry() {
-    clearRedirectTimer();
-    startedRef.current = false;
+    if (!navigator.onLine) {
+      setError("You are offline. Reconnect to the internet then try again.");
+      return;
+    }
+    if (!socket) {
+      setStatus("connecting");
+      setError("Still connecting to server. Please try again in a moment.");
+      return;
+    }
+    if (!socket.connected) {
+      socket.connect();
+      setStatus("connecting");
+      setError("Reconnecting to server. Please try again in a moment.");
+      return;
+    }
+    startedRef.current = true;
     setQueuePosition(null);
     setMatchData(null);
     setError(null);
-
-    if (!socket) {
-      setStatus("connecting");
-      return;
-    }
-
-    if (!socket.connected) {
-      setStatus("connecting");
-      socket.connect();
-      return;
-    }
-
+    clearRedirectTimer();
     setStatus("searching");
-    startedRef.current = true;
     emitFindGame();
   }
 
   function leaveMatchmaking() {
+    if (status === "found") return;
     clearRedirectTimer();
-    startedRef.current = false;
-
     if (socket) {
+      cancelledRef.current = true;
       socket.emit("cancel_search");
     }
+    void navigate("/lobby");
   }
 
   useEffect(() => {
@@ -173,11 +177,12 @@ export default function Matchmaking() {
 
   useEffect(() => {
     return () => {
-      if (socket && status === "searching") {
+      if (socket && status === "searching" && !cancelledRef.current) {
         socket.emit("cancel_search");
       }
     };
   }, [socket, status]);
+
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center justify-center px-4">

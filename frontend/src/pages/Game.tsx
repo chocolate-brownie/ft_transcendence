@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import type { BoardSize, GameOverPlayerSummary } from "../types/game";
 import { useSocket } from "../context/SocketContext";
-import { ApiError } from "../lib/apiClient";
-import { gamesService } from "../services/games.service";
 
 import Button from "../components/Button";
 import GameOverModal from "../components/Game/GameOverModal";
@@ -39,13 +37,27 @@ export default function Game() {
     stateRef,
   });
 
+  // Emit leave_game_room on tab close / refresh so the server cleans up
+  // immediately rather than waiting for the socket disconnect timeout.
+  useEffect(() => {
+    function handleBeforeUnload() {
+      if (socket && gameId) {
+        socket.emit("leave_game_room", { gameId });
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [socket, gameId]);
+
   useEffect(() => {
     if (gameState.startedAtMs === null || gameState.serverStatus !== "IN_PROGRESS") {
       return;
     }
 
     const tick = () => {
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - gameState.startedAtMs!) / 1000)));
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - gameState.startedAtMs!) / 1000)),
+      );
     };
 
     tick();
@@ -55,7 +67,8 @@ export default function Game() {
 
   useEffect(() => {
     if (gameState.opponentConnection !== "disconnected") return;
-    if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0) return;
+    if (gameState.disconnectCountdown === null || gameState.disconnectCountdown <= 0)
+      return;
 
     const timer = window.setTimeout(() => {
       dispatch({ type: "DISCONNECT_COUNTDOWN_TICK" });
@@ -63,6 +76,18 @@ export default function Game() {
 
     return () => window.clearTimeout(timer);
   }, [gameState.opponentConnection, gameState.disconnectCountdown]);
+
+  useEffect(() => {
+    if (!gameState.reconnectedOpponentName) return;
+
+    const timeoutId = window.setTimeout(() => {
+      dispatch({ type: "DISMISS_RECONNECTED_NOTICE" });
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [gameState.reconnectedOpponentName, dispatch]);
 
   function handleCellClick(index: number) {
     if (gameState.board[index] !== null) return;
@@ -81,39 +106,9 @@ export default function Game() {
     void navigate("/lobby");
   }
 
-  function goHome() {
+  function handlePlayAgain() {
     emitLeaveRoomOnce();
-    void navigate("/");
-  }
-
-  async function handlePlayAgain() {
-    if (!gameState.gameOverPayload || gameState.isCreatingRematch) return;
-
-    const opponentId =
-      gameState.gameOverPayload.winner?.symbol === gameState.yourSymbol
-        ? gameState.gameOverPayload.loser?.id
-        : gameState.gameOverPayload.winner?.id;
-
-    if (!opponentId) {
-      dispatch({ type: "REMATCH_OPPONENT_MISSING" });
-      return;
-    }
-
-    dispatch({ type: "REMATCH_REQUEST_START" });
-
-    try {
-      const newGame = await gamesService.createGame({
-        player2Id: opponentId,
-        sourceGameId: gameId,
-      });
-
-      socket?.emit("send_rematch", { gameId, newGameId: newGame.id });
-      void navigate(`/game/${newGame.id}`);
-    } catch (err: unknown) {
-      const message =
-        err instanceof ApiError ? err.message : "Failed to create rematch. Please retry.";
-      dispatch({ type: "REMATCH_REQUEST_FAILED", message });
-    }
+    void navigate("/matchmaking");
   }
 
   function handleRetry() {
@@ -172,15 +167,20 @@ export default function Game() {
   const moveCount = gameState.board.filter((cell) => cell !== null).length;
   const totalCells = boardSize * boardSize;
   const gameClock = gameState.gameOverPayload?.duration ?? elapsedSeconds;
-  const isGameOver = gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW";
+  const isGameOver =
+    gameState.serverStatus === "FINISHED" ||
+    gameState.serverStatus === "DRAW" ||
+    gameState.serverStatus === "ABANDONED";
   const winnerSymbol =
     gameState.gameOverPayload?.winner?.symbol ??
     (isGameOver && winningLine ? gameState.board[winningLine[0]] : null);
-  const waitingText = gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
-  const gameOverText = gameState.gameResultText ? `Game over: ${gameState.gameResultText}` : "Game over";
-  const player1Score = gameState.gameOverPayload?.winner?.symbol === gameState.player1Symbol ? 1 : 0;
-  const player2Score = gameState.gameOverPayload?.winner?.symbol === gameState.player2Symbol ? 1 : 0;
-
+  const waitingText =
+    gameId > 0 ? `Waiting for opponent in game #${gameId}…` : "Waiting for opponent…";
+  const gameOverText = gameState.isForfeit
+    ? `Game over: ${gameState.gameResultText ?? "Forfeit"} (forfeit)`
+    : gameState.gameResultText
+      ? `Game over: ${gameState.gameResultText}`
+      : "Game over";
   return (
     <div className="flex flex-col items-center gap-6">
       <h1 className="text-2xl font-bold text-pong-text -mb-4">
@@ -208,7 +208,7 @@ export default function Game() {
         <p className="animate-pulse text-sm text-pong-text/60">Loading game…</p>
       ) : null}
 
-      {gameState.serverStatus === "WAITING" ? (
+      {!gameState.error && gameState.serverStatus === "WAITING" ? (
         <div className="w-full max-w-xl rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
           <p className="text-base font-semibold text-pong-text">{waitingText}</p>
           <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
@@ -230,7 +230,20 @@ export default function Game() {
           className="w-full max-w-xl rounded-lg border border-carrot-orange-400 bg-carrot-orange-100 px-5 py-3 text-pong-text"
           data-testid="opponent-disconnected-banner"
         >
-          <p className="text-sm font-semibold text-carrot-orange-700">
+          <p className="flex items-center gap-2 text-sm font-semibold text-carrot-orange-700">
+            <svg
+              className="h-4 w-4 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+              />
+            </svg>
             {gameState.disconnectedOpponentName ?? "Opponent"} disconnected.
           </p>
           <p className="text-xs text-pong-text/80">
@@ -243,17 +256,43 @@ export default function Game() {
         </div>
       ) : null}
 
+      {gameState.reconnectedOpponentName ? (
+        <div
+          className="w-full max-w-xl rounded-lg border border-emerald-300/50 bg-emerald-400/10 px-5 py-3 text-pong-text"
+          data-testid="opponent-reconnected-banner"
+        >
+          <p className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
+            <svg
+              className="h-4 w-4 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            {gameState.reconnectedOpponentName} reconnected.
+          </p>
+        </div>
+      ) : null}
+
       <TurnIndicator
         currentPlayer={gameState.currentTurn}
         playerSymbol={gameState.yourSymbol}
         isYourTurn={isYourTurn}
         className="-mb-6"
         textOverride={
-          gameState.serverStatus === "WAITING"
-            ? waitingText
-            : gameState.serverStatus === "FINISHED" || gameState.serverStatus === "DRAW"
-              ? gameOverText
-              : undefined
+          gameState.error
+            ? "Reconnecting…"
+            : gameState.serverStatus === "WAITING"
+              ? waitingText
+              : isGameOver
+                ? gameOverText
+                : undefined
         }
       />
 
@@ -264,8 +303,6 @@ export default function Game() {
         player2Symbol={gameState.player2Symbol}
         currentTurn={gameState.currentTurn}
         serverStatus={gameState.serverStatus}
-        player1Score={player1Score}
-        player2Score={player2Score}
       />
 
       <div className="flex items-center gap-3 text-xs text-pong-text/60">
@@ -281,22 +318,30 @@ export default function Game() {
           className={`rounded-lg border px-5 py-3 text-center ${
             gameState.serverStatus === "DRAW"
               ? "border-slate-300/40 bg-slate-300/10 text-pong-text/90"
-              : gameState.gameResultText === "You won"
-                ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
-                : "border-red-300/50 bg-red-400/10 text-red-300"
+              : gameState.isForfeit
+                ? "border-amber-300/50 bg-amber-400/10 text-amber-300"
+                : gameState.gameResultText === "You won"
+                  ? "border-emerald-300/50 bg-emerald-400/10 text-emerald-300"
+                  : "border-red-300/50 bg-red-400/10 text-red-300"
           }`}
         >
           <p className="text-2xl font-bold">
             {gameState.serverStatus === "DRAW"
               ? "It's a Draw! 🤝"
-              : gameState.gameResultText === "You won"
-                ? "You Won! 🎉"
-                : "You Lost 😢"}
+              : gameState.isForfeit
+                ? gameState.gameResultText === "You won"
+                  ? "⚠️ Won by Forfeit"
+                  : "⚠️ Lost by Forfeit"
+                : gameState.gameResultText === "You won"
+                  ? "You Won! 🎉"
+                  : "You Lost 😢"}
           </p>
         </div>
       ) : null}
 
-      {gameState.moveError ? <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p> : null}
+      {gameState.moveError ? (
+        <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p>
+      ) : null}
       {gameState.isSendingMove ? (
         <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p>
       ) : null}
@@ -314,7 +359,10 @@ export default function Game() {
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button variant="secondary" onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}>
+        <Button
+          variant="secondary"
+          onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
+        >
           View Result
         </Button>
       ) : null}
@@ -327,17 +375,18 @@ export default function Game() {
         opponent={opponentSummary}
         mySymbol={gameState.yourSymbol}
         totalMoves={
-          gameState.gameOverPayload?.totalMoves ?? gameState.board.filter((cell) => cell !== null).length
+          gameState.gameOverPayload?.totalMoves ??
+          gameState.board.filter((cell) => cell !== null).length
         }
-        durationSeconds={gameState.gameOverPayload?.duration}
+        durationSeconds={gameClock}
         opponentAvatarUrl={opponentAvatarUrl}
+        isForfeit={gameState.isForfeit}
         rematchLoading={gameState.isCreatingRematch}
         rematchError={gameState.rematchError}
         onPlayAgain={() => {
           void handlePlayAgain();
         }}
         onGoLobby={backToLobby}
-        onGoHome={goHome}
         onClose={() => dispatch({ type: "CLOSE_GAME_OVER_MODAL" })}
       />
     </div>

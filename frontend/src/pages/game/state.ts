@@ -17,6 +17,7 @@ export type GameViewState = {
   showGameOverModal: boolean;
   isCreatingRematch: boolean;
   rematchError: string | null;
+  isForfeit: boolean;
   player1: RoomPlayerSummary | null;
   player2: RoomPlayerSummary | null;
   player1Symbol: PlayerSymbol;
@@ -25,6 +26,7 @@ export type GameViewState = {
   opponentConnection: "online" | "disconnected";
   disconnectCountdown: number | null;
   disconnectedOpponentName: string | null;
+  reconnectedOpponentName: string | null;
 };
 
 export type GameAction =
@@ -38,7 +40,8 @@ export type GameAction =
       fallbackToPlayer2: boolean;
     }
   | { type: "OPPONENT_DISCONNECTED"; username: string; waitTime: number }
-  | { type: "OPPONENT_RECONNECTED" }
+  | { type: "OPPONENT_RECONNECTED"; username?: string }
+  | { type: "DISMISS_RECONNECTED_NOTICE" }
   | { type: "GAME_FORFEITED"; payload: GameOver; didWin: boolean }
   | { type: "MOVE_ERROR"; error: string }
   | { type: "SOCKET_ERROR"; message: string; asMoveError: boolean }
@@ -58,8 +61,7 @@ export type GameAction =
   | { type: "RETRY_READY" }
   | { type: "OPEN_GAME_OVER_MODAL" }
   | { type: "CLOSE_GAME_OVER_MODAL" }
-  | { type: "RESET_FOR_ROUTE_CHANGE" }
-  ;
+  | { type: "RESET_FOR_ROUTE_CHANGE" };
 
 export const initialGameState: GameViewState = {
   status: "idle",
@@ -76,6 +78,7 @@ export const initialGameState: GameViewState = {
   showGameOverModal: false,
   isCreatingRematch: false,
   rematchError: null,
+  isForfeit: false,
   player1: null,
   player2: null,
   player1Symbol: "X",
@@ -84,6 +87,7 @@ export const initialGameState: GameViewState = {
   opponentConnection: "online",
   disconnectCountdown: null,
   disconnectedOpponentName: null,
+  reconnectedOpponentName: null,
 };
 
 export function gameReducer(state: GameViewState, action: GameAction): GameViewState {
@@ -98,7 +102,8 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         const line = findWinningLine(game.boardState);
         const winnerSymbol = line ? game.boardState[line[0]] : null;
         if (winnerSymbol === game.yourSymbol) gameResultText = "You won";
-        else if (winnerSymbol === "X" || winnerSymbol === "O") gameResultText = "You lost";
+        else if (winnerSymbol === "X" || winnerSymbol === "O")
+          gameResultText = "You lost";
       }
 
       return {
@@ -117,16 +122,20 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         showGameOverModal: false,
         isCreatingRematch: false,
         rematchError: null,
+        isForfeit: false,
         player1: game.player1,
         player2: game.player2,
         player1Symbol: game.player1Symbol,
         player2Symbol: game.player2Symbol,
         startedAtMs: game.startedAt ? new Date(game.startedAt).getTime() : null,
-        opponentConnection: "online",
-        disconnectCountdown: null,
-        disconnectedOpponentName: null,
+        // Restore disconnect warning if the opponent has an active forfeit timer
+        opponentConnection: game.opponentDisconnected ? "disconnected" : "online",
+        disconnectCountdown: game.opponentDisconnected?.remainingTime ?? null,
+        disconnectedOpponentName: game.opponentDisconnected?.username ?? null,
+        reconnectedOpponentName: null,
       };
     }
+
     case "GAME_UPDATE":
       return {
         ...state,
@@ -137,49 +146,39 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         isSendingMove: false,
         moveError: null,
       };
+
     case "GAME_OVER":
       return {
         ...state,
+        isForfeit: false,
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
         gameResultText:
-          action.payload.result === "draw" ? "Draw game" : action.didWin ? "You won" : "You lost",
-        serverWinningLine: action.payload.winningLine ?? null,
+          action.payload.result === "draw"
+            ? "Draw game"
+            : action.didWin
+              ? "You won"
+              : "You lost",
         gameOverPayload: action.payload,
         showGameOverModal: true,
-        rematchError: null,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,
+        reconnectedOpponentName: null,
         isSendingMove: false,
         moveError: null,
       };
+
     case "OPPONENT_JOINED": {
       const { opponent, role, fallbackToPlayer2 } = action;
-      const knownPlayer1 = state.player1;
-      const knownPlayer2 = state.player2;
 
-      if (knownPlayer1?.id === opponent.id) {
-        return {
-          ...state,
-          player1: {
-            ...knownPlayer1,
-            ...opponent,
-            avatarUrl: opponent.avatarUrl ?? knownPlayer1.avatarUrl,
-          },
-          opponentConnection: "online",
-          disconnectCountdown: null,
-          disconnectedOpponentName: null,
-        };
-      }
-
-      if (knownPlayer2?.id === opponent.id) {
+      if (role === "player2" || (!role && fallbackToPlayer2)) {
+        const knownPlayer2 = state.player2;
         return {
           ...state,
           player2: {
-            ...knownPlayer2,
             ...opponent,
-            avatarUrl: opponent.avatarUrl ?? knownPlayer2.avatarUrl,
+            avatarUrl: opponent.avatarUrl ?? knownPlayer2?.avatarUrl ?? null,
           },
           opponentConnection: "online",
           disconnectCountdown: null,
@@ -205,36 +204,51 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         disconnectedOpponentName: null,
       };
     }
+
     case "OPPONENT_DISCONNECTED":
       return {
         ...state,
         opponentConnection: "disconnected",
         disconnectedOpponentName: action.username,
         disconnectCountdown: action.waitTime,
+        reconnectedOpponentName: null,
       };
+
     case "OPPONENT_RECONNECTED":
       return {
         ...state,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,
+        reconnectedOpponentName: action.username ?? "Opponent",
       };
+
+    case "DISMISS_RECONNECTED_NOTICE":
+      return {
+        ...state,
+        reconnectedOpponentName: null,
+      };
+
     case "GAME_FORFEITED":
       return {
         ...state,
+        isForfeit: true,
         board: action.payload.finalBoard,
-        serverStatus: "FINISHED",
+        serverStatus: "ABANDONED",
         gameResultText: action.didWin ? "You won" : "You lost",
         gameOverPayload: action.payload,
         showGameOverModal: true,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,
+        reconnectedOpponentName: null,
         isSendingMove: false,
         moveError: null,
       };
+
     case "MOVE_ERROR":
       return { ...state, isSendingMove: false, moveError: action.error };
+
     case "SOCKET_ERROR":
       if (action.asMoveError) {
         return { ...state, isSendingMove: false, moveError: action.message };
@@ -246,6 +260,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         moveError: null,
         error: action.message,
       };
+
     case "SOCKET_DISCONNECT":
       return {
         ...state,
@@ -254,8 +269,10 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         moveError: null,
         error: action.message,
       };
+
     case "JOIN_CONNECTING":
       return { ...state, status: "connecting" };
+
     case "JOIN_START":
       return {
         ...state,
@@ -264,10 +281,13 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         moveError: null,
         isSendingMove: false,
       };
+
     case "INVALID_GAME_ID":
       return { ...state, status: "idle", error: action.message };
+
     case "BEGIN_MOVE_SEND":
       return { ...state, isSendingMove: true, moveError: null };
+
     case "DISCONNECT_COUNTDOWN_TICK":
       return {
         ...state,
@@ -276,29 +296,36 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
             ? state.disconnectCountdown - 1
             : 0,
       };
+
     case "REMATCH_RECEIVED":
       return { ...state, isCreatingRematch: true, rematchError: null };
+
     case "REMATCH_REQUEST_START":
       return { ...state, isCreatingRematch: true, rematchError: null };
+
     case "REMATCH_REQUEST_FAILED":
       return { ...state, rematchError: action.message, isCreatingRematch: false };
+
     case "REMATCH_OPPONENT_MISSING":
       return {
         ...state,
         rematchError: "Unable to identify opponent for rematch.",
         isCreatingRematch: false,
       };
+
     case "RETRY_OFFLINE":
       return {
         ...state,
         error: "You are offline. Reconnect to the internet and try again.",
       };
+
     case "RETRY_SOCKET_UNAVAILABLE":
       return {
         ...state,
         status: "connecting",
         error: "Still connecting to server. Please try again in a moment.",
       };
+
     case "RETRY_RESET":
       return {
         ...state,
@@ -306,14 +333,22 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         moveError: null,
         isSendingMove: false,
       };
+
     case "RETRY_READY":
       return { ...state, status: "idle" };
+
     case "OPEN_GAME_OVER_MODAL":
       return { ...state, showGameOverModal: true };
+
     case "CLOSE_GAME_OVER_MODAL":
       return { ...state, showGameOverModal: false };
+
     case "RESET_FOR_ROUTE_CHANGE":
+      // Don't reset if game results are already showing — prevents a StrictMode
+      // race where this action fires after game_already_ended has set the state.
+      if (state.showGameOverModal) return state;
       return { ...state, status: "idle" };
+
     default:
       return state;
   }

@@ -351,7 +351,7 @@ describeDb("Socket Game Rooms", () => {
     }
   });
 
-  it("emits opponent_left and cleans room membership on disconnect", async () => {
+  it("cleans room membership on leave_game_room and emits opponent_disconnected on socket disconnect", async () => {
     const game = await prisma.game.create({
       data: {
         player1Id: player1.id,
@@ -381,16 +381,57 @@ describeDb("Socket Game Rooms", () => {
         waitForEvent(p2, "room_joined"),
       ]);
 
-      const opponentLeftPromise = waitForEvent<{ userId: number }>(p2, "opponent_left");
+      // leave_game_room only cleans up room membership (no opponent_disconnected)
       p1.emit("leave_game_room", { gameId: game.id });
-      const leftPayload = await opponentLeftPromise;
-
-      expect(leftPayload.userId).toBe(player1.id);
+      await new Promise((r) => setTimeout(r, 100));
       expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
-
+    } finally {
       p1.close();
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      p2.close();
+    }
+  });
+
+  it("cleans room membership when socket disconnects during an in-progress game", async () => {
+    const game = await prisma.game.create({
+      data: {
+        player1Id: player1.id,
+        player2Id: player2.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+      },
+    });
+
+    const p1Token = jwt.sign({ id: player1.id, username: player1.username }, JWT_SECRET);
+    const p2Token = jwt.sign({ id: player2.id, username: player2.username }, JWT_SECRET);
+
+    const p1 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p1Token}` },
+    });
+    const p2 = Client(`http://localhost:${port}`, {
+      auth: { token: `Bearer ${p2Token}` },
+    });
+
+    try {
+      await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
+
+      p1.emit("join_game_room", { gameId: game.id });
+      p2.emit("join_game_room", { gameId: game.id });
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
+
+      expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(2);
+
+      // Simulate browser tab close
+      p1.disconnect();
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Room membership cleaned up by handleGameRoomDisconnect
       expect(gameRoomService.getPlayersInRoom(game.id)).toHaveLength(1);
+      expect(
+        gameRoomService.getPlayersInRoom(game.id).some((p) => p.userId === player2.id),
+      ).toBe(true);
     } finally {
       p1.close();
       p2.close();
@@ -518,7 +559,10 @@ describeDb("Socket Game Rooms", () => {
 
       p1.emit("join_game_room", { gameId: game.id });
       p2.emit("join_game_room", { gameId: game.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const errorPromise = waitForEvent<{ message: string }>(out, "error");
       out.emit("send_rematch", { gameId: game.id, newGameId: game.id + 1000 });
@@ -568,7 +612,10 @@ describeDb("Socket Game Rooms", () => {
       await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
       p1.emit("join_game_room", { gameId: sourceGame.id });
       p2.emit("join_game_room", { gameId: sourceGame.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const relayPromise = waitForEvent<{ newGameId: number }>(p2, "rematch_received");
       p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: rematchGame.id });
@@ -613,7 +660,10 @@ describeDb("Socket Game Rooms", () => {
       await Promise.all([waitForEvent(p1, "connect"), waitForEvent(p2, "connect")]);
       p1.emit("join_game_room", { gameId: sourceGame.id });
       p2.emit("join_game_room", { gameId: sourceGame.id });
-      await Promise.all([waitForEvent(p1, "room_joined"), waitForEvent(p2, "room_joined")]);
+      await Promise.all([
+        waitForEvent(p1, "room_joined"),
+        waitForEvent(p2, "room_joined"),
+      ]);
 
       const errorPromise = waitForEvent<{ message: string }>(p1, "error");
       p1.emit("send_rematch", { gameId: sourceGame.id, newGameId: unrelatedGame.id });

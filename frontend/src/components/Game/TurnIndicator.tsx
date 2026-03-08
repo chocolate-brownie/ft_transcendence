@@ -26,10 +26,9 @@ export default function TurnIndicator({
         ? "text-pong-accent"
         : "text-pong-secondary"
       : isYourTurn
-        ? playerSymbol === "X"
-          ? "text-pong-accent animate-pulse"
-          : "text-pong-secondary animate-pulse"
-        : "text-pong-text/50";
+        ? (currentPlayer === "X" ? "text-pong-accent" : "text-pong-secondary") +
+          " animate-pulse"
+        : "text-pong-text/60";
 
   return (
     <div

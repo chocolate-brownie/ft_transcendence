@@ -3,6 +3,12 @@ import type { Socket } from "socket.io-client";
 import type { NavigateFunction } from "react-router-dom";
 
 import type { RoomPlayerSummary } from "../../types/game";
+import {
+  buildRoomJoinedGame,
+  resolveWinnerLoser,
+  didPlayerWin,
+} from "./gameEndedHelpers";
+import type { EndedGameData } from "./gameEndedHelpers";
 import type {
   GameForfeited,
   GameOver,
@@ -23,6 +29,35 @@ type UseGameSocketControllerParams = {
   stateRef: React.MutableRefObject<GameViewState>;
 };
 
+const LEAVE_DEBOUNCE_MS = 150;
+
+/* Module-level state — intentionally lives outside the hook.
+
+WHY: React StrictMode double-invokes effects in development. If this state
+lived inside the hook (e.g. a useRef), each mount/unmount cycle would reset
+it, causing a second join_game_room emit before the first completes. By
+keeping it at module scope it survives the StrictMode unmount and prevents
+duplicate join/leave events.
+
+RISK: stale gameId across navigations. Mitigated by the joinRevision and
+gameId change effects which both reset pendingGameId/joinedGameId explicitly.
+Revisit with a proper context or ref-forwarding approach in Phase 5. */
+const joinState = {
+  pendingGameId: null as number | null,
+  joinedGameId: null as number | null,
+  leaveTimeout: null as ReturnType<typeof setTimeout> | null,
+};
+
+/** Reset module-level join state — only for use in tests. */
+export function __resetJoinStateForTests() {
+  joinState.pendingGameId = null;
+  joinState.joinedGameId = null;
+  if (joinState.leaveTimeout) {
+    clearTimeout(joinState.leaveTimeout);
+    joinState.leaveTimeout = null;
+  }
+}
+
 export function useGameSocketController({
   socket,
   gameId,
@@ -31,28 +66,95 @@ export function useGameSocketController({
   dispatch,
   stateRef,
 }: UseGameSocketControllerParams) {
-  const joinedRef = useRef(false);
-  const leftRoomRef = useRef(false);
+  const socketRef = useRef(socket);
+  socketRef.current = socket;
   const activeRoomIdRef = useRef<number | null>(null);
   const lastJoinRevisionRef = useRef(joinRevision);
+  const receivedEventsRef = useRef({
+    roomJoined: false,
+    opponentJoined: false,
+  });
 
+  // ── Cancel pending leave ──
+  const cancelPendingLeave = useCallback(() => {
+    if (joinState.leaveTimeout) {
+      clearTimeout(joinState.leaveTimeout);
+      joinState.leaveTimeout = null;
+    }
+  }, []);
+
+  const resetJoinTracking = useCallback(() => {
+    activeRoomIdRef.current = null;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
+    joinState.joinedGameId = null;
+    joinState.pendingGameId = null;
+  }, []);
+  const startJoin = useCallback(() => {
+    if (!socket || !gameId) return;
+    // Annuler tout leave en attente
+    cancelPendingLeave();
+    // Si on a déjà un join pending ou complété pour ce gameId, skip
+    if (joinState.pendingGameId === gameId || joinState.joinedGameId === gameId) {
+      if (import.meta.env.DEV) {
+        console.log(
+          "[Game] Join already pending/completed for game",
+          gameId,
+          "— skipping",
+        );
+      }
+      return;
+    }
+    joinState.pendingGameId = gameId;
+    dispatch({ type: "JOIN_START" });
+    socket.emit("join_game_room", { gameId });
+  }, [socket, gameId, dispatch, cancelPendingLeave]);
+
+  // ── Leave with debounce ──
   const emitLeaveRoomOnce = useCallback(() => {
     if (!socket) return;
-    if (leftRoomRef.current) return;
 
     const roomId = activeRoomIdRef.current ?? gameId;
     if (!roomId) return;
 
-    leftRoomRef.current = true;
-    socket.emit("leave_game_room", { gameId: roomId });
-  }, [socket, gameId]);
+    cancelPendingLeave();
 
+    joinState.leaveTimeout = setTimeout(() => {
+      // Vérifier qu'on n'a pas rejoint entre temps
+      if (joinState.joinedGameId === roomId && joinState.pendingGameId === roomId) {
+        // On veut toujours cette room, ne pas leave
+        return;
+      }
+
+      socket.emit("leave_game_room", { gameId: roomId });
+
+      if (joinState.joinedGameId === roomId) {
+        joinState.joinedGameId = null;
+      }
+      joinState.leaveTimeout = null;
+    }, LEAVE_DEBOUNCE_MS);
+  }, [socket, gameId, cancelPendingLeave]);
+
+  // ── Event listeners ──
   useEffect(() => {
     if (!socket) return;
 
+    function onConnect() {
+      startJoin();
+    }
+
     function onRoomJoined({ gameId: joinedId, game }: RoomJoined) {
       if (joinedId !== gameId) return;
+
+      // Ignorer les doublons
+      if (receivedEventsRef.current.roomJoined) {
+        if (import.meta.env.DEV)
+          console.log("[Game] Ignoring duplicate room_joined for game", joinedId);
+        return;
+      }
+
+      receivedEventsRef.current.roomJoined = true;
       activeRoomIdRef.current = joinedId;
+      joinState.joinedGameId = joinedId;
       dispatch({ type: "ROOM_JOINED", game });
     }
 
@@ -71,7 +173,13 @@ export function useGameSocketController({
       dispatch({ type: "MOVE_ERROR", error });
     }
 
-    function onError({ gameId: eventGameId, message }: { gameId?: number; message?: string }) {
+    function onError({
+      gameId: eventGameId,
+      message,
+    }: {
+      gameId?: number;
+      message?: string;
+    }) {
       if (typeof eventGameId === "number" && eventGameId !== gameId) return;
       const userMessage = message || "Something went wrong.";
       const asMoveError = stateRef.current.status === "ready";
@@ -79,6 +187,7 @@ export function useGameSocketController({
     }
 
     function onDisconnect() {
+      resetJoinTracking();
       dispatch({
         type: "SOCKET_DISCONNECT",
         message: "Connection lost. Please check your network and try again.",
@@ -90,6 +199,90 @@ export function useGameSocketController({
       void navigate(`/game/${newGameId}`);
     }
 
+    function onGameAlreadyEnded(data?: { gameId?: number; game?: EndedGameData }) {
+      const game = data?.game;
+      if (!game?.boardState || !game.yourSymbol) {
+        if (import.meta.env.DEV)
+          console.log("[Game] Game already ended, redirecting to lobby");
+        void navigate("/lobby");
+        return;
+      }
+
+      const id = data?.gameId ?? gameId;
+      const { winnerPlayer, loserPlayer, winnerSymbol, loserSymbol } =
+        resolveWinnerLoser(game);
+
+      // Restore board state for any terminal status
+      dispatch({ type: "ROOM_JOINED", game: buildRoomJoinedGame(game, game.status!) });
+
+      if (game.status === "ABANDONED") {
+        dispatch({
+          type: "GAME_FORFEITED",
+          payload: {
+            gameId: id,
+            finalBoard: game.boardState,
+            result: "win",
+            winner: winnerPlayer
+              ? {
+                  id: winnerPlayer.id,
+                  username: winnerPlayer.username,
+                  symbol: winnerSymbol,
+                }
+              : undefined,
+            loser: loserPlayer
+              ? {
+                  id: loserPlayer.id,
+                  username: loserPlayer.username,
+                  symbol: loserSymbol,
+                }
+              : undefined,
+          },
+          didWin: didPlayerWin(game),
+        });
+        return;
+      }
+
+      if (game.status === "FINISHED" || game.status === "DRAW") {
+        const isDraw = game.status === "DRAW";
+        const duration =
+          game.startedAt && game.finishedAt
+            ? Math.round(
+                (new Date(game.finishedAt).getTime() -
+                  new Date(game.startedAt).getTime()) /
+                  1000,
+              )
+            : undefined;
+        dispatch({
+          type: "GAME_OVER",
+          payload: {
+            gameId: id,
+            finalBoard: game.boardState,
+            result: isDraw ? "draw" : "win",
+            winner:
+              !isDraw && winnerPlayer
+                ? {
+                    id: winnerPlayer.id,
+                    username: winnerPlayer.username,
+                    symbol: winnerSymbol,
+                  }
+                : undefined,
+            loser:
+              !isDraw && loserPlayer
+                ? {
+                    id: loserPlayer.id,
+                    username: loserPlayer.username,
+                    symbol: loserSymbol,
+                  }
+                : undefined,
+            winningLine: game.winningLine ?? null,
+            duration,
+          },
+          didWin: !isDraw && didPlayerWin(game),
+        });
+      }
+    }
+
+    socket.on("connect", onConnect);
     socket.on("room_joined", onRoomJoined);
     socket.on("game_update", onGameUpdate);
     socket.on("game_over", onGameOver);
@@ -97,8 +290,10 @@ export function useGameSocketController({
     socket.on("error", onError);
     socket.on("disconnect", onDisconnect);
     socket.on("rematch_received", onRematchReceived);
+    socket.on("game_already_ended", onGameAlreadyEnded);
 
     return () => {
+      socket.off("connect", onConnect);
       socket.off("room_joined", onRoomJoined);
       socket.off("game_update", onGameUpdate);
       socket.off("game_over", onGameOver);
@@ -106,14 +301,25 @@ export function useGameSocketController({
       socket.off("error", onError);
       socket.off("disconnect", onDisconnect);
       socket.off("rematch_received", onRematchReceived);
+      socket.off("game_already_ended", onGameAlreadyEnded);
     };
-  }, [socket, gameId, navigate, dispatch, stateRef]);
+  }, [socket, gameId, navigate, dispatch, stateRef, startJoin, resetJoinTracking]);
 
+  // ── Opponent events ──
   useEffect(() => {
     if (!socket) return;
 
     function onOpponentJoined({ opponent }: OpponentJoined) {
       if (!opponent) return;
+
+      // Ignorer les doublons
+      if (receivedEventsRef.current.opponentJoined) {
+        if (import.meta.env.DEV) console.log("[Game] Ignoring duplicate opponent_joined");
+        return;
+      }
+
+      receivedEventsRef.current.opponentJoined = true;
+
       const normalizedOpponent: RoomPlayerSummary = {
         id: opponent.id,
         username: opponent.username,
@@ -141,9 +347,15 @@ export function useGameSocketController({
       });
     }
 
-    function onOpponentReconnected({ gameId: reconnectedGameId }: { gameId?: number }) {
+    function onOpponentReconnected({
+      gameId: reconnectedGameId,
+      username,
+    }: {
+      gameId?: number;
+      username?: string;
+    }) {
       if (typeof reconnectedGameId === "number" && reconnectedGameId !== gameId) return;
-      dispatch({ type: "OPPONENT_RECONNECTED" });
+      dispatch({ type: "OPPONENT_RECONNECTED", username });
     }
 
     function onGameForfeited({
@@ -218,40 +430,35 @@ export function useGameSocketController({
     };
   }, [socket, gameId, dispatch, stateRef]);
 
+  // ── Reset on joinRevision change ──
   useEffect(() => {
     if (joinRevision === lastJoinRevisionRef.current) return;
     lastJoinRevisionRef.current = joinRevision;
-    joinedRef.current = false;
-    leftRoomRef.current = false;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
+    joinState.joinedGameId = null;
+    joinState.pendingGameId = null;
   }, [joinRevision]);
 
+  // ── Reset on gameId change ──
   useEffect(() => {
     if (!socket || !gameId) return;
 
     const previousRoomId = activeRoomIdRef.current;
     if (previousRoomId && previousRoomId !== gameId) {
+      cancelPendingLeave();
       socket.emit("leave_game_room", { gameId: previousRoomId });
+      joinState.joinedGameId = null;
     }
 
-    joinedRef.current = false;
-    leftRoomRef.current = false;
     activeRoomIdRef.current = null;
+    receivedEventsRef.current = { roomJoined: false, opponentJoined: false };
     dispatch({ type: "RESET_FOR_ROUTE_CHANGE" });
-  }, [socket, gameId, dispatch]);
+  }, [socket, gameId, dispatch, cancelPendingLeave]);
 
+  // ══════════════════════════════════════════════════════════════════════
+  // JOIN LOGIC — avec déduplication via état module
+  // ══════════════════════════════════════════════════════════════════════
   useEffect(() => {
-    function startJoin() {
-      if (!socket || joinedRef.current) return;
-
-      joinedRef.current = true;
-      leftRoomRef.current = false;
-
-      dispatch({ type: "JOIN_START" });
-      socket.emit("join_game_room", { gameId });
-    }
-
-    if (joinedRef.current) return;
-
     if (!gameId) {
       dispatch({ type: "INVALID_GAME_ID", message: "Invalid game id in URL." });
       return;
@@ -264,21 +471,32 @@ export function useGameSocketController({
 
     if (!socket.connected) {
       dispatch({ type: "JOIN_CONNECTING" });
-      socket.once("connect", startJoin);
       socket.connect();
-      return () => {
-        socket.off("connect", startJoin);
-      };
+      return;
     }
 
     startJoin();
-  }, [socket, gameId, joinRevision, dispatch]);
+  }, [socket, gameId, joinRevision, dispatch, startJoin]);
 
+  // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
-      emitLeaveRoomOnce();
+      // On unmount, emit leave_game_room synchronously — bypass the debounce
+      // because the component is being destroyed and a debounced call may
+      // never fire.
+      if (joinState.leaveTimeout) {
+        clearTimeout(joinState.leaveTimeout);
+        joinState.leaveTimeout = null;
+      }
+      const roomId = joinState.joinedGameId;
+      if (roomId && socketRef.current) {
+        socketRef.current.emit("leave_game_room", { gameId: roomId });
+      }
+      // Reset both so a remount for the same gameId triggers a fresh join.
+      joinState.joinedGameId = null;
+      joinState.pendingGameId = null;
     };
-  }, [emitLeaveRoomOnce]);
+  }, []);
 
   return { emitLeaveRoomOnce };
 }

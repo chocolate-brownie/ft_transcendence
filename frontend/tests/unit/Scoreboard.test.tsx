@@ -85,7 +85,11 @@ describe("Scoreboard", () => {
       />,
     );
 
-    expect(screen.getByTestId("scoreboard-player2-card").className).toContain("text-right");
-    expect(screen.getByTestId("scoreboard-player2-row").className).toContain("flex-row-reverse");
+    expect(screen.getByTestId("scoreboard-player2-card").className).toContain(
+      "text-right",
+    );
+    expect(screen.getByTestId("scoreboard-player2-row").className).toContain(
+      "flex-row-reverse",
+    );
   });
 });

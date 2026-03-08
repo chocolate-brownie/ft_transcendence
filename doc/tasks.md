@@ -169,7 +169,7 @@
 
 ### QA & Testing — [PM: mgodawat]
 
-- [ ] Test profile view and edit flows
+- [x] Test profile view and edit flows
 - [x] Test friend request flow end-to-end — mgodawat
 - [x] Test chat between two users (two browser windows) — mgodawat
 - [x] Finalize Privacy Policy and Terms of Service React pages — mgodawat (Issue #63)
@@ -177,9 +177,9 @@
 
 ### Modules Progressed
 
-- Module #4 — User Interaction (chat + profiles + friends): **In Progress**
+- Module #4 — User Interaction (chat + profiles + friends): **Completed**
 - Module #5 — Standard User Management: **Completed**
-- Module #6 — Web-based Game: **Started**
+- Module #6 — Web-based Game: **Completed**
 
 ---
 
@@ -198,40 +198,41 @@
 
 ### Frontend — Game UI Complete — [Frontend: zamgar, jayzatov]
 
-- [ ] Game states: waiting (for opponent), playing, finished (win), finished (draw)
-- [ ] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!"
-- [ ] Draw display: "It's a draw!"
-- [ ] Game over screen: winner display, "Play Again" button, "Back to Lobby" button
+- [x] Game states: waiting (for opponent), playing, finished (win), finished (draw) — zamgar, jayzatov
+- [x] Win display: highlight the 3 winning cells, show "X wins!" or "O wins!" — zamgar, jayzatov
+- [x] Draw display: "It's a draw!" — zamgar, jayzatov
+- [x] Game over screen: winner display, "Play Again" button, "Back to Lobby" button — zamgar, jayzatov
 - [x] Pre-game lobby page (`pages/GameLobby.tsx`):
   - [x] "Play Local" (two players, same screen)
   - [x] "Play Online" (matchmaking)
   - [x] "Play vs AI" (with difficulty selector)
-- [ ] Local game mode: alternate turns on same screen
+- [x] Local game mode: alternate turns on same screen — zamgar
 
-### Backend + Frontend — Multiplayer — [Real-Time: mgodawat]
+### Backend + Frontend — Multiplayer — [Real-Time: mgodawat, DarkWhiteOff]
 
-- [ ] Matchmaking: `find_game` event → add to queue → match two players → create room
-- [ ] Cancel matchmaking: `cancel_search` event
-- [ ] Game room: both players join a Socket.io room named by game ID
-- [ ] `make_move` event: client sends `{ gameId, cell }` → server validates → updates state
-- [ ] `game_update` event: server broadcasts updated board to both players in room
-- [ ] `game_over` event: server sends final result (winner or draw)
-- [ ] Disconnection handling:
-  - [ ] If player disconnects during game → wait 30 seconds → forfeit
-  - [ ] Show "Opponent disconnected, waiting for reconnection..." message
-- [ ] Reconnection: player rejoins room, receives current game state
-- [ ] Matchmaking UI: "Searching for opponent..." with cancel button
+- [x] Matchmaking: `find_game` event → add to queue → match two players → create room — mgodawat
+- [x] Cancel matchmaking: `cancel_search` event — mgodawat
+- [x] Game room: both players join a Socket.io room named by game ID — mgodawat
+- [x] `make_move` event: client sends `{ gameId, cell }` → server validates → updates state — mgodawat
+- [x] `game_update` event: server broadcasts updated board to both players in room — mgodawat
+- [x] `game_over` event: server sends final result (winner or draw) — mgodawat
+- [x] Disconnection handling: — mgodawat, DarkWhiteOff
+  - [x] If player disconnects during game → wait 30 seconds → forfeit
+  - [x] Show "Opponent disconnected, waiting for reconnection..." message
+- [x] Reconnection: player rejoins room, receives current game state — mgodawat, DarkWhiteOff
+- [x] Matchmaking UI: "Searching for opponent..." with cancel button — mgodawat
 
-### QA & Testing — [PM: mgodawat]
+### QA & Testing — [PM: mgodawat, mqwa78, DarkWhiteOff]
 
-- [ ] Test local game: all win conditions (rows, columns, diagonals), draw
-- [ ] Test multiplayer: two browsers, full game to completion
-- [ ] Test disconnection: close one browser, verify other sees message
-- [ ] Test reconnection: reopen browser, verify game resumes
+- [x] Test local game: all win conditions (rows, columns, diagonals), draw — Issue #151
+- [x] Test multiplayer: two browsers, full game to completion — Issue #152
+- [x] Test disconnection: close one browser, verify other sees message — Issue #153
+- [x] Test reconnection: reopen browser, verify game resumes — Issue #154
 
 ### Modules Progressed
 
 - Module #3 — Real-time WebSockets: **Completed**
+- Module #4 — User Interaction: **Completed**
 - Module #6 — Web-based Tic-Tac-Toe Game: **Completed**
 - Module #7 — Remote Players: **Completed**
 
@@ -241,16 +242,16 @@
 
 ### Tournament System (Module #8 — 1pt) — [Backend: mamahtal, tzizi + PM: mgodawat]
 
-- [ ] Prisma: Tournaments + TournamentParticipants tables (already in schema)
-- [ ] `POST /api/tournaments` — create tournament (name, max players: 4 or 8)
-- [ ] `POST /api/tournaments/:id/join` — register for tournament
-- [ ] `GET /api/tournaments` — list tournaments (filterable by status)
-- [ ] `GET /api/tournaments/:id` — get tournament details + bracket
-- [ ] Auto-generate bracket when registration full (power of 2 seeding)
-- [ ] After each match: advance winner to next round
-- [ ] Determine tournament champion
+- [x] Prisma: Tournaments + TournamentParticipants tables (already in schema) — mamahtal
+- [x] `POST /api/tournaments` — create tournament (name, max players: 4 or 8) — mamahtal
+- [x] `POST /api/tournaments/:id/join` — register for tournament — mamahtal
+- [x] `GET /api/tournaments` — list tournaments (filterable by status) — mamahtal
+- [x] `GET /api/tournaments/:id` — get tournament details + bracket — mamahtal
+- [x] Auto-generate bracket when registration full (power of 2 seeding) — mamahtal
+- [x] After each match: advance winner to next round — mamahtal
+- [x] Determine tournament champion — mamahtal
 - [x] Frontend — Tournament list page (available, in progress, completed) — mgodawat
-- [ ] Frontend — Tournament detail page with visual bracket
+- [x] Frontend — Tournament detail page with visual bracket — mgodawat
 - [x] Frontend — Registration button — mgodawat
 - [ ] Socket.io — Notify player when it's their turn in tournament
 
@@ -291,10 +292,10 @@
 
 ### Modules Progressed
 
-- Module #8 — Tournament: **Completed**
-- Module #9 — AI Opponent: **Completed**
-- Module #10 — Customization: **Completed**
-- Module #11 — Statistics: **Completed**
+- Module #8 — Tournament: **In Progress**
+- Module #9 — AI Opponent: **Not Started**
+- Module #10 — Customization: **Not Started**
+- Module #11 — Statistics: **Not Started**
 
 ---
 

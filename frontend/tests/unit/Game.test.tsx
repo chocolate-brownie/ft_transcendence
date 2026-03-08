@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Game from "../../src/pages/Game";
+import { __resetJoinStateForTests } from "../../src/pages/game/useGameSocketController";
 import { gamesService } from "../../src/services/games.service";
 
 type Handler = (...args: unknown[]) => void;
@@ -90,6 +91,7 @@ describe("Game page socket wiring", () => {
     navigateMock.mockReset();
     useSocketMock.mockReset();
     vi.mocked(gamesService.createGame).mockReset();
+    __resetJoinStateForTests();
   });
 
   function joinRoom(socket: MockSocket) {
@@ -203,12 +205,9 @@ describe("Game page socket wiring", () => {
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
   });
 
-  it("creates rematch and navigates to new game when Play Again is clicked", async () => {
+  it("navigates to matchmaking when Play Again is clicked", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-    vi.mocked(gamesService.createGame).mockResolvedValue({
-      id: 77,
-    } as never);
 
     render(<Game />);
     joinRoom(socket);
@@ -226,14 +225,7 @@ describe("Game page socket wiring", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: /play again/i }));
-
-    await waitFor(() => {
-      expect(gamesService.createGame).toHaveBeenCalledWith({
-        player2Id: 2,
-        sourceGameId: 42,
-      });
-      expect(navigateMock).toHaveBeenCalledWith("/game/77");
-    });
+    expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
   });
 
   it("reopens modal after closing when another game_over event arrives", () => {
@@ -346,7 +338,9 @@ describe("Game page socket wiring", () => {
     render(<Game />);
     joinRoom(socket);
 
-    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /view result/i }),
+    ).not.toBeInTheDocument();
 
     act(() => {
       socket.trigger("game_over", {
@@ -360,20 +354,16 @@ describe("Game page socket wiring", () => {
       });
     });
 
-    expect(screen.queryByRole("button", { name: /view result/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /view result/i }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
 
-  it("prevents duplicate rematch requests on rapid Play Again clicks", async () => {
+  it("navigates to matchmaking only once on rapid Play Again clicks", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
-
-    let resolveCreateGame: ((value: { id: number }) => void) | null = null;
-    const createGamePromise = new Promise<{ id: number }>((resolve) => {
-      resolveCreateGame = resolve;
-    });
-    vi.mocked(gamesService.createGame).mockReturnValue(createGamePromise as never);
 
     render(<Game />);
     joinRoom(socket);
@@ -394,12 +384,7 @@ describe("Game page socket wiring", () => {
     fireEvent.click(playAgainButton);
     fireEvent.click(playAgainButton);
 
-    expect(gamesService.createGame).toHaveBeenCalledTimes(1);
-
-    resolveCreateGame?.({ id: 88 });
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith("/game/88");
-    });
+    expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
   });
 
   it("disables local rematch action when opponent rematch event is received", () => {
@@ -517,7 +502,11 @@ describe("Game page socket wiring", () => {
           status: "IN_PROGRESS",
           yourSymbol: "O",
           player1: { id: 1, username: "admin", avatarUrl: "/uploads/avatars/admin.png" },
-          player2: { id: 2, username: "admin2", avatarUrl: "/uploads/avatars/admin2.png" },
+          player2: {
+            id: 2,
+            username: "admin2",
+            avatarUrl: "/uploads/avatars/admin2.png",
+          },
           player1Symbol: "X",
           player2Symbol: "O",
           startedAt: null,
@@ -568,11 +557,13 @@ describe("Game page socket wiring", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByTestId("opponent-disconnected-banner")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("opponent-disconnected-banner"),
+      ).not.toBeInTheDocument();
     });
   });
 
-  it("maps game_forfeited payload to game over state and winner message", () => {
+  it("maps game_forfeited payload to game over state with forfeit styling", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -582,14 +573,66 @@ describe("Game page socket wiring", () => {
     act(() => {
       socket.trigger("game_forfeited", {
         gameId: 42,
-        forfeitedBy: { id: 2, username: "bob" },
-        winner: { id: 1, username: "alice" },
+        forfeitedBy: { id: 2, username: "bob", symbol: "O" },
+        winner: { id: 1, username: "alice", symbol: "X" },
+        winnerSymbol: "X",
+        loserSymbol: "O",
       });
     });
 
-    expect(screen.getByText("Game over: You won")).toBeInTheDocument();
-    expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
-    expect(screen.getAllByText("You Won! 🎉").length).toBeGreaterThan(0);
+    expect(screen.getByText(/game over:.*forfeit/i)).toBeInTheDocument();
+    const modal = screen.getByTestId("game-over-modal");
+    expect(modal).toBeInTheDocument();
+
+    // Forfeit modal shows warning emoji title, forfeit subtitle, and "Find New Game" button
+    expect(within(modal).getByText("You Won! ⚠️")).toBeInTheDocument();
+    expect(
+      within(modal).getByText("Opponent disconnected for too long."),
+    ).toBeInTheDocument();
+    expect(
+      within(modal).getByRole("button", { name: /find new game/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows forfeit loss modal with correct text when loser views forfeited game", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+
+    render(<Game />);
+
+    // Join as player2 (O) — the loser in this scenario
+    act(() => {
+      socket.trigger("room_joined", {
+        gameId: 42,
+        game: {
+          boardState: Array(9).fill(null),
+          currentTurn: "X",
+          status: "IN_PROGRESS",
+          yourSymbol: "O",
+          player1: { id: 1, username: "alice", avatarUrl: null },
+          player2: { id: 2, username: "bob", avatarUrl: null },
+          player1Symbol: "X",
+          player2Symbol: "O",
+          startedAt: null,
+        },
+      });
+    });
+
+    act(() => {
+      socket.trigger("game_forfeited", {
+        gameId: 42,
+        forfeitedBy: { id: 2, username: "bob", symbol: "O" },
+        winner: { id: 1, username: "alice", symbol: "X" },
+        winnerSymbol: "X",
+        loserSymbol: "O",
+      });
+    });
+
+    const modal = screen.getByTestId("game-over-modal");
+    expect(within(modal).getByText("You Lost ⚠️")).toBeInTheDocument();
+    expect(
+      within(modal).getByText("You were disconnected for too long."),
+    ).toBeInTheDocument();
   });
 
   it("rejoins the room when Try again is clicked while socket is still connected", async () => {
@@ -625,7 +668,9 @@ describe("Game page socket wiring", () => {
     const { rerender } = render(<Game />);
     joinRoom(socket);
 
-    const joinCallsBefore = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+    const joinCallsBefore = socket.emit.mock.calls.filter(
+      (call) => call[0] === "join_game_room",
+    );
     expect(joinCallsBefore).toHaveLength(1);
     expect(joinCallsBefore[0][1]).toEqual({ gameId: 42 });
 
@@ -633,8 +678,12 @@ describe("Game page socket wiring", () => {
     rerender(<Game />);
 
     await waitFor(() => {
-      const leaveCalls = socket.emit.mock.calls.filter((call) => call[0] === "leave_game_room");
-      const joinCalls = socket.emit.mock.calls.filter((call) => call[0] === "join_game_room");
+      const leaveCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "leave_game_room",
+      );
+      const joinCalls = socket.emit.mock.calls.filter(
+        (call) => call[0] === "join_game_room",
+      );
       expect(leaveCalls.some((call) => call[1]?.gameId === 42)).toBe(true);
       expect(joinCalls.some((call) => call[1]?.gameId === 77)).toBe(true);
     });
@@ -676,7 +725,7 @@ describe("Game page socket wiring", () => {
     });
   });
 
-  it("navigates to lobby and home from modal actions", () => {
+  it("navigates to lobby from modal New Game (Lobby) button", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -697,24 +746,9 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
-
-    act(() => {
-      socket.trigger("game_over", {
-        gameId: 42,
-        result: "draw",
-        winner: null,
-        loser: null,
-        totalMoves: 9,
-        finalBoard: ["X", "O", "X", "X", "O", "O", "O", "X", "X"],
-        winningLine: null,
-      });
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /back to home/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/");
   });
 
-  it("emits leave_game_room only once when navigating away", () => {
+  it("navigates to lobby when New Game (Lobby) is clicked after game over", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -735,11 +769,6 @@ describe("Game page socket wiring", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
-
-    const leaveCalls = socket.emit.mock.calls.filter(
-      (call) => call[0] === "leave_game_room",
-    );
-    expect(leaveCalls).toHaveLength(1);
   });
 });
 

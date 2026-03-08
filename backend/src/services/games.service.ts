@@ -81,7 +81,10 @@ const playerSelect = {
 
 const REMATCH_ACTIVE_STATUSES = ["WAITING", "IN_PROGRESS"] as const;
 
-export const buildPairLockParts = (playerA: number, playerB: number): [number, number] => {
+export const buildPairLockParts = (
+  playerA: number,
+  playerB: number,
+): [number, number] => {
   return [Math.min(playerA, playerB), Math.max(playerA, playerB)];
 };
 
@@ -513,6 +516,7 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
       updateData.winnerId =
         result.winner === game.player1Symbol ? game.player1Id : game.player2Id;
       updateData.finishedAt = new Date();
+      updateData.winningLine = result.line ?? null;
     } else if (result.gameOver && result.isDraw) {
       updateData.status = "DRAW";
       updateData.winnerId = null;
