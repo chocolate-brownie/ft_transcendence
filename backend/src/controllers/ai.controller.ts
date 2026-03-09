@@ -48,10 +48,10 @@ export const RequestAIMove = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Not your game' });
     }
     if (error.message === 'Not your turn') {
-      return res.status(400).json({ error: 'Not your turn' });
+      return res.status(400).json({ error: `It's not your turn, current turn is: ${error.currentTurn}` });
     }
     if (error.message === 'Cell is already occupied') {
-      return res.status(400).json({ error: 'Cell is already occupied' });
+      return res.status(400).json({ error: `Cell ${error.cellIndex} is already occupied` });
     }
 
     console.error('Error trying to make move:', error);

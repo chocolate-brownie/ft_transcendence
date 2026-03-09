@@ -3,6 +3,7 @@ import { getAIMove } from '../src/ai/difficulty';
 import { evaluate } from "../src/ai/evaluation";
 import { Board, CellValue, Player } from '../src/types/game';
 import { checkGameOver } from "../src/services/games.service";
+import { Difficulty } from "@prisma/client";
 
 // Helper pour créer un plateau rapidement
 const createBoard = (cells: string): Board => {
@@ -19,7 +20,7 @@ describe('Minimax Algorithm', () => {
           '.O.' +
           '...'
       );
-      const bestMove = getAIMove(board, ai, 'easy');
+      const bestMove = getAIMove(board, ai, Difficulty.EASY);
       console.log('Random move :', bestMove);
       expect(bestMove).toBeGreaterThan(0);
     });
@@ -31,7 +32,7 @@ describe('Minimax Algorithm', () => {
             'OO.' +
             'X..'
         );
-        const bestMove = getAIMove(board, ai, 'hard');
+        const bestMove = getAIMove(board, ai, Difficulty.HARD);
         console.log('Meilleure case pour la victoire immédiate :', bestMove);
         expect(bestMove).toBe(5);
     });
@@ -44,7 +45,7 @@ describe('Minimax Algorithm', () => {
             '...'
         );
         const start = Date.now();
-        const bestMove = getAIMove(board, ai, 'hard');
+        const bestMove = getAIMove(board, ai, Difficulty.HARD);
         const duration = Date.now() - start;
         console.log('Best move for empty board (should be 4):', bestMove, 'Time taken:', duration, 'ms');
         expect(bestMove).toBe(4);
@@ -61,7 +62,7 @@ describe('Minimax Algorithm', () => {
             '..O'
         );
         const start = Date.now();
-        const bestMove1 = getAIMove(board1, ai, 'hard');
+        const bestMove1 = getAIMove(board1, ai, Difficulty.HARD);
         const duration = Date.now() - start;
         console.log('Best move for winning immediately :', bestMove1, 'Time taken:', duration, 'ms');
 
@@ -76,7 +77,7 @@ describe('Minimax Algorithm', () => {
             '...'
         );
         const start = Date.now();
-        const bestMove = getAIMove(board, ai, 'medium');
+        const bestMove = getAIMove(board, ai, Difficulty.MEDIUM);
         const duration = Date.now() - start;
         console.log('Best move for medium difficulty :', bestMove, 'Time taken:', duration, 'ms');
         expect(bestMove).toBeGreaterThanOrEqual(1);
@@ -92,7 +93,7 @@ describe('Minimax Algorithm', () => {
         let turn: Player = 'X';
 
         while (!checkGameOver(board).gameOver && !board.every(cell => cell !== null)) {
-          const move = getAIMove(board, turn, 'hard');
+          const move = getAIMove(board, turn, Difficulty.HARD);
           board[move] = turn as CellValue;
           turn = turn === 'X' ? 'O' : 'X';
         }

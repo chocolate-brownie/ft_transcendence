@@ -7,7 +7,7 @@ import { Board, CellValue, Player } from "../types/game";
 export const createAIGame = async (userId: number, difficulty: Difficulty, playerSymbol: Player) => {
   const aiSymbol = playerSymbol === 'X' ? 'O' : 'X';
   const board = Array(9).fill(null);
-  if (aiSymbol === 'O') {
+  if (aiSymbol === 'X') {
     const aiMove = getAIMove(board, aiSymbol, difficulty);
     board[aiMove] = aiSymbol;
   }
@@ -67,12 +67,12 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
   board[moveIndex] = playerSymbol as CellValue;
 
   const playerWin = checkGameOver(board, 3);
-  if (playerWin) {
-    await finishGame(gameId, board, playerWin.isDraw ? null : userId, playerWin.isDraw);
+  if (playerWin.gameOver) {
+    const finishedGame = await finishGame(gameId, board, playerWin.isDraw ? null : userId, playerWin.isDraw);
     return {
       game: {
         boardState: board,
-        status: GameStatus.FINISHED,
+        status: finishedGame.status,
         winner: playerWin.isDraw ? null : playerSymbol,
       },
       aiMove: null,
@@ -83,12 +83,12 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
   board[aiMove] = aiSymbol as CellValue;
 
   const aiWin = checkGameOver(board, 3);
-  if (aiWin) {
-    await finishGame(gameId, board, null, aiWin.isDraw); // It's either a draw or the AI wins, so winnerId is null
+  if (aiWin.gameOver) {
+    const finishedGame = await finishGame(gameId, board, null, aiWin.isDraw); // It's either a draw or the AI wins, so winnerId is null
     return {
       game: {
         boardState: board,
-        status: GameStatus.FINISHED,
+        status: finishedGame.status,
         winner: aiWin.isDraw ? null : aiSymbol,
       },
       aiMove: {
