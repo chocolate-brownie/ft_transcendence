@@ -6,6 +6,9 @@ import { useSocket } from "../context/SocketContext";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import SearchingScreen from "../components/Matchmaking/SearchingScreen";
+import ThemeSelector from "../components/Customization/ThemeSelector";
+import CustomSymbolSelector from "../components/Customization/SymbolSelector";
+import { useGameCustomization } from "../hooks/useGameCustomization";
 
 type MatchFound = {
   gameId: number;
@@ -25,6 +28,9 @@ export default function Matchmaking() {
   const { socket } = useSocket();
 
   const boardSize = parseBoardSize(searchParams.get("boardSize"));
+
+  /* Issue #209 — customization while searching */
+  const { customization, setTheme, setSymbols } = useGameCustomization();
 
   const [status, setStatus] = useState<
     "idle" | "connecting" | "searching" | "found" | "cancelled"
@@ -217,7 +223,29 @@ export default function Matchmaking() {
           </div>
         </Card>
       ) : status === "searching" ? (
-        <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
+        <div className="w-full max-w-lg space-y-4">
+          <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
+
+          {/* Issue #209 — customize while searching */}
+          <div className="rounded-lg border border-pong-accent/20 bg-pong-surface px-6 py-4">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Customize while you wait
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Theme</h3>
+                <ThemeSelector selected={customization.theme} onSelect={setTheme} />
+              </div>
+              <div>
+                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Symbols</h3>
+                <CustomSymbolSelector
+                  symbols={customization.symbols}
+                  onSelect={setSymbols}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       ) : status === "found" ? (
         <Card variant="elevated" className="text-center">
           <div className="space-y-3" role="status" aria-live="polite">
