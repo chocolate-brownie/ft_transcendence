@@ -11,11 +11,6 @@
  */
 
 /* ------------------------------------------------------------------ */
-/* Google Fonts — Press Start 2P for the retro theme                  */
-/* ------------------------------------------------------------------ */
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
-
-/* ------------------------------------------------------------------ */
 /* Classic theme — clean, neutral, inherits design system defaults    */
 /* ------------------------------------------------------------------ */
 .game-theme-wrapper[data-theme="classic"] {
