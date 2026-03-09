@@ -12,7 +12,7 @@
  * The board is always 3x3 (backend AI only supports 3x3).
  */
 import { useState, useCallback, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
 import { aiService } from "../services/ai.service";
@@ -39,13 +39,9 @@ interface GameState {
 
 export default function AIGame() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const raw = searchParams.get("difficulty");
-  const initDifficulty: AiDifficulty =
-    raw === "easy" || raw === "medium" || raw === "hard" ? raw : "medium";
 
   const [phase, setPhase] = useState<GamePhase>("setup");
-  const [difficulty, setDifficulty] = useState<AiDifficulty>(initDifficulty);
+  const [difficulty, setDifficulty] = useState<AiDifficulty>("medium");
   const [symbol, setSymbol] = useState<PlayerSymbol>("X");
   const [game, setGame] = useState<GameState | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -111,7 +107,13 @@ export default function AIGame() {
         // Reveal final board state (with AI move)
         setGame((prev) =>
           prev
-            ? { ...prev, board: newBoard, isPlayerTurn: true, winner: res.game.winner, status: res.game.status }
+            ? {
+                ...prev,
+                board: newBoard,
+                isPlayerTurn: true,
+                winner: res.game.winner,
+                status: res.game.status,
+              }
             : prev,
         );
 
@@ -166,10 +168,10 @@ export default function AIGame() {
   };
 
   return (
-    <div className="w-full max-w-2xl space-y-6 py-4">
+    <div className="flex w-full max-w-2xl flex-col items-center py-6">
       {/* Setup phase */}
       {phase === "setup" && (
-        <div className="space-y-8">
+        <div className="w-full space-y-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-pong-accent">Play vs AI</h1>
             <p className="mt-1 text-sm text-pong-text/60">
@@ -187,9 +189,7 @@ export default function AIGame() {
             <SymbolSelector selected={symbol} onSelect={setSymbol} />
           </div>
 
-          {error && (
-            <p className="text-center text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
           <div className="flex flex-col items-center gap-3">
             <Button
@@ -213,7 +213,7 @@ export default function AIGame() {
 
       {/* Playing phase */}
       {phase === "playing" && game && (
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex w-full flex-col items-center gap-4">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-pong-text">
               vs AI{" "}
@@ -251,19 +251,13 @@ export default function AIGame() {
             playerSymbol={game.playerSymbol}
           />
 
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
       )}
 
       {/* Finished phase */}
       {phase === "finished" && game && (
-        <div className="flex flex-col items-center space-y-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-pong-text">Game Over</h1>
-          </div>
-
+        <div className="flex w-full flex-col items-center gap-4">
           <GameBoard
             board={game.board}
             onCellClick={() => {}}

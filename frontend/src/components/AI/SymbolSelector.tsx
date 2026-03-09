@@ -11,17 +11,13 @@ interface SymbolSelectorProps {
   onSelect: (s: PlayerSymbol) => void;
 }
 
-export default function SymbolSelector({
-  selected,
-  onSelect,
-}: SymbolSelectorProps) {
+export default function SymbolSelector({ selected, onSelect }: SymbolSelectorProps) {
   return (
     <div className="space-y-2">
       <div className="flex gap-3">
         {(["X", "O"] as const).map((symbol) => {
           const isActive = selected === symbol;
-          const colorClass =
-            symbol === "X" ? "text-pong-accent" : "text-pong-secondary";
+          const colorClass = symbol === "X" ? "text-pong-accent" : "text-pong-secondary";
           const borderClass =
             symbol === "X"
               ? "border-pong-accent bg-pong-accent/10"
