@@ -1,4 +1,4 @@
-
+// TODO(#192): implement real stats persistence (win/loss tracking, game history, leaderboard data)
 export interface GameOverStatsPayload {
   gameId: number;
   winnerId: number | null;
