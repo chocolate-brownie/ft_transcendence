@@ -200,7 +200,7 @@ describeDb("AI Game API Integration Tests", () => {
       expect(res.body.error).toMatch(/occupied/i);
     });
 
-    test("Invalid cell index", async () => {
+    test("Invalid cell index (negative)", async () => {
       const setup = await request(app)
         .post("/api/ai/games")
         .set("Authorization", `Bearer ${token}`)
@@ -214,7 +214,7 @@ describeDb("AI Game API Integration Tests", () => {
       expect(res.body.error).toMatch(/invalid/i);
     });
 
-    test("Invalid cell index", async () => {
+    test("Invalid cell index (out of bounds)", async () => {
       const setup = await request(app)
         .post("/api/ai/games")
         .set("Authorization", `Bearer ${token}`)
@@ -228,7 +228,7 @@ describeDb("AI Game API Integration Tests", () => {
       expect(res.body.error).toMatch(/invalid/i);
     });
 
-    test("Invalid cell index", async () => {
+    test("Invalid cell index (string type)", async () => {
       const setup = await request(app)
         .post("/api/ai/games")
         .set("Authorization", `Bearer ${token}`)

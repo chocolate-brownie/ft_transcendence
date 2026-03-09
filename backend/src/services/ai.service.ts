@@ -19,13 +19,13 @@ export const createAIGame = async (userId: number, difficulty: Difficulty, playe
       player2Id: null,
       player1Symbol: playerSymbol,
       player2Symbol:aiSymbol,
-      currentTurn: playerSymbol === 'X' ? 'X' : 'O',
+      currentTurn: playerSymbol,
       status: GameStatus.IN_PROGRESS,
       gameType: GameType.AI,
       difficulty: difficulty.toUpperCase() as Difficulty,
     },
   });
-  return Promise.resolve({ game, difficulty });
+  return { game, difficulty };
 }
 
 const finishGame = async (gameId: number, board: Board, winnerId: number | null, isDraw: boolean) => {
