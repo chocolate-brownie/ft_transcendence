@@ -7,6 +7,7 @@ import {
   type TournamentDetails,
 } from "../services/tournament.service";
 import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
 import { useTournamentSocket } from "../hooks/useTournamentSocket";
 import BracketView from "../components/Tournament/BracketView";
 import Button from "../components/Button";
@@ -29,6 +30,7 @@ export default function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { socket } = useSocket();
+  const { user } = useAuth();
 
   const [tournament, setTournament] = useState<TournamentDetails | null>(null);
   const [bracket, setBracket] = useState<BracketResponse | null>(null);
@@ -206,7 +208,7 @@ export default function TournamentDetail() {
             </p>
           </div>
         ) : bracket ? (
-          <BracketView bracket={bracket} participants={tournament.participants} />
+          <BracketView bracket={bracket} participants={tournament.participants} currentUserId={user?.id} />
         ) : (
           <p className="text-sm text-pong-text/40">Bracket data unavailable.</p>
         )}

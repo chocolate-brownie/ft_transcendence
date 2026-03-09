@@ -105,9 +105,10 @@ interface MatchCardProps {
   currentRound: number | null;
   totalRounds: number;
   seedMap: Map<number, number>; // userId → seed
+  currentUserId?: number | null;
 }
 
-function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps) {
+function MatchCard({ match, currentRound, totalRounds, seedMap, currentUserId }: MatchCardProps) {
   const navigate = useNavigate();
   const player1 = match.player1;
   const player2 = match.player2;
@@ -116,11 +117,13 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
   const isPending = status === "pending";
   const isScheduled = status === "scheduled";
   const isInProgress = status === "in_progress";
-  /* Issue #159 — Match is clickable if it has a gameId (completed = view result,
-     scheduled/in_progress = play the game) */
+  /* Issue #159 — Match is clickable if it has a gameId. Completed matches can
+     be viewed by anyone; active matches are only playable by the two assigned players. */
   const hasGame = match.gameId !== null;
-  const isClickable = hasGame;
-  const isPlayable = hasGame && !isComplete && !isPending;
+  const isMyMatch = currentUserId != null
+    && (player1?.id === currentUserId || player2?.id === currentUserId);
+  const isClickable = hasGame && (isComplete || isMyMatch);
+  const isPlayable = hasGame && !isComplete && !isPending && isMyMatch;
   const isNotStarted = isPending || isScheduled;
   const goToGame = () => {
     if (!isClickable) return;
@@ -237,9 +240,10 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
 interface BracketViewProps {
   bracket: BracketResponse;
   participants?: TournamentParticipant[];
+  currentUserId?: number | null;
 }
 
-export default function BracketView({ bracket, participants = [] }: BracketViewProps) {
+export default function BracketView({ bracket, participants = [], currentUserId }: BracketViewProps) {
   const { matches, totalRounds, currentRound } = bracket;
 
   // Group matches by round (sorted by matchNumber)
@@ -323,6 +327,7 @@ export default function BracketView({ bracket, participants = [] }: BracketViewP
                     currentRound={currentRound}
                     totalRounds={totalRounds}
                     seedMap={seedMap}
+                    currentUserId={currentUserId}
                   />
                 ))}
               </div>
