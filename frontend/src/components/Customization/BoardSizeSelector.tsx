@@ -7,13 +7,7 @@ interface Props {
   onSelect: (size: BoardSize) => void;
 }
 
-function MiniBoard({
-  size,
-  active = false,
-}: {
-  size: BoardSize;
-  active?: boolean;
-}) {
+function MiniBoard({ size, active = false }: { size: BoardSize; active?: boolean }) {
   const cells = Array(size * size).fill(null);
 
   const gridColsClass = {

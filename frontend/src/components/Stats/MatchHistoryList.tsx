@@ -92,7 +92,9 @@ export default function MatchHistoryList({ userId }: MatchHistoryListProps) {
       )}
 
       {!loading && !error && matches.length === 0 && (
-        <p className="py-4 text-center text-sm text-pong-text/50">No matches played yet.</p>
+        <p className="py-4 text-center text-sm text-pong-text/50">
+          No matches played yet.
+        </p>
       )}
 
       {!loading && !error && matches.length > 0 && (

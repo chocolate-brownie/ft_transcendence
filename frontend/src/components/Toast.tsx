@@ -35,11 +35,13 @@ const actionStyles: Record<ToastVariant, string> = {
 };
 
 let nextId = 0;
-let globalAddToast: ((
-  message: string,
-  variant?: ToastVariant,
-  opts?: { action?: ToastAction; duration?: number },
-) => void) | null = null;
+let globalAddToast:
+  | ((
+      message: string,
+      variant?: ToastVariant,
+      opts?: { action?: ToastAction; duration?: number },
+    ) => void)
+  | null = null;
 
 /* Call this from anywhere to show a toast.
    Pass opts.action for a clickable button, opts.duration to override auto-dismiss. */
@@ -63,7 +65,10 @@ export default function ToastContainer() {
     ) => {
       const id = nextId++;
       const duration = opts?.duration ?? 5000;
-      setToasts((prev) => [...prev, { id, message, variant, action: opts?.action, duration }]);
+      setToasts((prev) => [
+        ...prev,
+        { id, message, variant, action: opts?.action, duration },
+      ]);
     },
     [],
   );

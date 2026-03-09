@@ -29,8 +29,15 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
       onUpdateRef.current?.();
     }
 
-    function onPlayerJoined(data: { tournamentName: string; player: { username: string }; currentParticipants: number; maxPlayers: number }) {
-      showToast(`${data.player.username} joined ${data.tournamentName} (${data.currentParticipants}/${data.maxPlayers})`);
+    function onPlayerJoined(data: {
+      tournamentName: string;
+      player: { username: string };
+      currentParticipants: number;
+      maxPlayers: number;
+    }) {
+      showToast(
+        `${data.player.username} joined ${data.tournamentName} (${data.currentParticipants}/${data.maxPlayers})`,
+      );
       onUpdateRef.current?.();
     }
 
@@ -44,19 +51,32 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
       onUpdateRef.current?.();
     }
 
-    function onMatchCompleted(data: { winner: { username: string }; loser: { username: string } | null; round: number }) {
+    function onMatchCompleted(data: {
+      winner: { username: string };
+      loser: { username: string } | null;
+      round: number;
+    }) {
       const loserName = data.loser?.username ?? "opponent";
       showToast(`${data.winner.username} defeated ${loserName} in Round ${data.round}`);
       onUpdateRef.current?.();
     }
 
     function onEliminated(data: { tournamentName: string; roundName: string }) {
-      showToast(`You were eliminated in the ${data.roundName}. Better luck next time!`, "error");
+      showToast(
+        `You were eliminated in the ${data.roundName}. Better luck next time!`,
+        "error",
+      );
       onUpdateRef.current?.();
     }
 
-    function onCompleted(data: { tournamentName: string; champion: { username: string } }) {
-      showToast(`${data.champion.username} is the champion of ${data.tournamentName}!`, "success");
+    function onCompleted(data: {
+      tournamentName: string;
+      champion: { username: string };
+    }) {
+      showToast(
+        `${data.champion.username} is the champion of ${data.tournamentName}!`,
+        "success",
+      );
       onUpdateRef.current?.();
     }
 

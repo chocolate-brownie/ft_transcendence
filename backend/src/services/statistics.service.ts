@@ -10,9 +10,7 @@ export interface GameOverStatsPayload {
   finishedAt: Date;
 }
 
-export async function updateGameStatistics(
-  payload: GameOverStatsPayload,
-): Promise<void> {
+export async function updateGameStatistics(payload: GameOverStatsPayload): Promise<void> {
   console.log(
     `[Stats Placeholder] Game ${payload.gameId} ended — stats update not yet implemented`,
   );

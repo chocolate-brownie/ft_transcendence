@@ -60,10 +60,7 @@ function checkDirection(
 }
 
 // Returns the winning line indices if a player has won, otherwise null.
-export function findWinningLine(
-  board: Board,
-  boardSize?: BoardSize,
-): number[] | null {
+export function findWinningLine(board: Board, boardSize?: BoardSize): number[] | null {
   const resolvedBoardSize = getBoardSize(board, boardSize);
   const winLength = getWinLength(resolvedBoardSize);
   const directions = [
@@ -96,10 +93,7 @@ export function findWinningLine(
   return null;
 }
 
-export function findWinner(
-  board: Board,
-  boardSize?: BoardSize,
-): PlayerSymbol | null {
+export function findWinner(board: Board, boardSize?: BoardSize): PlayerSymbol | null {
   const line = findWinningLine(board, boardSize);
   if (!line) {
     return null;

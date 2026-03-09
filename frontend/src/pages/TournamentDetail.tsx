@@ -208,7 +208,11 @@ export default function TournamentDetail() {
             </p>
           </div>
         ) : bracket ? (
-          <BracketView bracket={bracket} participants={tournament.participants} currentUserId={user?.id} />
+          <BracketView
+            bracket={bracket}
+            participants={tournament.participants}
+            currentUserId={user?.id}
+          />
         ) : (
           <p className="text-sm text-pong-text/40">Bracket data unavailable.</p>
         )}

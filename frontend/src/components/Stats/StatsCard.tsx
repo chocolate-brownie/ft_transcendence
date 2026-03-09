@@ -37,7 +37,9 @@ function StatTile({
   tint?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-black/10 p-3 text-center ${tint ?? "bg-white/20"}`}>
+    <div
+      className={`rounded-lg border border-black/10 p-3 text-center ${tint ?? "bg-white/20"}`}
+    >
       <p className="text-xs text-pong-text/50">{label}</p>
       <p className="text-lg font-bold text-pong-text">{value}</p>
     </div>

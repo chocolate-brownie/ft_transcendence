@@ -49,7 +49,9 @@ export default function GameBoard({
   }[resolvedBoardSize];
 
   return (
-    <div className={`inline-block rounded-lg bg-pong-surface p-2.5 shadow-sm ${className}`}>
+    <div
+      className={`inline-block rounded-lg bg-pong-surface p-2.5 shadow-sm ${className}`}
+    >
       <div className={`grid ${gridColsClass} ${boardWidthClass} gap-2.5`}>
         {board.map((cell, index) => (
           <button

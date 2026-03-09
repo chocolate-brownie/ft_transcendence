@@ -20,7 +20,11 @@ export const statsService = {
    * Issue #290 — Fetch a user's paginated match history with opponent info,
    * result, duration, and game metadata. Calls GET /api/users/:id/matches.
    */
-  getUserMatches(userId: number, page: number, limit = 10): Promise<MatchHistoryResponse> {
+  getUserMatches(
+    userId: number,
+    page: number,
+    limit = 10,
+  ): Promise<MatchHistoryResponse> {
     return apiClient.get<MatchHistoryResponse>(
       `/api/users/${userId}/matches?page=${page}&limit=${limit}`,
     );

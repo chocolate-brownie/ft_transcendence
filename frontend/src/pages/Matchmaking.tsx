@@ -183,7 +183,6 @@ export default function Matchmaking() {
     };
   }, [socket, status]);
 
-
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center justify-center px-4">
       {error ? (
@@ -227,8 +226,8 @@ export default function Matchmaking() {
             <p className="text-sm text-pong-text/60">Joining game…</p>
             {matchData ? (
               <p className="text-xs text-pong-text/40">
-                vs <span className="font-semibold">{matchData.opponent.username}</span> —
-                {" "}you are <span className="font-semibold">{matchData.yourSymbol}</span>
+                vs <span className="font-semibold">{matchData.opponent.username}</span> —{" "}
+                you are <span className="font-semibold">{matchData.yourSymbol}</span>
               </p>
             ) : null}
           </div>
