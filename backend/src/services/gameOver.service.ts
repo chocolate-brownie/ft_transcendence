@@ -71,7 +71,7 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
 // Checks if the finished game is linked to a TournamentMatch. If so, calls
 // advanceWinner and emits tournament socket notifications (fire-and-forget).
 
-async function handleTournamentGameOver(
+export async function handleTournamentGameOver(
   io: Server,
   gameId: number,
   winnerId: number,
