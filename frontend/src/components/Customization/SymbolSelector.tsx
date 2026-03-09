@@ -71,12 +71,8 @@ export default function SymbolSelector({ symbols, onSelect }: Props) {
 
       {/* Tab content */}
       {activeTab === "default" && <ClassicTab />}
-      {activeTab === "emoji" && (
-        <EmojiTab symbols={symbols} onSelect={onSelect} />
-      )}
-      {activeTab === "initials" && (
-        <InitialsTab symbols={symbols} onSelect={onSelect} />
-      )}
+      {activeTab === "emoji" && <EmojiTab symbols={symbols} onSelect={onSelect} />}
+      {activeTab === "initials" && <InitialsTab symbols={symbols} onSelect={onSelect} />}
     </div>
   );
 }
@@ -143,9 +139,7 @@ function EmojiTab({
             <span className="text-2xl">
               {pair.player1} vs {pair.player2}
             </span>
-            <span className="text-xs text-pong-text/50">
-              {pair.label}
-            </span>
+            <span className="text-xs text-pong-text/50">{pair.label}</span>
           </button>
         );
       })}
@@ -182,10 +176,7 @@ function InitialsTab({
       <div className="flex items-center gap-4">
         {/* Player 1 input */}
         <div className="flex flex-col items-center gap-1">
-          <label
-            htmlFor="p1-initial"
-            className="text-xs font-medium text-pong-text/50"
-          >
+          <label htmlFor="p1-initial" className="text-xs font-medium text-pong-text/50">
             Player 1
           </label>
           <input
@@ -207,10 +198,7 @@ function InitialsTab({
 
         {/* Player 2 input */}
         <div className="flex flex-col items-center gap-1">
-          <label
-            htmlFor="p2-initial"
-            className="text-xs font-medium text-pong-text/50"
-          >
+          <label htmlFor="p2-initial" className="text-xs font-medium text-pong-text/50">
             Player 2
           </label>
           <input
@@ -229,9 +217,7 @@ function InitialsTab({
         </div>
       </div>
 
-      <p className="text-xs text-pong-text/50">
-        Enter 1-2 characters for each player
-      </p>
+      <p className="text-xs text-pong-text/50">Enter 1-2 characters for each player</p>
     </div>
   );
 }

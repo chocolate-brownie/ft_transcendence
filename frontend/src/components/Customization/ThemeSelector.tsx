@@ -113,18 +113,9 @@ export default function ThemeSelector({ selected, onSelect }: Props) {
                 : "border-black/10 bg-white hover:border-pong-accent/30")
             }
           >
-            <MiniPreview
-              bg={theme.bg}
-              grid={theme.grid}
-              p1={theme.p1}
-              p2={theme.p2}
-            />
-            <span className="text-sm font-semibold text-pong-text">
-              {theme.label}
-            </span>
-            <span className="text-xs text-pong-text/50">
-              {theme.description}
-            </span>
+            <MiniPreview bg={theme.bg} grid={theme.grid} p1={theme.p1} p2={theme.p2} />
+            <span className="text-sm font-semibold text-pong-text">{theme.label}</span>
+            <span className="text-xs text-pong-text/50">{theme.description}</span>
           </button>
         );
       })}

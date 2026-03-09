@@ -42,8 +42,8 @@ export default function LocalGame() {
   /* Setup phase state — Issue #209                                     */
   /* ------------------------------------------------------------------ */
   const [phase, setPhase] = useState<"setup" | "play">("setup");
-  const [boardSize, setBoardSize] = useState<BoardSize>(
-    () => parseBoardSize(searchParams.get("boardSize")),
+  const [boardSize, setBoardSize] = useState<BoardSize>(() =>
+    parseBoardSize(searchParams.get("boardSize")),
   );
   const [customization, setCustomization] = useState<GameCustomization>(
     () => DEFAULT_CUSTOMIZATION,
@@ -59,7 +59,10 @@ export default function LocalGame() {
   const [scoreO, setScoreO] = useState(0);
   const [scoreDraw, setScoreDraw] = useState(0);
 
-  const winningLine = useMemo(() => findWinningLine(board, boardSize), [board, boardSize]);
+  const winningLine = useMemo(
+    () => findWinningLine(board, boardSize),
+    [board, boardSize],
+  );
   const playerSymbol: "X" | "O" = "X";
   const isYourTurn = result === null && currentPlayer === playerSymbol;
 
@@ -213,10 +216,17 @@ export default function LocalGame() {
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Symbols
             </h2>
-            <SymbolSelector symbols={customization.symbols} onSelect={handleSymbolsChange} />
+            <SymbolSelector
+              symbols={customization.symbols}
+              onSelect={handleSymbolsChange}
+            />
           </section>
 
-          <Button variant="primary" onClick={handleStartGame} className="mt-2 px-8 py-3 text-lg">
+          <Button
+            variant="primary"
+            onClick={handleStartGame}
+            className="mt-2 px-8 py-3 text-lg"
+          >
             Start Game
           </Button>
         </div>
@@ -271,7 +281,9 @@ export default function LocalGame() {
               gameOver={result !== null}
               disabled={result !== null}
               themed={isThemed}
-              renderSymbol={customization.symbols.type !== "default" ? renderSymbol : undefined}
+              renderSymbol={
+                customization.symbols.type !== "default" ? renderSymbol : undefined
+              }
             />
 
             {result !== null && (
