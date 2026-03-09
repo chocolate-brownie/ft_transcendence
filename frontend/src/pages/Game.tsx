@@ -22,12 +22,16 @@ export default function Game() {
 
   const gameId = Number(id);
 
-  /* Issue #209 — shared customization hook (persisted to localStorage) */
-  const { customization, isThemed, renderSymbol } = useGameCustomization();
-
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
   const [joinRevision, setJoinRevision] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  /* Issue #209 — shared customization hook (persisted to localStorage).
+   * Disabled for tournament games to avoid extra complexity. */
+  const { customization, isThemed: _isThemed, renderSymbol: _renderSymbol } =
+    useGameCustomization();
+  const isThemed = gameState.isTournament ? false : _isThemed;
+  const renderSymbol = gameState.isTournament ? undefined : _renderSymbol;
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;

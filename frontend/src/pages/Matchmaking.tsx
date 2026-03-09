@@ -22,6 +22,11 @@ function parseBoardSize(value: string | null): BoardSize {
   return 3;
 }
 
+const backButtonClass =
+  "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
+  "transition-colors bg-pong-surface text-pong-text/70 " +
+  "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none";
+
 export default function Matchmaking() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -29,12 +34,12 @@ export default function Matchmaking() {
 
   const boardSize = parseBoardSize(searchParams.get("boardSize"));
 
-  /* Issue #209 — customization while searching */
+  /* Issue #209 — customization before searching */
   const { customization, setTheme, setSymbols } = useGameCustomization();
 
   const [status, setStatus] = useState<
-    "idle" | "connecting" | "searching" | "found" | "cancelled"
-  >("idle");
+    "setup" | "idle" | "connecting" | "searching" | "found" | "cancelled"
+  >("setup");
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchFound | null>(null);
@@ -52,6 +57,30 @@ export default function Matchmaking() {
   function emitFindGame() {
     if (!socket) return;
     socket.emit("find_game", { boardSize });
+  }
+
+  /** Transition from setup to searching. */
+  function handleStartSearch() {
+    if (!navigator.onLine) {
+      setError("You are offline. Reconnect to the internet then try again.");
+      return;
+    }
+    if (!socket) {
+      setStatus("connecting");
+      return;
+    }
+    if (!socket.connected) {
+      setStatus("connecting");
+      socket.connect();
+      return;
+    }
+    startedRef.current = true;
+    setQueuePosition(null);
+    setMatchData(null);
+    setError(null);
+    clearRedirectTimer();
+    setStatus("searching");
+    emitFindGame();
   }
 
   function handleRetry() {
@@ -143,37 +172,7 @@ export default function Matchmaking() {
     };
   }, [socket, navigate]);
 
-  useEffect(() => {
-    function startSearch() {
-      if (!socket || startedRef.current) return;
-
-      startedRef.current = true;
-      setQueuePosition(null);
-      setMatchData(null);
-      setError(null);
-      setStatus("searching");
-      socket.emit("find_game", { boardSize });
-    }
-
-    if (startedRef.current) return;
-
-    if (!socket) {
-      setStatus("connecting");
-      return;
-    }
-
-    if (!socket.connected) {
-      setStatus("connecting");
-      socket.once("connect", startSearch);
-      socket.connect();
-
-      return () => {
-        socket.off("connect", startSearch);
-      };
-    }
-
-    startSearch();
-  }, [socket, boardSize]);
+  /* No longer auto-start searching — wait for user to click "Find Opponent" */
 
   useEffect(() => {
     return () => {
@@ -189,6 +188,63 @@ export default function Matchmaking() {
     };
   }, [socket, status]);
 
+  /* ── Setup phase — pick theme & symbols before queuing ─────────────── */
+  if (status === "setup") {
+    return (
+      <div className="min-h-screen w-full px-4 pt-4">
+        <div className="flex w-full justify-start">
+          <button
+            type="button"
+            onClick={() => void navigate("/lobby")}
+            className={backButtonClass}
+          >
+            <span className="text-base leading-none">&larr;</span>
+            <span>Back to Lobby</span>
+          </button>
+        </div>
+
+        <div className="mx-auto flex max-w-lg flex-col items-center gap-6 pt-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-pong-accent">Play Online</h1>
+            <p className="mt-1 text-sm text-pong-text/60">
+              Customize your game, then find an opponent.
+            </p>
+          </div>
+
+          {/* Theme picker */}
+          <section className="w-full">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Theme
+            </h2>
+            <ThemeSelector selected={customization.theme} onSelect={setTheme} />
+          </section>
+
+          {/* Symbol picker */}
+          <section className="w-full">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Symbols
+            </h2>
+            <CustomSymbolSelector
+              symbols={customization.symbols}
+              onSelect={setSymbols}
+            />
+          </section>
+
+          {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
+          <Button
+            variant="primary"
+            onClick={handleStartSearch}
+            className="mt-2 px-8 py-3 text-lg"
+          >
+            Find Opponent
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Searching / found / error phases ──────────────────────────────── */
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center justify-center px-4">
       {error ? (
@@ -223,33 +279,11 @@ export default function Matchmaking() {
           </div>
         </Card>
       ) : status === "searching" ? (
-        <div className="w-full max-w-lg space-y-4">
-          <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
-
-          {/* Issue #209 — customize while searching */}
-          <div className="rounded-lg border border-pong-accent/20 bg-pong-surface px-6 py-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
-              Customize while you wait
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Theme</h3>
-                <ThemeSelector selected={customization.theme} onSelect={setTheme} />
-              </div>
-              <div>
-                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Symbols</h3>
-                <CustomSymbolSelector
-                  symbols={customization.symbols}
-                  onSelect={setSymbols}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SearchingScreen queuePosition={queuePosition} onCancel={leaveMatchmaking} />
       ) : status === "found" ? (
         <Card variant="elevated" className="text-center">
           <div className="space-y-3" role="status" aria-live="polite">
-            <div className="text-5xl">✓</div>
+            <div className="text-5xl">&#x2713;</div>
             <h1 className="text-3xl font-bold text-pong-text">Match Found!</h1>
             <p className="text-sm text-pong-text/60">Joining game…</p>
             {matchData ? (

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -66,6 +66,14 @@ vi.mock("../../src/context/SocketContext", () => ({
   useSocket: () => useSocketMock(),
 }));
 
+vi.mock("../../src/components/Customization/ThemeSelector", () => ({
+  default: () => <div data-testid="theme-selector" />,
+}));
+
+vi.mock("../../src/components/Customization/SymbolSelector", () => ({
+  default: () => <div data-testid="symbol-selector" />,
+}));
+
 function renderMatchmaking(route = "/matchmaking?boardSize=3") {
   return render(
     <MemoryRouter initialEntries={[route]}>
@@ -74,25 +82,50 @@ function renderMatchmaking(route = "/matchmaking?boardSize=3") {
   );
 }
 
+/** Click "Find Opponent" to move past the setup phase. */
+function startSearch() {
+  act(() => {
+    const buttons = screen.getAllByRole("button", { name: /find opponent/i });
+    fireEvent.click(buttons[0]);
+  });
+}
+
 describe("Matchmaking", () => {
   beforeEach(() => {
+    cleanup();
     navigateMock.mockReset();
     useSocketMock.mockReset();
     vi.useRealTimers();
+  });
+
+  it("shows setup phase with customization options on mount", () => {
+    const socket = new MockSocket();
+    useSocketMock.mockReturnValue({ socket });
+    renderMatchmaking();
+
+    expect(screen.getByText(/play online/i)).toBeInTheDocument();
+    expect(screen.getByTestId("theme-selector")).toBeInTheDocument();
+    expect(screen.getByTestId("symbol-selector")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /find opponent/i })).toBeInTheDocument();
+    expect(socket.emit).not.toHaveBeenCalled();
   });
 
   it("shows connecting state when socket is unavailable", () => {
     useSocketMock.mockReturnValue({ socket: null });
     renderMatchmaking();
 
+    startSearch();
+
     expect(screen.getByText(/connecting to matchmaking/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry connection/i })).toBeInTheDocument();
   });
 
-  it("emits find_game on mount and renders queue position on searching event", () => {
+  it("emits find_game after clicking Find Opponent and renders queue position", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
     renderMatchmaking();
+
+    startSearch();
 
     expect(socket.emit).toHaveBeenCalledWith("find_game", { boardSize: 3 });
 
@@ -110,6 +143,8 @@ describe("Matchmaking", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
     renderMatchmaking();
+
+    startSearch();
 
     act(() => {
       socket.trigger("match_found", {
@@ -134,6 +169,8 @@ describe("Matchmaking", () => {
     useSocketMock.mockReturnValue({ socket });
     renderMatchmaking();
 
+    startSearch();
+
     act(() => {
       socket.trigger("search_cancelled");
     });
@@ -145,6 +182,8 @@ describe("Matchmaking", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
     renderMatchmaking();
+
+    startSearch();
 
     act(() => {
       socket.trigger("error", { message: "Already in an active game" });
@@ -162,6 +201,8 @@ describe("Matchmaking", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
     renderMatchmaking();
+
+    startSearch();
 
     act(() => {
       socket.trigger("disconnect");
