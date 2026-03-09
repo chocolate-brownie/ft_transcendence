@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../lib/apiClient";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
+import { useTournamentSocket } from "../hooks/useTournamentSocket";
 import TournamentList from "../components/Tournament/TournamentList";
 import CreateTournamentModal from "../components/Tournament/CreateTournamentModal";
 import {
@@ -22,6 +24,7 @@ const tabStatusMap: Record<TabKey, TournamentStatus> = {
 export default function Tournaments() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket } = useSocket();
   const [activeTab, setActiveTab] = useState<TabKey>("available");
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +84,10 @@ export default function Tournaments() {
   useEffect(() => {
     void loadTournaments();
   }, [loadTournaments]);
+
+  /* Issue #159 — Re-fetch tournament list when socket events arrive */
+  const handleSocketUpdate = useCallback(() => void loadTournaments(), [loadTournaments]);
+  useTournamentSocket({ socket, onUpdate: handleSocketUpdate });
 
   const isUserParticipant = (tournament: TournamentListItem): boolean => {
     if (!user) return false;
