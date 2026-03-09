@@ -66,6 +66,9 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
       totalMoves: payload.totalMoves,
       durationSeconds: payload.duration,
       finishedAt: updatedGame.finishedAt ?? new Date(),
+      player1Id: player1.id,
+      player2Id: player2?.id ?? null,
+      gameType: updatedGame.gameType,
     };
     await updateGameStatistics(statsPayload);
   } catch (error) {
@@ -84,9 +87,9 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   return payload;
 }
 
-// ─── Issue #159 — Tournament auto-advance on game completion ────────────────
-// Checks if the finished game is linked to a TournamentMatch. If so, calls
-// advanceWinner and emits tournament socket notifications (fire-and-forget).
+/* ─── Issue #159 — Tournament auto-advance on game completion ────────────────
+Checks if the finished game is linked to a TournamentMatch. If so, calls
+advanceWinner and emits tournament socket notifications (fire-and-forget). */
 
 export async function handleTournamentGameOver(
   io: Server,
@@ -115,9 +118,9 @@ export async function handleTournamentGameOver(
   }
 }
 
-// ─── Issue #159 — Emit tournament notifications after auto-advance ──────────
-// Replicates the notification logic from recordMatchResultController so that
-// auto-advanced tournament matches produce the same real-time events.
+/* ─── Issue #159 — Emit tournament notifications after auto-advance ──────────
+Replicates the notification logic from recordMatchResultController so that
+auto-advanced tournament matches produce the same real-time events. */
 
 async function emitTournamentNotifications(
   io: Server,
@@ -133,9 +136,7 @@ async function emitTournamentNotifications(
   if (!tournament) return;
 
   const loserId =
-    result.match.player1Id === winnerId
-      ? result.match.player2Id
-      : result.match.player1Id;
+    result.match.player1Id === winnerId ? result.match.player2Id : result.match.player1Id;
 
   // Notify all participants that a match finished
   await notifyMatchCompleted(io, tournamentId, tournament.name, result.match, winnerId);
@@ -174,9 +175,9 @@ async function emitTournamentNotifications(
   }
 }
 
-// ─── Notification helpers (Issue #159) ──────────────────────────────────────
-// Minimal copies of the controller notification functions, scoped to this
-// service so we don't need to export controller internals.
+/* ─── Notification helpers (Issue #159) ──────────────────────────────────────
+Minimal copies of the controller notification functions, scoped to this
+service so we don't need to export controller internals. */
 
 function getRoundName(round: number, maxPlayers: number): string {
   const totalRounds = Math.log2(maxPlayers);
@@ -198,15 +199,26 @@ async function notifyMatchCompleted(
   io: Server,
   tournamentId: number,
   tournamentName: string,
-  match: { id: number; round: number; player1Id: number | null; player2Id: number | null },
+  match: {
+    id: number;
+    round: number;
+    player1Id: number | null;
+    player2Id: number | null;
+  },
   winnerId: number,
 ): Promise<void> {
   const loserId = match.player1Id === winnerId ? match.player2Id : match.player1Id;
 
   const [winner, loser] = await Promise.all([
-    prisma.user.findUnique({ where: { id: winnerId }, select: { id: true, username: true } }),
+    prisma.user.findUnique({
+      where: { id: winnerId },
+      select: { id: true, username: true },
+    }),
     loserId
-      ? prisma.user.findUnique({ where: { id: loserId }, select: { id: true, username: true } })
+      ? prisma.user.findUnique({
+          where: { id: loserId },
+          select: { id: true, username: true },
+        })
       : null,
   ]);
 
@@ -246,7 +258,13 @@ async function notifyYourTurn(
   io: Server,
   tournamentId: number,
   tournamentName: string,
-  match: { id: number; round: number; player1Id: number | null; player2Id: number | null; gameId?: number | null },
+  match: {
+    id: number;
+    round: number;
+    player1Id: number | null;
+    player2Id: number | null;
+    gameId?: number | null;
+  },
   maxPlayers: number,
 ): Promise<void> {
   if (!match.player1Id || !match.player2Id) return;
@@ -274,7 +292,11 @@ async function notifyYourTurn(
     gameId: match.gameId ?? null,
     round: match.round,
     roundName,
-    opponent: { id: player2.id, username: player2.username, avatarUrl: player2.avatarUrl },
+    opponent: {
+      id: player2.id,
+      username: player2.username,
+      avatarUrl: player2.avatarUrl,
+    },
   });
 
   io.to(`user:${player2.id}`).emit("tournament_your_turn", {
@@ -284,7 +306,11 @@ async function notifyYourTurn(
     gameId: match.gameId ?? null,
     round: match.round,
     roundName,
-    opponent: { id: player1.id, username: player1.username, avatarUrl: player1.avatarUrl },
+    opponent: {
+      id: player1.id,
+      username: player1.username,
+      avatarUrl: player1.avatarUrl,
+    },
   });
 }
 
@@ -307,7 +333,11 @@ async function notifyTournamentCompleted(
     io.to(`user:${userId}`).emit("tournament_completed", {
       tournamentId,
       tournamentName,
-      champion: { id: champion.id, username: champion.username, avatarUrl: champion.avatarUrl },
+      champion: {
+        id: champion.id,
+        username: champion.username,
+        avatarUrl: champion.avatarUrl,
+      },
     });
   });
 }
