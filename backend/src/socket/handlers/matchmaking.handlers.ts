@@ -30,7 +30,9 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         where: {
           userId,
           tournament: {
-            status: "IN_PROGRESS",
+            status: {
+              in: ["REGISTERING", "IN_PROGRESS"],
+            },
           },
         },
         select: {
@@ -159,7 +161,9 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
           where: {
             userId: player.userId,
             tournament: {
-              status: "IN_PROGRESS",
+              status: {
+                in: ["REGISTERING", "IN_PROGRESS"],
+              },
             },
           },
           select: {

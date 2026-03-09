@@ -63,7 +63,9 @@ export async function joinTournament(tournamentId: number, userId: number) {
       where: {
         userId,
         tournament: {
-          status: "IN_PROGRESS",
+          status: {
+            in: ["REGISTERING", "IN_PROGRESS"],
+          },
         },
       },
       select: {
