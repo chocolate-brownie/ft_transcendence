@@ -3,6 +3,7 @@
 
 import prisma from "../lib/prisma";
 import type { PrismaClient } from "@prisma/client";
+import { initializeBoard } from "../types/game";
 
 // ─── Transaction client type ───────────────────────────────────────────────
 // Matches PrismaClient but without connection/transaction methods
@@ -31,6 +32,42 @@ function generateSeedOrder(numPlayers: number): number[] {
   }
 
   return seeds;
+}
+
+// ─── Issue #159 — Auto-create Game for a ready match ────────────────────────
+// Creates a Game record and links it to the TournamentMatch when both players
+// are determined. Returns the created game's id.
+
+export async function createGameForMatch(
+  tournamentId: number,
+  matchId: number,
+  player1Id: number,
+  player2Id: number,
+  tx: TxClient = prisma,
+): Promise<number> {
+  const board = initializeBoard(3);
+
+  const game = await tx.game.create({
+    data: {
+      player1Id,
+      player2Id,
+      boardState: board,
+      boardSize: 3,
+      currentTurn: "X",
+      status: "IN_PROGRESS",
+      gameType: "TOURNAMENT",
+      player1Symbol: "X",
+      player2Symbol: "O",
+      tournamentId,
+      startedAt: new Date(),
+    },
+  });
+
+  await tx.tournamentMatch.update({
+    where: { id: matchId },
+    data: { gameId: game.id },
+  });
+  return game.id;
 }
 
 // ─── Generate Bracket ──────────────────────────────────────────────────────
@@ -99,6 +136,18 @@ export async function generateBracket(
   }
 
   await tx.tournamentMatch.createMany({ data: allMatches });
+
+  // Issue #159 — Auto-create Game records for Round 1 matches
+  // All Round 1 matches have both players determined after bracket generation
+  const round1Matches = await tx.tournamentMatch.findMany({
+    where: { tournamentId, round: 1 },
+  });
+
+  for (const m of round1Matches) {
+    if (m.player1Id && m.player2Id) {
+      await createGameForMatch(tournamentId, m.id, m.player1Id, m.player2Id, tx);
+    }
+  }
 }
 
 // ─── Advance Winner ────────────────────────────────────────────────────────
@@ -161,6 +210,17 @@ export async function advanceWinner(
       },
       data: updateData,
     });
+
+    // Issue #159 — Auto-create Game when next match has both players ready
+    if (nextMatch.player1Id && nextMatch.player2Id && !nextMatch.gameId) {
+      await createGameForMatch(
+        tournamentId,
+        nextMatch.id,
+        nextMatch.player1Id,
+        nextMatch.player2Id,
+        tx,
+      );
+    }
   }
 
   // 4. Check if the round (and possibly the tournament) is complete

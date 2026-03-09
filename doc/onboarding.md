@@ -151,17 +151,24 @@ git push origin feature/your-feature-name
 
 ## Step 9: Useful Commands
 
-| Command           | What it does               |
-| :---------------- | :------------------------- |
-| `make`            | Build and start everything |
-| `make down`       | Stop containers            |
-| `make logs`       | Live logs (all services)   |
-| `make logs-back`  | Backend logs only          |
-| `make ps`         | Container status           |
-| `make shell-back` | Shell inside backend       |
-| `make shell-db`   | PostgreSQL CLI             |
-| `make fclean`     | Remove everything          |
-| `make re`         | Full rebuild               |
+| Command               | What it does                                          |
+| :-------------------- | :---------------------------------------------------- |
+| `make`                | Build and start everything                            |
+| `make down`           | Stop containers                                       |
+| `make logs`           | Live logs (all services)                              |
+| `make logs-back`      | Backend logs only                                     |
+| `make ps`             | Container status                                      |
+| `make shell-back`     | Shell inside backend                                  |
+| `make shell-db`       | PostgreSQL CLI                                        |
+| `make fclean`         | Remove everything                                     |
+| `make re`             | Full rebuild                                          |
+| `make db-reset`       | Reset DB (drop all data, re-apply migrations)         |
+| `make seed-users`     | Create 4 test users (Alice, Bob, John, Sarah)         |
+| `make seed-tournament`| Create a 4-player tournament from a random user       |
+| `make nuke-tournaments`| Delete all tournaments and related data              |
+| `make nuke-users`     | Delete all users (cascades everything)                |
+| `make nuke-all`       | Delete everything                                     |
+| `make fresh-test`     | Nuke all + seed 4 users + create tournament           |
 
 **When to rebuild:** Changed package.json or Dockerfile → `make re`. Changed source code → no rebuild (hot reload).
 

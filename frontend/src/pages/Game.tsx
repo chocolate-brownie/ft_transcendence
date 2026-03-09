@@ -381,12 +381,18 @@ export default function Game() {
         durationSeconds={gameClock}
         opponentAvatarUrl={opponentAvatarUrl}
         isForfeit={gameState.isForfeit}
+        isTournament={gameState.isTournament}
         rematchLoading={gameState.isCreatingRematch}
         rematchError={gameState.rematchError}
         onPlayAgain={() => {
           void handlePlayAgain();
         }}
         onGoLobby={backToLobby}
+        onBackToTournament={
+          gameState.tournamentId
+            ? () => void navigate(`/tournaments/${gameState.tournamentId}`)
+            : undefined
+        }
         onClose={() => dispatch({ type: "CLOSE_GAME_OVER_MODAL" })}
       />
     </div>

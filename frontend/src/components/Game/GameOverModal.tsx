@@ -16,8 +16,10 @@ interface GameOverModalProps {
   opponentAvatarUrl?: string | null;
   rematchLoading?: boolean;
   rematchError?: string | null;
+  isTournament?: boolean;
   onPlayAgain: () => void;
   onGoLobby: () => void;
+  onBackToTournament?: () => void;
   onClose: () => void;
 }
 
@@ -43,8 +45,10 @@ export default function GameOverModal({
   opponentAvatarUrl = null,
   rematchLoading = false,
   rematchError = null,
+  isTournament = false,
   onPlayAgain,
   onGoLobby,
+  onBackToTournament,
   onClose,
 }: GameOverModalProps) {
   useEffect(() => {
@@ -190,22 +194,35 @@ export default function GameOverModal({
           <p className="mt-3 text-xs text-red-400">{rematchError}</p>
         ) : null}
 
+        {/* Issue #159 — Tournament games: show "Back to Tournament" instead of rematch */}
         <div className="mt-5 space-y-3">
-          <Button
-            variant="primary"
-            className="w-full"
-            onClick={onPlayAgain}
-            disabled={rematchLoading}
-          >
-            {rematchLoading
-              ? "Creating rematch..."
-              : isForfeit
-                ? "Find New Game"
-                : "Play Again"}
-          </Button>
-          <Button variant="secondary" className="w-full" onClick={onGoLobby}>
-            New Game (Lobby)
-          </Button>
+          {isTournament ? (
+            <Button
+              variant="primary"
+              className="w-full"
+              onClick={onBackToTournament ?? onGoLobby}
+            >
+              Back to Tournament
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={onPlayAgain}
+                disabled={rematchLoading}
+              >
+                {rematchLoading
+                  ? "Creating rematch..."
+                  : isForfeit
+                    ? "Find New Game"
+                    : "Play Again"}
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={onGoLobby}>
+                New Game (Lobby)
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@
 
 NAME		= ft_transcendence
 COMPOSE		= docker compose
+-include .env
 
 # Colors
 GREEN		= \033[0;32m
@@ -92,13 +93,48 @@ db-studio:			## Open Prisma Studio (DB browser)
 db-seed:			## Seed the database
 	$(COMPOSE) exec backend npx prisma db seed
 
+db-reset:			## Reset database (drop all data, re-apply migrations)
+	$(COMPOSE) exec backend npx prisma migrate reset --force
+
+# ── Test Data ──────────────────────────────────────────────────────────────
+
+PSQL = $(COMPOSE) exec -T db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c
+
+seed-users:			## Create 4 test users (Alice, Bob, John, Sarah — pw: Test1234!)
+	$(COMPOSE) exec backend npx tsx prisma/seed-users.ts
+
+seed-tournament:	## Create a 4-player tournament from a random user
+	$(COMPOSE) exec backend npx tsx prisma/seed-tournament.ts
+
+nuke-tournaments:	## Delete all tournaments, matches, participants, and tournament games
+	@echo "$(RED)Deleting all tournaments...$(RESET)"
+	@$(PSQL) "DELETE FROM tournament_matches; DELETE FROM tournament_participants; DELETE FROM games WHERE game_type = 'TOURNAMENT'; DELETE FROM tournaments;"
+	@echo "$(GREEN)✔ All tournaments deleted.$(RESET)"
+
+nuke-users:			## Delete all users (cascades games, friends, messages, tournaments)
+	@echo "$(RED)Deleting all users...$(RESET)"
+	@$(PSQL) "TRUNCATE users CASCADE;"
+	@echo "$(GREEN)✔ All users deleted.$(RESET)"
+
+nuke-all:			## Delete everything (users + tournaments + games)
+	@echo "$(RED)Nuking all data...$(RESET)"
+	@$(PSQL) "TRUNCATE users CASCADE;"
+	@echo "$(GREEN)✔ All data deleted.$(RESET)"
+
+fresh-test:			## Full reset: nuke all → seed 4 users → create tournament
+	@$(MAKE) --no-print-directory nuke-all
+	@$(MAKE) --no-print-directory seed-users
+	@$(MAKE) --no-print-directory seed-tournament
+
 # ── Help ────────────────────────────────────────────────────────────────────
 
 help:				## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2}'
 
 .PHONY: all build up down stop start clean fclean re \
         logs logs-back logs-front logs-db ps \
         shell-back shell-front shell-db \
-        db-migrate db-generate db-studio db-seed help
+        db-migrate db-generate db-studio db-seed db-reset \
+        seed-users seed-tournament \
+        nuke-tournaments nuke-users nuke-all fresh-test help

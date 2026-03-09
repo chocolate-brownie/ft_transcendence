@@ -39,10 +39,27 @@
 
 ## Tournament Events
 
-| Event                    | Direction       | Payload                                                                | Purpose                                          |
-| ------------------------ | --------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
-| `tournament_match_ready` | Server → Client | `{ tournamentId: string, gameId: string, opponent: { id, username } }` | Notify player their tournament match is starting |
-| `tournament_update`      | Server → Client | `{ tournamentId: string, bracket: object }`                            | Bracket updated after a match completes          |
+| Event                        | Direction       | Payload                                                                                         | Purpose                                                  |
+| ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `tournament_created`         | Server → Client | `{ tournamentName, creator: { id, username } }`                                                 | New tournament available (broadcast, excludes creator)   |
+| `tournament_player_joined`   | Server → Client | `{ tournamentName, player: { id, username }, currentParticipants, maxPlayers }`                  | Player joined a tournament (sent to all participants)    |
+| `tournament_started`         | Server → Client | `{ tournamentName }`                                                                            | Tournament registration full, bracket generated          |
+| `tournament_your_turn`       | Server → Client | `{ tournamentName, roundName, opponent: { id, username }, gameId }`                              | Player's match is ready (game auto-created)              |
+| `tournament_match_completed` | Server → Client | `{ tournamentName, winner: { id, username }, loser: { id, username }, round }`                   | A match finished (sent to all participants)              |
+| `tournament_eliminated`      | Server → Client | `{ tournamentName, roundName }`                                                                 | Player was eliminated (sent only to the loser)           |
+| `tournament_completed`       | Server → Client | `{ tournamentName, champion: { id, username } }`                                                | Tournament finished, champion declared                   |
+
+### Tournament Game Lifecycle
+
+1. Tournament created → `tournament_created` broadcast
+2. Players join → `tournament_player_joined` to all participants + creator
+3. Registration full → bracket generated, Round 1 games auto-created → `tournament_started` + `tournament_your_turn`
+4. Players play via bracket "Play Now" buttons (navigate to `/game/:gameId`)
+5. Game finishes → `tournament_match_completed`, loser gets `tournament_eliminated`
+6. If next-round match has both players → new game auto-created → `tournament_your_turn`
+7. Finals played → `tournament_completed` with champion
+8. Forfeit (disconnect timeout) → winner auto-advances in bracket
+9. Both players disconnect → player1 (higher seed) advances by default
 
 ---
 
@@ -69,5 +86,5 @@ io.use((socket, next) => {
 ## Rooms Strategy
 
 - **Game rooms**: Each active game gets a room named `game:<gameId>`. Both players join on `game_found`, leave on `game_over`.
-- **User rooms**: Each authenticated user joins a room named `user:<userId>` for receiving direct messages and notifications.
-- **Tournament rooms**: `tournament:<tournamentId>` for bracket updates.
+- **User rooms**: Each authenticated user joins a room named `user:<userId>` for receiving direct messages, friend requests, and tournament notifications.
+- **Tournament notifications**: Sent to individual user rooms (`user:<userId>`) rather than a shared tournament room, so only relevant participants receive each event.

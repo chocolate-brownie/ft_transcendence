@@ -26,6 +26,8 @@ export type RoomJoined = {
     player2: RoomPlayerSummary | null;
     player1Symbol: PlayerSymbol;
     player2Symbol: PlayerSymbol;
+    gameType?: string;
+    tournamentId?: number | null;
     startedAt: string | null;
     opponentDisconnected?: {
       username: string;

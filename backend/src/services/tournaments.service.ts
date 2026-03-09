@@ -115,6 +115,7 @@ export async function joinTournament(tournamentId: number, userId: number) {
       tournamentInfo: {
         id: tournament.id,
         name: tournament.name,
+        createdById: tournament.createdById,
         currentParticipants: newCount,
         maxPlayers: tournament.maxPlayers,
         status: updatedStatus,

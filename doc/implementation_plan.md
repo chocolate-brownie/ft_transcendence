@@ -79,7 +79,7 @@ This lets the team focus on delivering polished auth, chat, profiles, and tourna
 | 5   | Standard user management                     | 2   | 2–3  | mgodawat, mamahtal, tzizi  | #1, #2       | ✅ Completed   |
 | 6   | Web-based Tic-Tac-Toe game                   | 2   | 4–6  | zamgar, jayzatov, mgodawat | #1           | ✅ Completed   |
 | 7   | Remote players                               | 2   | 5–6  | mgodawat                   | #3, #6       | ✅ Completed   |
-| 8   | Tournament system                            | 1   | 7–8  | mamahtal, tzizi, mgodawat  | #6           | 🔧 In Progress |
+| 8   | Tournament system                            | 1   | 7–8  | mamahtal, tzizi, mgodawat  | #6           | ✅ Completed   |
 
 ### Bonus Modules (4 Points — implement after core is stable)
 
@@ -330,7 +330,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Tournament WebSocket events: notify when it's your turn in the bracket
 - Test tournament flow end-to-end
 
-**Modules progressed:** #8 (Tournament system — 🔧 in progress)
+**Modules progressed:** #8 (Tournament system — ✅ completed)
 
 ---
 

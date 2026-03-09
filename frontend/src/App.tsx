@@ -17,6 +17,7 @@ import Leaderboard from "./pages/Leaderboard";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
 import ActiveGameBanner from "./components/ActiveGameBanner";
+import ToastContainer from "./components/Toast";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -69,6 +70,7 @@ function GameWrapper() {
 function App() {
   return (
     <ChatProvider>
+      <ToastContainer />
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
