@@ -43,6 +43,7 @@ describe("AI Game API Integration Tests", () => {
         .send({ difficulty: "hard", playerSymbol: "X" });
 
       expect(res.status).toBe(201);
+      expect(res.body.game.difficulty).toBe(Difficulty.HARD);
       expect(JSON.parse(res.body.game.boardState)).toEqual(Array(9).fill(null));
       expect(res.body.game.player1Id).toEqual(userId);
       expect(res.body.game.player2Id).toEqual(null);

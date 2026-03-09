@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import { generateAIGame, RequestAIMove, getAIGame } from '../controllers/ai.controller';
-import { get } from 'http';
 
 const router = Router();
 
