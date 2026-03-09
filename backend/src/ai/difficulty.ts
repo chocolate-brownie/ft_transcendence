@@ -1,12 +1,13 @@
-import { Board, DifficultyLevel, Player } from "../types/game";
+import { Board, Player } from "../types/game";
 import { minimax } from "./minimax";
+import { Difficulty } from "@prisma/client";
 
-export function getAIMove(board: Board, aiSymbol: Player, difficulty: DifficultyLevel): number
+export function getAIMove(board: Board, aiSymbol: Player, difficulty: Difficulty): number
 {
     let threshold = 1; // Par défaut 'hard' (100%)
 
-    if (difficulty === 'easy') threshold = 0.5;
-    if (difficulty === 'medium') threshold = 0.8;
+    if (difficulty === Difficulty.EASY) threshold = 0.5;
+    if (difficulty === Difficulty.MEDIUM) threshold = 0.8;
 
     // Si on dépasse le seuil, on joue au hasard, sinon on joue le meilleur coup
     if (Math.random() > threshold) {
