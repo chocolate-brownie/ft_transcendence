@@ -80,7 +80,9 @@ export default function StatsCard({ stats }: StatsCardProps) {
       <div className="mb-4">
         <div className="mb-1 flex items-center justify-between text-xs">
           <span className="text-pong-text/50">Win Rate</span>
-          <span className="font-semibold text-pong-text">{winRate.toFixed(1)}%</span>
+          <span className="font-semibold text-pong-text">
+            {(winRate ?? 0).toFixed(1)}%
+          </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-black/10">
           <div
@@ -98,10 +100,10 @@ export default function StatsCard({ stats }: StatsCardProps) {
         <div className="grid grid-cols-4 gap-1 text-center">
           {(
             [
-              ["Classic", gamesByType.classic],
-              ["Custom", gamesByType.custom],
-              ["Tourney", gamesByType.tournament],
-              ["AI", gamesByType.ai],
+              ["Classic", gamesByType.classic ?? 0],
+              ["Custom", gamesByType.custom ?? 0],
+              ["Tourney", gamesByType.tournament ?? 0],
+              ["AI", gamesByType.ai ?? 0],
             ] as [string, number][]
           ).map(([label, count]) => (
             <div key={label}>

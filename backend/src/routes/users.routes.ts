@@ -6,7 +6,10 @@ import {
   handleMulterError,
   searchUsersController,
 } from "../controllers/users.controller";
-import { getUserStatsController, getUserMatchesController } from "../controllers/stats.controller";
+import {
+  getUserStatsController,
+  getUserMatchesController,
+} from "../controllers/stats.controller";
 import { auth } from "../middleware/auth";
 import { uploadAvatar } from "../middleware/upload";
 

@@ -5,7 +5,7 @@
  * userId or page changes. Resets to page 1 when switching between users.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Card from "../Card";
 import Button from "../Button";
 import MatchHistoryItem from "./MatchHistoryItem";
@@ -31,15 +31,24 @@ export default function MatchHistoryList({ userId }: MatchHistoryListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const prevUserIdRef = useRef(userId);
 
   useEffect(() => {
+    // Reset to page 1 when userId changes (avoids double-fetch race condition)
+    let page = currentPage;
+    if (prevUserIdRef.current !== userId) {
+      prevUserIdRef.current = userId;
+      page = 1;
+      setCurrentPage(1);
+    }
+
     let cancelled = false;
 
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await statsService.getUserMatches(userId, currentPage, PAGE_LIMIT);
+        const data = await statsService.getUserMatches(userId, page, PAGE_LIMIT);
         if (!cancelled) {
           setMatches(data.matches);
           setTotalPages(data.pagination.totalPages);
@@ -59,11 +68,6 @@ export default function MatchHistoryList({ userId }: MatchHistoryListProps) {
       cancelled = true;
     };
   }, [userId, currentPage, retryKey]);
-
-  // Reset to page 1 when userId changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [userId]);
 
   return (
     <Card variant="elevated">
