@@ -1,3 +1,6 @@
+/* Issue #209 — theme definitions for local game customization (must precede @tailwind) */
+@import "./styles/themes.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

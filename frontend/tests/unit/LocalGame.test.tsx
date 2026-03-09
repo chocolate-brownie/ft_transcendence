@@ -60,6 +60,19 @@ vi.mock("../../src/components/Button", () => ({
   ),
 }));
 
+/* Issue #209 — mock customization components so tests don't depend on them */
+vi.mock("../../src/components/Customization/ThemeSelector", () => ({
+  default: () => <div data-testid="theme-selector" />,
+}));
+
+vi.mock("../../src/components/Customization/SymbolSelector", () => ({
+  default: () => <div data-testid="symbol-selector" />,
+}));
+
+vi.mock("../../src/components/Customization/BoardSizeSelector", () => ({
+  default: () => <div data-testid="board-size-selector" />,
+}));
+
 afterEach(() => {
   cleanup();
   navigateMock.mockReset();
@@ -73,22 +86,30 @@ function renderLocalGame(route = "/game/local") {
   );
 }
 
+/* Issue #209 — helper to skip the setup phase and enter the play phase */
+function startGame() {
+  fireEvent.click(screen.getByRole("button", { name: /start game/i }));
+}
+
 describe("LocalGame", () => {
-  it("uses a 3x3 board by default", () => {
+  it("shows the setup phase by default", () => {
     renderLocalGame();
 
-    expect(screen.getByText("Local Game Mode")).toBeInTheDocument();
-    expect(screen.getByTestId("board-length")).toHaveTextContent("9");
+    expect(screen.getByText("Local Game Setup")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start game/i })).toBeInTheDocument();
   });
 
-  it("uses the boardSize from query params", () => {
-    renderLocalGame("/game/local?boardSize=5");
+  it("uses a 3x3 board by default after starting", () => {
+    renderLocalGame();
+    startGame();
 
-    expect(screen.getByTestId("board-length")).toHaveTextContent("25");
+    expect(screen.getByText("Local Game")).toBeInTheDocument();
+    expect(screen.getByTestId("board-length")).toHaveTextContent("9");
   });
 
   it("updates local game state and resets on play again", () => {
     renderLocalGame();
+    startGame();
 
     fireEvent.click(screen.getByRole("button", { name: "cell-0" })); // X
     fireEvent.click(screen.getByRole("button", { name: "cell-1" })); // O

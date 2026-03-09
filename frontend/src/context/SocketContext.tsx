@@ -75,7 +75,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [socket]);
 
   return (
-    <SocketContext.Provider value={{ socket, activeGameId, activeTournamentId, setActiveTournamentId }}>
+    <SocketContext.Provider
+      value={{ socket, activeGameId, activeTournamentId, setActiveTournamentId }}
+    >
       {children}
     </SocketContext.Provider>
   );
