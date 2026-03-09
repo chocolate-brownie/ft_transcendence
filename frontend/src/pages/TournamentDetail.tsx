@@ -29,7 +29,7 @@ const statusClassMap: Record<string, string> = {
 export default function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { socket } = useSocket();
+  const { socket, setActiveTournamentId } = useSocket();
   const { user } = useAuth();
 
   const [tournament, setTournament] = useState<TournamentDetails | null>(null);
@@ -81,6 +81,32 @@ export default function TournamentDetail() {
   /* Issue #159 — Re-fetch tournament data when socket events arrive */
   const handleSocketUpdate = useCallback(() => void load(), [load]);
   useTournamentSocket({ socket, onUpdate: handleSocketUpdate });
+
+  useEffect(() => {
+    if (!user || !tournament) return;
+
+    const isRegistered = tournament.participants.some((p) => p.userId === user.id);
+    const isActive =
+      tournament.status === "REGISTERING" || tournament.status === "IN_PROGRESS";
+
+    if (isRegistered && isActive) {
+      setActiveTournamentId(tournament.id);
+    } else {
+      setActiveTournamentId(null);
+    }
+  }, [user, tournament, setActiveTournamentId]);
+
+  useEffect(() => {
+    return () => {
+      if (!tournament) return;
+
+      const isActive =
+        tournament.status === "REGISTERING" || tournament.status === "IN_PROGRESS";
+
+      if (isActive) return;
+      setActiveTournamentId(null);
+    };
+  }, [tournament, setActiveTournamentId]);
 
   if (loading) {
     return (
