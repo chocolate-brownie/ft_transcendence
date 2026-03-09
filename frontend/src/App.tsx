@@ -14,6 +14,7 @@ import Matchmaking from "./pages/Matchmaking";
 import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
+import AIGame from "./pages/AIGame";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
 import ActiveGameBanner from "./components/ActiveGameBanner";
@@ -95,6 +96,7 @@ function App() {
               <Route path="/game/local" element={<LocalGame />} />
               <Route path="/game/:id" element={<GameWrapper />} /> {/**/}
               <Route path="/matchmaking" element={<Matchmaking />} />
+              <Route path="/ai-game" element={<AIGame />} />
             </Route>
           </Route>
         </Routes>

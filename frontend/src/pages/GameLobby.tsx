@@ -1,3 +1,11 @@
+/**
+ * GameLobby — Issue #183
+ *
+ * Landing page for mode selection. Offers Play Local, Play Online, and Play vs AI.
+ * Board size selection applies to local and online modes. The AI mode always uses
+ * a 3x3 board (backend constraint) and difficulty is now chosen on the AI game
+ * page itself, so no difficulty dropdown is shown here.
+ */
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
@@ -6,11 +14,8 @@ import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
 import BoardSizeSelector from "../components/Customization/BoardSizeSelector";
 
-type AiDifficulty = "easy" | "medium" | "hard";
-
 export default function GameLobby() {
   const navigate = useNavigate();
-  const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>("medium");
   const [boardSize, setBoardSize] = useState<BoardSize>(3);
 
   function handlePlayOnline() {
@@ -65,30 +70,9 @@ export default function GameLobby() {
             title="Play vs AI"
             description="Challenge the computer"
             buttonText="Start AI Game"
-            onClick={() => {}}
-            color="neutral"
-            disabled
-            badgeText="Coming Soon"
-          >
-            <div className="w-full">
-              <label
-                htmlFor="ai-difficulty"
-                className="mb-1 block text-xs font-medium text-pong-text/50"
-              >
-                Difficulty
-              </label>
-              <select
-                id="ai-difficulty"
-                value={aiDifficulty}
-                onChange={(e) => setAiDifficulty(e.target.value as AiDifficulty)}
-                className="w-full rounded-lg border border-black/10 bg-black/5 px-3 py-2 text-sm text-pong-text/60 focus:outline-none"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-          </GameModeCard>
+            onClick={() => void navigate("/ai-game")}
+            color="blue"
+          />
         </div>
 
         <div className="flex flex-col items-center gap-2">
