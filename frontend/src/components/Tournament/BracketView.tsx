@@ -5,10 +5,12 @@ import type {
   TournamentParticipant,
 } from "../../services/tournament.service";
 
-// ─── Layout constants (must match Tailwind values + card dimensions) ──────────
+// ─── Layout constants ────────────────────────────────────────────────────────
 const CARD_W = 208; // w-52 = 13rem
 const COL_GAP = 32; // gap between round columns (px); matches gap-8
-const CARD_H = 102; // header row (~18px) + 2 player rows (~36px each) + waiting footer (~12px) + borders
+const BASE_GAP = 8; // round 1 vertical gap between match cards
+const CARD_H = 118; // visual card height used for bracket positioning
+const CARD_ANCHOR_Y = 70; // connector anchor inside a card: between player 1 and player 2
 const HEADER_H = 28; // round label text (16px) + gap-3 (12px)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -42,21 +44,24 @@ function getMatchStatus(match: BracketMatch, currentRound: number | null): Match
   return "scheduled";
 }
 
-// ─── SVG connector paths ──────────────────────────────────────────────────────
-// Builds bracket-arm SVG path data connecting pairs of matches in round R
-// to the corresponding match in round R+1.
-//
-// Shape per pair:
-//   [Match 1] ────┐
-//                 │
-//                 ├──── [Next Match]
-//                 │
-//   [Match 2] ────┘
+function roundStep(round: number): number {
+  return Math.pow(2, round - 1) * (CARD_H + BASE_GAP);
+}
+
+function roundTopOffset(round: number): number {
+  return ((Math.pow(2, round - 1) - 1) * (CARD_H + BASE_GAP)) / 2;
+}
+
+function roundGap(round: number): number {
+  return roundStep(round) - CARD_H;
+}
+
+// ─── SVG connector paths ─────────────────────────────────────────────────────
 
 interface ConnectorPath {
   key: string;
-  bracket: string; // U-arm connecting the pair
-  midline: string; // horizontal line to next round
+  bracket: string;
+  midline: string;
 }
 
 function buildConnectorPaths(
@@ -67,8 +72,8 @@ function buildConnectorPaths(
 
   for (let round = 1; round < totalRounds; round++) {
     const roundMatches = rounds.get(round) ?? [];
-    const gapPx = Math.pow(2, round - 1) * 8; // flex gap between matches (px)
-    const ptPx = (Math.pow(2, round - 1) - 1) * 4; // padding-top of match list (px)
+    const stepPx = roundStep(round);
+    const ptPx = roundTopOffset(round);
 
     const colX = (round - 1) * (CARD_W + COL_GAP);
     const nextColX = round * (CARD_W + COL_GAP);
@@ -77,18 +82,15 @@ function buildConnectorPaths(
       const i1 = p;
       const i2 = p + 1;
 
-      // Y center of each match from top of SVG
-      const y1 = HEADER_H + ptPx + i1 * (CARD_H + gapPx) + CARD_H / 2;
-      const y2 = HEADER_H + ptPx + i2 * (CARD_H + gapPx) + CARD_H / 2;
+      const y1 = HEADER_H + ptPx + i1 * stepPx + CARD_ANCHOR_Y;
+      const y2 = HEADER_H + ptPx + i2 * stepPx + CARD_ANCHOR_Y;
       const midY = (y1 + y2) / 2;
 
-      const xRight = colX + CARD_W; // right edge of match cards
-      const xMid = xRight + COL_GAP / 2; // midpoint of the column gap
-      const xNext = nextColX; // left edge of next round
+      const xRight = colX + CARD_W;
+      const xMid = xRight + COL_GAP / 2;
+      const xNext = nextColX;
 
-      // Bracket arm: right stub from match1 → spine → right stub from match2
       const bracket = `M ${xRight} ${y1} H ${xMid} V ${y2} H ${xRight}`;
-      // Midpoint line: from spine midpoint to left edge of next round
       const midline = `M ${xMid} ${midY} H ${xNext}`;
 
       paths.push({ key: `conn-${round}-${p}`, bracket, midline });
@@ -98,13 +100,13 @@ function buildConnectorPaths(
   return paths;
 }
 
-// ─── MatchCard ────────────────────────────────────────────────────────────────
+// ─── MatchCard ───────────────────────────────────────────────────────────────
 
 interface MatchCardProps {
   match: BracketMatch;
   currentRound: number | null;
   totalRounds: number;
-  seedMap: Map<number, number>; // userId → seed
+  seedMap: Map<number, number>;
   currentUserId?: number | null;
 }
 
@@ -123,8 +125,7 @@ function MatchCard({
   const isPending = status === "pending";
   const isScheduled = status === "scheduled";
   const isInProgress = status === "in_progress";
-  /* Issue #159 — Match is clickable if it has a gameId. Completed matches can
-     be viewed by anyone; active matches are only playable by the two assigned players. */
+
   const hasGame = match.gameId !== null;
   const isMyMatch =
     currentUserId != null &&
@@ -132,6 +133,7 @@ function MatchCard({
   const isClickable = hasGame && (isComplete || isMyMatch);
   const isPlayable = hasGame && !isComplete && !isPending && isMyMatch;
   const isNotStarted = isPending || isScheduled;
+
   const goToGame = () => {
     if (!isClickable) return;
     void navigate(`/game/${match.gameId}`);
@@ -142,7 +144,6 @@ function MatchCard({
     const seed = player ? seedMap.get(player.id) : undefined;
     const name = player?.username ?? "TBD";
 
-    // Score indicator: ✓ for winner, – for both if not yet played, nothing for TBD
     const scoreIndicator = isEmpty ? null : isComplete ? (
       isWinner ? (
         <span className="shrink-0 text-xs font-bold text-green-600">✓</span>
@@ -178,14 +179,14 @@ function MatchCard({
 
   return (
     <div
-      className={`w-52 overflow-hidden rounded-lg border shadow-sm backdrop-blur-sm ${
+      className={`flex min-h-[118px] w-52 flex-col overflow-hidden rounded-lg border shadow-sm backdrop-blur-sm ${
         isPending
           ? "border-dashed border-black/15 bg-gray-50/60"
           : isInProgress
             ? "border-pong-accent/40 bg-white/40 ring-1 ring-pong-accent/20"
             : isScheduled
               ? "border-black/10 bg-gray-100/60"
-              : "border-black/10 bg-white/40" // completed
+              : "border-black/10 bg-white/40"
       } ${isClickable ? "cursor-pointer transition-shadow hover:shadow-md" : ""}`}
       onClick={isClickable ? goToGame : undefined}
       onKeyDown={
@@ -201,7 +202,7 @@ function MatchCard({
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
-      {/* Match header: round label + Live badge */}
+      {/* Match header */}
       <div className="flex items-center justify-between gap-1 border-b border-black/5 px-3 py-1">
         <span className="truncate text-[10px] font-medium text-pong-text/40">
           {cardLabel}
@@ -229,17 +230,21 @@ function MatchCard({
       </div>
 
       {/* Footer */}
-      {isPlayable ? (
-        <div className="border-t border-pong-accent/20 bg-pong-accent/5 px-3 py-1.5 text-center">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-pong-accent">
-            Play Now →
-          </span>
-        </div>
-      ) : isNotStarted ? (
-        <div className="border-t border-black/5 px-3 py-1 text-center">
-          <span className="text-[10px] text-pong-text/30">Waiting for players</span>
-        </div>
-      ) : null}
+      <div className="mt-auto">
+        {isPlayable ? (
+          <div className="border-t border-pong-accent/20 bg-pong-accent/5 px-3 py-1.5 text-center">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-pong-accent">
+              Play Now →
+            </span>
+          </div>
+        ) : isNotStarted ? (
+          <div className="border-t border-black/5 px-3 py-1 text-center">
+            <span className="text-[10px] text-pong-text/30">Waiting for players</span>
+          </div>
+        ) : (
+          <div className="px-3 py-1.5" />
+        )}
+      </div>
     </div>
   );
 }
@@ -259,7 +264,6 @@ export default function BracketView({
 }: BracketViewProps) {
   const { matches, totalRounds, currentRound } = bracket;
 
-  // Group matches by round (sorted by matchNumber)
   const rounds: Map<number, BracketMatch[]> = new Map();
   for (let r = 1; r <= totalRounds; r++) {
     rounds.set(
@@ -268,23 +272,18 @@ export default function BracketView({
     );
   }
 
-  // Build userId → seed lookup from the participant list
   const seedMap = new Map<number, number>(participants.map((p) => [p.userId, p.seed]));
-
   const connectors = buildConnectorPaths(rounds, totalRounds);
 
-  // Calculate SVG canvas dimensions
   const svgWidth = totalRounds * CARD_W + (totalRounds - 1) * COL_GAP;
   const round1Count = rounds.get(1)?.length ?? 1;
-  const gap1 = 8; // Math.pow(2, 0) * 8
-  const svgHeight = HEADER_H + (round1Count - 1) * (CARD_H + gap1) + CARD_H + 16;
+  const svgHeight = HEADER_H + (round1Count - 1) * roundStep(1) + CARD_H + 16;
 
   return (
     <div className="w-full">
-      {/* ── Desktop layout: horizontal columns with SVG connectors ── */}
+      {/* Desktop */}
       <div className="hidden overflow-x-auto pb-4 sm:block">
         <div className="relative inline-flex min-w-max items-start gap-8">
-          {/* SVG connector overlay */}
           <svg
             width={svgWidth}
             height={svgHeight}
@@ -311,10 +310,8 @@ export default function BracketView({
             ))}
           </svg>
 
-          {/* Round columns */}
           {Array.from(rounds.entries()).map(([round, roundMatches]) => (
             <div key={round} className="flex flex-col gap-3">
-              {/* Column round label */}
               <div className="text-center">
                 <span
                   className={`text-xs font-semibold uppercase tracking-widest ${
@@ -325,12 +322,11 @@ export default function BracketView({
                 </span>
               </div>
 
-              {/* Match cards */}
               <div
                 className="flex flex-col"
                 style={{
-                  gap: `${Math.pow(2, round - 1) * 0.5}rem`,
-                  paddingTop: `${(Math.pow(2, round - 1) - 1) * 0.25}rem`,
+                  gap: `${roundGap(round)}px`,
+                  paddingTop: `${roundTopOffset(round)}px`,
                 }}
               >
                 {roundMatches.map((match) => (
@@ -349,11 +345,10 @@ export default function BracketView({
         </div>
       </div>
 
-      {/* ── Mobile layout: vertical round stack ── */}
+      {/* Mobile */}
       <div className="flex flex-col gap-6 sm:hidden">
         {Array.from(rounds.entries()).map(([round, roundMatches]) => (
           <div key={round}>
-            {/* Round section header */}
             <div className="mb-3 flex items-center gap-2">
               <span
                 className={`text-xs font-semibold uppercase tracking-widest ${
@@ -365,17 +360,16 @@ export default function BracketView({
               <div className="h-px flex-1 bg-black/8" />
             </div>
 
-            {/* Match cards — full-width on mobile */}
             <div className="flex flex-col gap-3">
               {roundMatches.map((match) => (
                 <div key={match.id} className="w-full">
-                  {/* Override w-52 for mobile */}
                   <div className="[&>div]:w-full">
                     <MatchCard
                       match={match}
                       currentRound={currentRound}
                       totalRounds={totalRounds}
                       seedMap={seedMap}
+                      currentUserId={currentUserId}
                     />
                   </div>
                 </div>
