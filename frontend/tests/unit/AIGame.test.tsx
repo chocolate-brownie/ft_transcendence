@@ -33,6 +33,15 @@ vi.mock("../../src/services/ai.service", () => ({
   },
 }));
 
+/* Issue #209 — mock customization components so tests don't depend on them */
+vi.mock("../../src/components/Customization/ThemeSelector", () => ({
+  default: () => <div data-testid="theme-selector" />,
+}));
+
+vi.mock("../../src/components/Customization/SymbolSelector", () => ({
+  default: () => <div data-testid="custom-symbol-selector" />,
+}));
+
 /* ── Helpers ─────────────────────────────────────────────────────────────────── */
 
 /** Returns a fake createGame response with an empty 3x3 board. */
