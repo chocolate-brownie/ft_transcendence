@@ -2,7 +2,7 @@
 // Create game, validate moves, win detection, draw detection
 
 import prisma from "../lib/prisma";
-import { initializeBoard } from "../types/game";
+import { initializeBoard, isBoardSize } from "../types/game";
 import type {
   GameState,
   GameStatus,
@@ -443,7 +443,11 @@ export const createOrGetRematchInDb = async (
       return rematch;
     }
 
-    const boardSize = sourceGame.boardSize as BoardSize;
+    if (!isBoardSize(sourceGame.boardSize)) {
+      throw new Error("Invalid board size");
+    }
+
+    const boardSize = sourceGame.boardSize;
     const board = initializeBoard(boardSize);
 
     if (!isBoardShapeValid(board, boardSize)) {
@@ -485,7 +489,11 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     if (!game) throw new Error("Game not found");
 
-    const boardSize = game.boardSize as BoardSize;
+    if (!isBoardSize(game.boardSize)) {
+      throw new Error("Invalid board size");
+    }
+
+    const boardSize = game.boardSize;
     const currentBoard = game.boardState as CellValue[];
 
     if (!isBoardShapeValid(currentBoard, boardSize)) {

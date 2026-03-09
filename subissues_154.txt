@@ -1,0 +1,529 @@
+==== Sub-issue #221: Reconnection within 30-second window ====
+Labels: (none)
+Assignees: (none)
+**Bug:** [User_1's browser disconnects while playing with User_2]
+
+**Steps to reprduce:**
+1. Two users are playing online
+2. Set the Network of the User_1 offline
+3. Reconnect him after 30s
+
+**Expected:** What should happen
+
+- Forfeit timer cancellation
+- Game state restoration
+- "Opponent reconnected" notification
+- Board re-enabling and turn restoration
+- Multiple reconnection cycles
+
+
+
+**Actual:** User_1 has a "Game error" message, and console errors, while but timer kept runnin while he was disconnected.
+
+<br>
+
+<img width="661" height="889" alt="Image" src="https://github.com/user-attachments/assets/b8eade3b-5038-4fb0-bf79-ce4ddc90ba47" />
+
+<br>
+
+<img width="449" height="193" alt="Image" src="https://github.com/user-attachments/assets/e7b6760b-a20e-45e2-b097-4bd428e5ca99" />
+
+
+User_1 can reconnect after pushing "Play again" but then : 
+- his timer has stopped
+- his game became inactive (freezed)
+- he is stuck in this game
+
+<br>
+
+<img width="624" height="807" alt="Image" src="https://github.com/user-attachments/assets/47eb4807-de3d-4bb2-b321-7a6336cbd7c8" />
+
+
+While User_2 is stuck in the game without any notification since User_1 got offline.
+
+**Priority:** Major 
+
+**Browser:** Chrome latest
+**Device:** Desktop
+
+==== Sub-issue #222: Game continues normally ====
+Labels: (none)
+Assignees: (none)
+**Bug** Basic Reconnection Within 30 Seconds
+
+Steps:
+Setup: Alice and Bob in active game
+
+Browser 1 (Alice):
+1. Game in progress
+2. Close browser/tab
+
+Browser 2 (Bob):
+3. See "Opponent Disconnected" warning
+4. Countdown starts (30s)
+
+Browser 1 (Alice):
+5. Wait 10 seconds
+6. Reopen browser
+7. Navigate to /game/{gameId} (same game)
+8. Auto-joins room
+
+Expected Result (Alice's browser):
+
+Game page loads
+
+- Receives current game state from server
+- Board displays with all previous moves
+- Turn indicator shows correct turn
+- If it's Alice's turn → board enabled
+- If it's Bob's turn → board disabled
+- No errors
+
+Expected Result (Bob's browser):
+
+- Disconnection warning disappears
+- Message: "Opponent reconnected" (toast/notification)
+- Countdown timer stops and clears
+- Board state unchanged
+- Game continues normally
+
+
+**Actual**
+
+Browser 1 (Alice): 
+
+- After reopening the browser and entering the game path in the navigator,
+  the game is erased and "Game error" is shown : 
+<br>
+
+<img width="615" height="846" alt="Image" src="https://github.com/user-attachments/assets/2a8d15c7-2507-4b00-b0a6-cbe12b553a12" />
+
+<br>
+While the logs are : 
+<br>
+
+<img width="314" height="346" alt="Image" src="https://github.com/user-attachments/assets/b9878848-417e-4a05-aac0-c40b894372bb" />
+
+<br><br>
+
+Browser 2 (Bob):
+- no error logs in the console
+- when he tries to click on a cell of a gameBoard, the cell doesn't change,
+  and an error "Game has been abandoned" appeared, while the timer still turns: 
+<br>
+ 
+<img width="578" height="824" alt="Image" src="https://github.com/user-attachments/assets/4f70c97d-3931-4b00-8909-33b3a0e3410a" />
+<br>
+<br>
+**Browser** : Chrome, on Desktop
+
+==== Sub-issue #268: [ BUG ] - MAJOR - 401 Unauthorized on `/api/auth/me` after login ====
+Labels: (none)
+Assignees: DarkWhiteOff
+## Description
+After logging in, the frontend sends a request to `/api/auth/me` to retrieve the authenticated user's information.  
+This request sometimes returns a **401 Unauthorized** error even though the user has just successfully logged in.
+
+This issue does not appear to be related to the game reconnection system but rather to the **authentication/session handling after login** (possibly cache, cookie, or token handling).
+
+## Environment
+- Local environment
+- URL: `http://localhost:5173`
+- Browser: (e.g. Chrome)
+- Observed during manual testing
+
+## Steps to Reproduce
+1. Open the application.
+2. Log in with a valid account.
+3. Open the browser developer console.
+4. Observe the network requests.
+
+## Expected Result
+- The request to `/api/auth/me` should return **200 OK**.
+- The authenticated user's information should be returned.
+- No authentication errors should appear in the console.
+
+## Actual Result
+- The request to `/api/auth/me` returns **401 Unauthorized**.
+- Error appears in the browser console.
+
+## Error Log
+
+Failed to load resource: the server responded with a status of 401 (Unauthorized)
+/api/auth/me
+
+
+## Possible Causes (Hypothesis)
+- Authentication token not stored correctly after login
+- Cookie not sent with the request
+- Session not yet established when `/api/auth/me` is called
+- Cache issue or race condition
+
+## Impact
+- Authenticated user state may not be correctly retrieved.
+- Could cause UI inconsistencies or unexpected logout behaviour.
+
+==== Sub-issue #269: Message: "Opponent reconnected" (toast/notification) ====
+Labels: (none)
+Assignees: DarkWhiteOff
+# Missing "Opponent reconnected" notification after player reconnects
+
+## Description
+When a player reconnects to an ongoing game after being disconnected, the opponent should receive a notification indicating that the player has reconnected.
+
+Currently, the **"Opponent reconnected" toast/notification is not displayed** to the opponent after the disconnected player successfully rejoins the game.
+
+## Environment
+- Local environment
+- URL: `http://localhost:5173`
+- Browsers: (e.g. Chrome)
+- Test case: **Basic Reconnection Within 30 Seconds**
+
+## Steps to Reproduce
+1. Start a game between **Alice** and **Bob**.
+2. Ensure the game is in progress.
+3. Close **Alice's browser/tab**.
+4. On **Bob's side**, observe the **"Opponent Disconnected"** warning and the **30s countdown timer** starting.
+5. Wait about **10 seconds**.
+6. Reopen Alice's browser.
+7. Navigate to `/game/{gameId}` to reconnect to the game.
+
+## Expected Result
+On **Bob's browser**:
+- The **disconnection warning disappears**.
+- The **countdown timer stops and clears**.
+- A **toast/notification appears saying "Opponent reconnected"**.
+
+## Actual Result
+- Alice successfully reconnects to the game.
+- The game continues normally.
+- **Bob does not receive the "Opponent reconnected" notification.**
+
+## Impact
+Players may not realize that their opponent has reconnected, which can cause confusion during gameplay.
+
+==== Sub-issue #270: "Opponent reconnected" notification shows ====
+Labels: (none)
+Assignees: (none)
+Same issue than #269 
+
+==== Sub-issue #271: [ BUG ] - MAJOR - Player considered reconnected before fully loading the game page ====
+Labels: (none)
+Assignees: (none)
+# Player considered reconnected before fully loading the game page
+
+## Description
+When a disconnected player starts navigating back to the game page, the system considers the player **reconnected before the page is actually loaded**.
+
+This causes the opponent's client to believe the player has rejoined the game even though the player has not yet completed the navigation and cannot see the game board.
+
+## Environment
+- Local environment
+- URL: `http://localhost:5173`
+- Browsers: (e.g. Chrome)
+- Test case: **Reconnection Timer Cancellation**
+
+## Steps to Reproduce
+1. Start a game between **Alice** and **Bob**.
+2. Close **Alice's browser/tab**.
+3. On **Bob's browser**, observe the **"Opponent Disconnected"** warning and the **30s countdown timer**.
+4. On **Alice's browser**, type `/game/{gameId}` in the address bar but **do not press Enter yet**.
+5. Observe the behavior on **Bob's side**.
+
+## Expected Result
+- Alice should only be considered **reconnected after the game page is actually loaded**.
+- Bob should continue seeing:
+  - the **disconnection warning**
+  - the **countdown timer**
+- The timer should stop **only after Alice successfully reconnects to the game room**.
+
+## Actual Result
+- As soon as Alice types the `/game/{gameId}` URL (before pressing Enter), she is **already considered reconnected**.
+- On Bob's side:
+  - the game considers Alice **present again**
+  - the board becomes **unlocked**
+- On Alice's side:
+  - the **game board is not yet visible**
+  - the page has not been loaded yet.
+
+## Impact
+The game state becomes inconsistent:
+- The opponent believes the player has reconnected.
+- The reconnecting player has not actually loaded the game yet.
+
+This may lead to incorrect gameplay states or confusion.
+
+
+==== Sub-issue #272: Bob sees "Opponent reconnected" ====
+Labels: (none)
+Assignees: (none)
+same issue than :
+#269   
+#270
+
+==== Sub-issue #273: Board shows ALL moves (including Bob's move at cell 6) ====
+Labels: (none)
+Assignees: (none)
+## Bug Description
+
+When Alice disconnects, Bob cannot make his move on **cell 6**.
+As a result, **cell 6 remains empty**, even though Bob attempted to play there.
+
+However, the board history still shows **all moves**, including Bob's move at cell 6.
+
+## Steps to Reproduce
+
+1. Start a game between **Alice** and **Bob**.
+2. Alice disconnects from the game.
+3. Bob attempts to play on **cell 6**.
+
+## Expected Behavior
+
+Bob should still be able to place his move on **cell 6**, and the board should update correctly.
+
+## Actual Behavior
+
+* Bob's move on **cell 6** is not applied to the board.
+* The **cell remains empty**.
+* The board history still lists Bob's move.
+
+## Possible Cause
+
+The game state may not properly handle player disconnections, preventing the move from being applied to the board.
+
+## Additional Context
+
+This issue occurs specifically when **Alice disconnects before Bob's move**.
+
+Fix it will fix test 5.
+
+==== Sub-issue #274: Joins room successfully ====
+Labels: (none)
+Assignees: (none)
+## Bug: Player Cannot Reconnect to Game After It Has Completed
+
+Test 8.
+
+### Description
+When a player disconnects during a game and the opponent finishes the game while they are offline, the disconnected player cannot reconnect to the game afterward.
+
+The expected behavior is that the player should still be able to reconnect and receive the final game state, even if the game has already ended.
+
+### Steps to Reproduce
+
+1. Start a game between **Alice** and **Bob**
+2. Alice disconnects (close tab / refresh / network drop)
+3. Bob continues playing
+4. Bob makes the winning move
+5. The game ends and Bob sees the victory screen
+6. Alice reconnects or refreshes the page
+
+### Expected Behavior
+
+When Alice reconnects:
+
+- The client successfully rejoins the game room
+- The server sends the final `game_state`
+- The board shows the **final state**
+- The **winning line is highlighted**
+- A **Game Over modal** appears with the message **"You Lost"**
+- Alice can see the result of the game even though she was disconnected
+- The **"Back to Lobby"** button works normally
+
+### Actual Behavior
+
+- Alice cannot reconnect to the game
+- The client fails to rejoin the game room
+- No final `game_state` is received
+- The game view does not load for Alice
+
+Meanwhile, Bob's client still correctly displays the final game screen.
+
+### Possible Cause
+
+The backend likely prevents joining a game room when the game status is `"completed"`.  
+Reconnection should still be allowed so the player can receive the final game state.
+
+### Environment
+
+- Browser: Any
+- Transport: Socket.io
+- Scenario: Reconnection after game completion
+
+### Notes
+
+Page refresh counts as a **disconnect + immediate reconnect**, so the server should allow the player to rejoin and retrieve the current game state regardless of whether the game is still in progress or already completed.
+
+==== Sub-issue #275: Joins room ====
+Labels: (none)
+Assignees: (none)
+Test 9.
+
+
+Same issue than #274 but with forfeit
+
+==== Sub-issue #276: [BUG] Opponent board is disabled when the other player disconnects, blocking T04 / T05 / T08 ====
+Labels: (none)
+Assignees: (none)
+## [BUG] Opponent board is disabled when the other player disconnects, blocking T04 / T05 / T08
+
+**Test Case:** T04 — Game State Restoration Accuracy / T05 — Reconnection on Opponent’s Turn / T08 — Reconnection to Completed Game
+
+**Steps to Reproduce:**
+1. Start an online game between **Alice** and **Bob**
+2. Play until the game is in progress
+3. Alice disconnects (close tab / refresh / leave page)
+4. Bob waits on the game page
+5. Bob tries to play the next move while Alice is disconnected
+
+**Expected:**
+- Bob should still be able to play the next move while Alice is disconnected
+- This should allow:
+  - updated board restoration on Alice reconnect (T04)
+  - turn-switch restoration while Alice is offline (T05)
+  - reconnection into a completed game state (T08)
+
+**Actual:**
+- Bob’s board becomes **disabled** as soon as Alice disconnects
+- Bob cannot make any move while Alice is disconnected
+- The expected Issue #154 scenarios cannot be executed end-to-end
+
+**Priority:** Major  
+**UI / State:** `opponent_disconnected` visible / Bob board disabled / no move possible
+
+==== Sub-issue #277: [BUG] Reconnect can fail into mixed "Game error" + "Waiting for opponent" state; retry required ====
+Labels: (none)
+Assignees: DarkWhiteOff
+## [BUG] Reconnect can fail into mixed "Game error" + "Waiting for opponent" state; retry required
+
+**Test Case:** Observed across multiple reconnect tests (intermittent during T01 / T02 / T03 / T06 / T07 / T09 / T10 / T11 / T12 / T13 / T15)
+
+**Steps to Reproduce:**
+1. Start an online game between **Alice** and **Bob**
+2. Alice disconnects
+3. Alice reconnects using:
+   - bookmarked `/game/{gameId}`, or
+   - refresh directly on the game page
+4. Occasionally, Alice lands on a broken screen state
+5. If Alice does not click **Try again** before Bob’s forfeit timer ends, let the forfeit happen
+
+**Expected:**
+- Reconnect should restore the game correctly on the first attempt
+- Alice should return directly to the active game or final game state
+- No manual retry should be required
+- Final modal values should remain valid if a forfeit happens
+
+**Actual:**
+- Alice can land on a mixed broken state with:
+  - **Game error**
+  - **Connection lost. Please check your network and try again**
+  - underlying **Waiting for opponent** UI still visible
+- Alice is still effectively treated as disconnected until **Try again** is clicked
+- Bob’s forfeit timer can continue in the meantime
+- If forfeit happens before retry, the final modal can show **null / zero-like values**
+- Bob may also receive an extra `opponent_reconnected`
+
+**Evidence / Screenshot:**
+<details>
+  <summary>📸 Reconnect failure screenshots (click to expand)</summary>
+
+  <p><strong>AllTests_Alice_Fails_To_Reconnect.png</strong></p>
+  <img src="https://github.com/user-attachments/assets/d54c2327-f023-47ae-a2de-c4c031cb9304" width="420" alt="AllTests_Alice_Fails_To_Reconnect" />
+
+  <br /><br />
+
+  <p><strong>AllTests_Alice_Fails_To_Reconnect_Modal.png</strong></p>
+  <img src="https://github.com/user-attachments/assets/f82cc2ba-c1b2-41f0-b236-d67734800fc3" width="420" alt="AllTests_Alice_Fails_To_Reconnect_Modal" />
+</details>
+
+**Priority:** Major  
+**Socket / State Notes:** reconnect appears partial / manual retry required / Bob can receive extra `opponent_reconnected`
+
+==== Sub-issue #278: [BUG] Missing "Opponent reconnected" notification after successful reconnect ====
+Labels: (none)
+Assignees: (none)
+## [BUG] Missing "Opponent reconnected" notification after successful reconnect
+
+**Test Case:** T14 — Opponent Notification Visibility
+
+**Steps to Reproduce:**
+1. Start an online game between **Alice** and **Bob**
+2. Alice disconnects
+3. Bob sees the disconnect warning / countdown
+4. Alice reconnects successfully within the allowed time
+5. Observe Bob’s UI
+
+**Expected:**
+- Bob should see a visible **"Opponent reconnected"** notification
+- Notification should be clearly readable
+- It should either auto-dismiss after a short delay or provide a close action
+
+**Actual:**
+- No visible **"Opponent reconnected"** notification appears on Bob’s side
+- Reconnection still succeeds, but the user-facing feedback is missing
+
+**Priority:** Minor  
+**UI / State:** reconnect succeeds but success feedback is missing
+
+==== Sub-issue #279: [BUG] Player can be considered reconnected before actually reopening / joining the game ====
+Labels: (none)
+Assignees: (none)
+## [BUG] Player can be considered reconnected before actually reopening / joining the game
+
+**Test Case:** Bonus test during Issue #154 reconnect QA
+
+**Steps to Reproduce:**
+1. Start an online game between **Alice** and **Bob**
+2. Alice disconnects
+3. Bob sees the disconnect warning / countdown
+4. On Alice’s browser, type the bookmarked game URL into the address bar
+5. **Do not press Enter**
+6. Observe Bob’s UI
+
+**Expected:**
+- Bob should keep seeing Alice as disconnected
+- The disconnect warning / countdown should only clear after Alice actually reopens the page and rejoins the game
+
+**Actual:**
+- Bob already considers Alice reconnected
+- The disconnect warning disappears even though Alice has not actually reopened / joined the game yet
+
+**Priority:** Major  
+**State Notes:** reconnect is detected too early / timer can be cancelled before a real rejoin
+
+==== Sub-issue #280: [BUG] Reopening a forfeited / abandoned game can show inconsistent result, winner, and duration ====
+Labels: (none)
+Assignees: (none)
+## [BUG] Reopening a forfeited / abandoned game can show inconsistent result, winner, and duration
+
+**Test Case:** Additional bug found during Issue #154 testing (out of official test scope)
+
+**Steps to Reproduce:**
+1. Start an online game between **Alice** and **Bob**
+2. On both pages, click **Grid Wars** to leave the game and return to Home
+3. Wait 30 seconds so the game forfeits / ends
+4. Reopen the bookmarked game URL on both Alice and Bob
+5. Observe the background result and the Game Over modal on both sides
+
+**Expected:**
+- Reopening the same forfeited / abandoned game should show a **consistent final result** on both sides
+- Modal content should match the background state
+- Winner / duration values should be accurate and non-contradictory
+
+**Actual:**
+- Both pages show a forfeit / lost background state
+- But one modal can show **"You Won!"**
+- Winner is displayed as **bob**
+- Duration is displayed as **0:00** even though the match lasted longer
+- The final state is contradictory across the UI
+
+**Evidence / Screenshot:**
+<details>
+  <summary>📸 See.png (click to expand)</summary>
+
+  <img src="https://github.com/user-attachments/assets/987c83b9-0213-4fa9-9694-c4507b59109d" width="700" alt="See" />
+</details>
+
+**Priority:** Major  
+**UI / State Notes:** background result and modal result are inconsistent / winner and duration are incorrect
+
