@@ -59,6 +59,38 @@ export async function joinTournament(tournamentId: number, userId: number) {
       throw new TournamentError("Tournament not found", 404);
     }
 
+    const activeTournamentEntry = await tx.tournamentParticipant.findFirst({
+      where: {
+        userId,
+        tournament: {
+          status: "IN_PROGRESS",
+        },
+      },
+      select: {
+        tournamentId: true,
+      },
+    });
+
+    if (activeTournamentEntry && activeTournamentEntry.tournamentId !== tournamentId) {
+      const activeTournamentMatch = await tx.tournamentMatch.findFirst({
+        where: {
+          tournamentId: activeTournamentEntry.tournamentId,
+          winnerId: null,
+          OR: [{ player1Id: userId }, { player2Id: userId }],
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      throw new TournamentError(
+        activeTournamentMatch
+          ? "Already in an active tournament match"
+          : "Already in a tournament",
+        409,
+      );
+    }
+
     if (tournament.status !== "REGISTERING") {
       throw new TournamentError("Tournament is no longer accepting players", 409);
     }
