@@ -66,6 +66,9 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
       totalMoves: payload.totalMoves,
       durationSeconds: payload.duration,
       finishedAt: updatedGame.finishedAt ?? new Date(),
+      player1Id: player1.id,
+      player2Id: player2?.id ?? null,
+      gameType: updatedGame.gameType,
     };
     await updateGameStatistics(statsPayload);
   } catch (error) {
@@ -84,9 +87,9 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   return payload;
 }
 
-// ─── Issue #159 — Tournament auto-advance on game completion ────────────────
-// Checks if the finished game is linked to a TournamentMatch. If so, calls
-// advanceWinner and emits tournament socket notifications (fire-and-forget).
+/* ─── Issue #159 — Tournament auto-advance on game completion ────────────────
+Checks if the finished game is linked to a TournamentMatch. If so, calls
+advanceWinner and emits tournament socket notifications (fire-and-forget). */
 
 export async function handleTournamentGameOver(
   io: Server,
@@ -115,9 +118,9 @@ export async function handleTournamentGameOver(
   }
 }
 
-// ─── Issue #159 — Emit tournament notifications after auto-advance ──────────
-// Replicates the notification logic from recordMatchResultController so that
-// auto-advanced tournament matches produce the same real-time events.
+/* ─── Issue #159 — Emit tournament notifications after auto-advance ──────────
+Replicates the notification logic from recordMatchResultController so that
+auto-advanced tournament matches produce the same real-time events. */
 
 async function emitTournamentNotifications(
   io: Server,
@@ -172,9 +175,9 @@ async function emitTournamentNotifications(
   }
 }
 
-// ─── Notification helpers (Issue #159) ──────────────────────────────────────
-// Minimal copies of the controller notification functions, scoped to this
-// service so we don't need to export controller internals.
+/* ─── Notification helpers (Issue #159) ──────────────────────────────────────
+Minimal copies of the controller notification functions, scoped to this
+service so we don't need to export controller internals. */
 
 function getRoundName(round: number, maxPlayers: number): string {
   const totalRounds = Math.log2(maxPlayers);
