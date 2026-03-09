@@ -25,4 +25,8 @@ export interface GameBoardProps {
   playerSymbol?: "X" | "O" | null;
   gameOver?: boolean;
   boardSize?: BoardSize;
+  /** Issue #209 — when true, cells use CSS-variable classes (themed-*) instead of pong-* */
+  themed?: boolean;
+  /** Issue #209 — custom render function for cell symbols (emojis, initials) */
+  renderSymbol?: (cell: CellValue) => React.ReactNode;
 }

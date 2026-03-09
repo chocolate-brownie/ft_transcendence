@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Issue #209 — theme definitions for local game customization */
+@import "./styles/themes.css";
+
 /* Animated grid background */
 @keyframes symbolAppear {
   0% {
