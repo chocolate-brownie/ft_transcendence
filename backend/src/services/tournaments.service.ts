@@ -24,24 +24,38 @@ export async function createTournament(
   maxPlayers: 4 | 8,
   createdById: number,
 ) {
-  return prisma.tournament.create({
-    data: {
-      name,
-      maxPlayers,
-      createdById,
-    },
-    include: {
-      creator: {
-        select: { id: true, username: true },
+  return prisma.$transaction(async (tx) => {
+    const tournament = await tx.tournament.create({
+      data: {
+        name,
+        maxPlayers,
+        createdById,
       },
-      participants: {
-        include: {
-          user: {
-            select: { id: true, username: true, avatarUrl: true },
+    });
+
+    await tx.tournamentParticipant.create({
+      data: {
+        tournamentId: tournament.id,
+        userId: createdById,
+        seed: 1,
+      },
+    });
+
+    return tx.tournament.findUniqueOrThrow({
+      where: { id: tournament.id },
+      include: {
+        creator: {
+          select: { id: true, username: true },
+        },
+        participants: {
+          include: {
+            user: {
+              select: { id: true, username: true, avatarUrl: true },
+            },
           },
         },
       },
-    },
+    });
   });
 }
 
