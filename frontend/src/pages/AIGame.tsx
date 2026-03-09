@@ -278,8 +278,9 @@ export default function AIGame() {
           {/* Issue #209 — Theme picker */}
           <Card
             variant="elevated"
-            className="relative w-full overflow-hidden border border-black/10"
+            className="relative w-full overflow-hidden border border-pong-accent/30"
           >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-accent" />
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Theme
             </h2>
@@ -289,8 +290,9 @@ export default function AIGame() {
           {/* Issue #209 — Custom symbol picker (emojis / initials) */}
           <Card
             variant="elevated"
-            className="relative w-full overflow-hidden border border-black/10"
+            className="relative w-full overflow-hidden border border-pong-secondary/35"
           >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-secondary" />
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Custom Symbols
             </h2>
@@ -332,7 +334,9 @@ export default function AIGame() {
                   ({game.difficulty})
                 </span>
               </h1>
-              <p className={`mt-1 text-xs ${isThemed ? "opacity-40" : "text-pong-text/40"}`}>
+              <p
+                className={`mt-1 text-xs ${isThemed ? "opacity-40" : "text-pong-text/40"}`}
+              >
                 You are{" "}
                 <span
                   className={

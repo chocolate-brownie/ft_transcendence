@@ -1,8 +1,9 @@
 /**
- * SymbolSelector — Issue #183
+ * SymbolSelector — Issue #183, Issue #209
  *
- * Two large buttons (X / O) for choosing the player's symbol.
+ * Two large centered buttons (X / O) for choosing the player's symbol.
  * Includes helper text: "X always goes first. Choosing O means the AI moves first."
+ * Issue #209 — centered layout to match Theme and Custom Symbols cards.
  */
 import type { PlayerSymbol } from "../../types/game";
 
@@ -13,7 +14,7 @@ interface SymbolSelectorProps {
 
 export default function SymbolSelector({ selected, onSelect }: SymbolSelectorProps) {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col items-center space-y-2">
       <div className="flex gap-3">
         {(["X", "O"] as const).map((symbol) => {
           const isActive = selected === symbol;

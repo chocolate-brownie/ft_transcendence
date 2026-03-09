@@ -85,8 +85,8 @@ This lets the team focus on delivering polished auth, chat, profiles, and tourna
 
 | #   | Module                          | Pts | Days | Owner(s)                          | Dependencies | Status         |
 | :-- | :------------------------------ | :-- | :--- | :-------------------------------- | :----------- | :------------- |
-| 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi                   | #6           | 🔲 Not Started |
-| 10  | Game customization              | 1   | 8–9  | zamgar, jayzatov                  | #6           | 🔲 Not Started |
+| 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi, mgodawat         | #6           | ✅ Completed   |
+| 10  | Game customization              | 1   | 8–9  | jayzatov                          | #6           | ✅ Completed   |
 | 11  | Game statistics & match history | 1   | 9–10 | mgodawat                          | #5, #6       | ✅ Completed   |
 
 ### Drop Strategy
@@ -346,7 +346,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 
 **zamgar, jayzatov (Frontend):**
 
-- Game customization UI: theme selector (classic/neon/retro), symbol selector (X/O, custom emoji), board size option (3x3, 4x4, 5x5)
+- Game customization UI (Issue #209): theme selector (Classic/Neon/Retro via CSS custom properties), symbol selector (X/O, 5 emoji pairs, 2-char initials), board size option (3x3, 4x4, 5x5). Applied to both Local and AI game modes.
 - Statistics section on profile page (wins, losses, win rate)
 - Match history page (date, opponent, result)
 - Leaderboard page (top players by wins)
@@ -362,7 +362,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Code reviews
 - Performance check: multiple concurrent games
 
-**Modules progressed:** #9 (AI Opponent), #10 (Customization), #11 (Statistics — ✅ completed by mgodawat)
+**Modules progressed:** #9 (AI Opponent — ✅ completed), #10 (Customization — ✅ completed by jayzatov, Issue #209), #11 (Statistics — ✅ completed by mgodawat)
 
 ---
 

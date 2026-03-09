@@ -260,31 +260,33 @@
 - [x] Tournament game-over modal with "Back to Tournament" button — mgodawat
 - [x] Toast notification system (action buttons, sticky duration) — mgodawat
 
-### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi]
+### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi + Frontend: mgodawat (Issue #183)]
 
-- [ ] Implement Minimax algorithm:
-  - [ ] Evaluate board: +10 if AI wins, -10 if player wins, 0 for draw
-  - [ ] Recursively check all possible moves
-  - [ ] Return the move with the best score
-- [ ] Add alpha-beta pruning (optimization — optional but recommended)
-- [ ] Difficulty levels:
-  - [ ] Easy: 50% random moves, 50% minimax
-  - [ ] Medium: 20% random moves, 80% minimax
-  - [ ] Hard: 100% minimax (unbeatable)
-- [ ] AI game flow: player makes move → server runs AI → server responds with AI move
-- [ ] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard)
-- [ ] Verify: AI wins sometimes on Easy, often on Medium, always draws or wins on Hard
+- [x] Implement Minimax algorithm — mamahtal, tzizi
+  - [x] Evaluate board: +10 if AI wins, -10 if player wins, 0 for draw
+  - [x] Recursively check all possible moves
+  - [x] Return the move with the best score
+- [x] Add alpha-beta pruning (optimization) — mamahtal, tzizi
+- [x] Difficulty levels — mamahtal, tzizi
+  - [x] Easy: 50% random moves, 50% minimax
+  - [x] Medium: 20% random moves, 80% minimax
+  - [x] Hard: 100% minimax (unbeatable)
+- [x] AI game flow: player makes move → server runs AI → server responds with AI move — mamahtal, tzizi
+- [x] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard) — mgodawat (Issue #183)
+- [x] Frontend — AI game supports theme and symbol customization (Issue #209) — jayzatov
+- [x] Verify: AI wins sometimes on Easy, often on Medium, always draws or wins on Hard
 
-### Game Customization (Module #10 — 1pt) — [Frontend: zamgar, jayzatov]
+### Game Customization (Module #10 — 1pt) — [Frontend: jayzatov (Issue #209, PR #306)]
 
-- [ ] Pre-game settings panel:
-  - [ ] Theme selector: Classic (black/white), Neon (dark bg + glowing lines), Retro (pixel art style)
-  - [ ] Symbol selector: X/O (default), custom emoji pairs, or initials
-  - [ ] Board size: 3x3 (default), 4x4 (win = 4 in a row), 5x5 (win = 4 in a row)
-- [ ] Store settings in game record (JSON field in database)
-- [ ] Apply settings during gameplay (colors, symbols, grid size)
-- [ ] Default options clearly available (subject requirement)
-- [ ] If AI module is implemented, AI must work with custom settings
+- [x] Pre-game settings panel — jayzatov (Issue #209)
+  - [x] Theme selector: Classic (neutral), Neon (dark bg + cyan/pink glow), Retro (cream + pixel font)
+  - [x] Symbol selector: X/O (default), 5 custom emoji pairs, or 2-char initials
+  - [x] Board size: 3x3 (default), 4x4 (win = 4 in a row), 5x5 (win = 4 in a row)
+- [x] Themes use CSS custom properties via `data-theme` attribute — no backend storage needed
+- [x] Apply settings during gameplay (colors, symbols, grid size) — jayzatov
+- [x] Default options clearly available (Classic theme + X/O selected by default)
+- [x] AI game mode supports theme and symbol customization (Issue #209) — jayzatov
+- [x] Online games completely unaffected (Game.tsx unchanged)
 
 ### Game Statistics & Match History (Module #11 — 1pt) — [Backend: mgodawat (Issue #289) + Frontend: mgodawat (Issues #290, #291)]
 
@@ -300,8 +302,8 @@
 ### Modules Progressed
 
 - Module #8 — Tournament: **Completed**
-- Module #9 — AI Opponent: **Not Started**
-- Module #10 — Customization: **Not Started**
+- Module #9 — AI Opponent: **Completed** (Issue #183)
+- Module #10 — Customization: **Completed** (Issue #209, PR #306 — jayzatov)
 - Module #11 — Statistics: **Completed** (Issues #289, #290, #291)
 
 ---
