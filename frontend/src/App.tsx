@@ -18,6 +18,7 @@ import AIGame from "./pages/AIGame";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
 import ActiveGameBanner from "./components/ActiveGameBanner";
+import ActiveTournamentBanner from "./components/ActiveTournamentBanner";
 import ToastContainer from "./components/Toast";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -35,6 +36,7 @@ function HomeLayout() {
       <Footer />
       <ChatWidget />
       <ActiveGameBanner />
+      <ActiveTournamentBanner />
     </div>
   );
 }
@@ -57,6 +59,7 @@ function Layout() {
       <Footer />
       <ChatWidget />
       <ActiveGameBanner />
+      <ActiveTournamentBanner />
     </div>
   );
 }
