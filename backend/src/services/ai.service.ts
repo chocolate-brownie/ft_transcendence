@@ -28,6 +28,18 @@ export const createAIGame = async (userId: number, difficulty: Difficulty, playe
   return Promise.resolve({ game, difficulty });
 }
 
+const finishGame = async (gameId: number, board: Board, winnerId: number | null, isDraw: boolean) => {
+  return await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      boardState: JSON.stringify(board),
+      status: isDraw ? GameStatus.DRAW : GameStatus.FINISHED,
+      winnerId: winnerId,
+      finishedAt: new Date(),
+    },
+  });
+};
+
 export const makeAIMove = async (gameId: number, userId: number, moveIndex: number) => {
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) {
@@ -40,7 +52,7 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
     throw new Error('Not your game');
   }
 
-  const board = game.boardState as Board;
+  const board = JSON.parse(game.boardState as string) as Board;
   const playerSymbol = game.player1Symbol;
   const aiSymbol = game.player2Symbol;
 
@@ -54,22 +66,14 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
 
   board[moveIndex] = playerSymbol as CellValue;
 
-  const winner = checkGameOver(board, 3);
-  if (winner) {
-    await prisma.game.update({
-      where: { id: gameId },
-      data: {
-        boardState: JSON.stringify(board),
-        status: GameStatus.FINISHED,
-        winnerId: userId,
-        finishedAt: new Date().toISOString(),
-      },
-    });
+  const playerWin = checkGameOver(board, 3);
+  if (playerWin) {
+    await finishGame(gameId, board, playerWin.isDraw ? null : userId, playerWin.isDraw);
     return {
       game: {
         boardState: board,
         status: GameStatus.FINISHED,
-        winner: winner.isDraw ? null : playerSymbol,
+        winner: playerWin.isDraw ? null : playerSymbol,
       },
       aiMove: null,
     };
@@ -78,22 +82,14 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
   const aiMove = getAIMove(board, aiSymbol as Player, game.difficulty as Difficulty);
   board[aiMove] = aiSymbol as CellValue;
 
-  const aiWinner = checkGameOver(board, 3);
-  if (aiWinner) {
-    await prisma.game.update({
-      where: { id: gameId },
-      data: {
-        boardState: JSON.stringify(board),
-        status: GameStatus.FINISHED,
-        winnerId: null,
-        finishedAt: new Date().toISOString(),
-      },
-    });
+  const aiWin = checkGameOver(board, 3);
+  if (aiWin) {
+    await finishGame(gameId, board, null, aiWin.isDraw); // It's either a draw or the AI wins, so winnerId is null
     return {
       game: {
         boardState: board,
         status: GameStatus.FINISHED,
-        winner: aiWinner.isDraw ? null : aiSymbol,
+        winner: aiWin.isDraw ? null : aiSymbol,
       },
       aiMove: {
         moveIndex: aiMove,

@@ -36,13 +36,13 @@ export const RequestAIMove = async (req: AuthRequest, res: Response) => {
 
     const game = await makeAIMove(gameId, userId, moveIndex);
 
-    res.json(game);
+    res.status(200).json(game);
   } catch (error: any) {
     if (error.message === 'Game not found') {
       return res.status(404).json({ error: 'Game not found' });
     }
     if (error.message === 'Game is not in progress') {
-      return res.status(400).json({ error: 'Game is not in progress' });
+      return res.status(409).json({ error: 'Game already over' });
     }
     if (error.message === 'Not your game') {
       return res.status(403).json({ error: 'Not your game' });
@@ -66,7 +66,7 @@ export const getAIGame = async (req: AuthRequest, res: Response) => {
 
     const game = await getAIGameById(gameId, userId);
 
-    res.json(game);
+    res.status(200).json(game);
   } catch (error: any) {
     if (error.message === 'Game not found') {
       return res.status(404).json({ error: 'Game not found' });
