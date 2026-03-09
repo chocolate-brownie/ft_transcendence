@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { getGameRoomName } from "../socket/helpers";
 import prisma from "../lib/prisma";
 import { advanceWinner } from "./bracket.service";
+import { updateGameStatistics, type GameOverStatsPayload } from "./statistics.service";
 
 interface PlayerInfo {
   id: number;
@@ -53,6 +54,22 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   // Issue #159 — Auto-record tournament result when a tournament game finishes
   if (updatedGame.status === "FINISHED" && winnerId) {
     await handleTournamentGameOver(io, id, winnerId);
+  }
+
+  try {
+    const statsPayload: GameOverStatsPayload = {
+      gameId: id,
+      winnerId: winner?.id ?? null,
+      loserId: loser?.id ?? null,
+      isDraw,
+      boardSize: updatedGame.boardSize,
+      totalMoves: payload.totalMoves,
+      durationSeconds: payload.duration,
+      finishedAt: updatedGame.finishedAt ?? new Date(),
+    };
+    await updateGameStatistics(statsPayload);
+  } catch (error) {
+    console.error(`[Stats Error] Game ${id}:`, error);
   }
 
   // Post-Game Cleanup: keep the room 5 minutes for chat
