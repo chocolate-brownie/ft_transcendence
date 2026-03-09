@@ -108,7 +108,13 @@ interface MatchCardProps {
   currentUserId?: number | null;
 }
 
-function MatchCard({ match, currentRound, totalRounds, seedMap, currentUserId }: MatchCardProps) {
+function MatchCard({
+  match,
+  currentRound,
+  totalRounds,
+  seedMap,
+  currentUserId,
+}: MatchCardProps) {
   const navigate = useNavigate();
   const player1 = match.player1;
   const player2 = match.player2;
@@ -120,8 +126,9 @@ function MatchCard({ match, currentRound, totalRounds, seedMap, currentUserId }:
   /* Issue #159 — Match is clickable if it has a gameId. Completed matches can
      be viewed by anyone; active matches are only playable by the two assigned players. */
   const hasGame = match.gameId !== null;
-  const isMyMatch = currentUserId != null
-    && (player1?.id === currentUserId || player2?.id === currentUserId);
+  const isMyMatch =
+    currentUserId != null &&
+    (player1?.id === currentUserId || player2?.id === currentUserId);
   const isClickable = hasGame && (isComplete || isMyMatch);
   const isPlayable = hasGame && !isComplete && !isPending && isMyMatch;
   const isNotStarted = isPending || isScheduled;
@@ -208,7 +215,9 @@ function MatchCard({ match, currentRound, totalRounds, seedMap, currentUserId }:
           <span className="shrink-0 text-[10px] text-pong-text/30">view ↗</span>
         )}
         {isPlayable && (
-          <span className="shrink-0 text-[10px] font-semibold text-pong-accent">play ↗</span>
+          <span className="shrink-0 text-[10px] font-semibold text-pong-accent">
+            play ↗
+          </span>
         )}
       </div>
 
@@ -243,7 +252,11 @@ interface BracketViewProps {
   currentUserId?: number | null;
 }
 
-export default function BracketView({ bracket, participants = [], currentUserId }: BracketViewProps) {
+export default function BracketView({
+  bracket,
+  participants = [],
+  currentUserId,
+}: BracketViewProps) {
   const { matches, totalRounds, currentRound } = bracket;
 
   // Group matches by round (sorted by matchNumber)

@@ -19,11 +19,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       gameId = assertGameId(rawGameId);
 
       // 1. Validation de l'index
-      if (
-        cellIndex === null ||
-        cellIndex < 0 ||
-        !Number.isInteger(cellIndex)
-      ) {
+      if (cellIndex === null || cellIndex < 0 || !Number.isInteger(cellIndex)) {
         socket.emit("move_error", { error: "Invalid cell index", cellIndex });
         return;
       }

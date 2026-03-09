@@ -9,7 +9,6 @@ interface CreateGamePayload {
   boardSize?: BoardSize;
 }
 
-
 export const gamesService = {
   createGame(payload: CreateGamePayload = {}): Promise<Game> {
     return apiClient.post<Game>("/api/games", payload);

@@ -3,14 +3,17 @@ import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import type { User, FriendInfo, PendingRequest } from "../types";
+import type { UserStats } from "../types/stats";
 import { usersService } from "../services/users.service";
 import { friendsService } from "../services/friends.service";
+import { statsService } from "../services/stats.service";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import FriendsList from "../components/FriendsList";
 import PendingRequests from "../components/PendingRequests";
 import FriendRequestButton from "../components/Friends/FriendRequestButton";
-import ProfileStats from "../components/Profile/ProfileStats";
+import StatsCard from "../components/Stats/StatsCard";
+import MatchHistoryList from "../components/Stats/MatchHistoryList";
 import AvatarUpload from "../components/Profile/AvatarUpload";
 import DisplayNameForm from "../components/Profile/DisplayNameForm";
 
@@ -46,6 +49,9 @@ export default function Profile() {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [pendingLoading, setPendingLoading] = useState<boolean>(true);
 
+  // Stats
+  const [stats, setStats] = useState<UserStats | null>(null);
+
   // ── Fetch profile
   useEffect(() => {
     if (resolvedId == null) return;
@@ -68,6 +74,26 @@ export default function Profile() {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [resolvedId]);
+
+  // ── Fetch stats
+  useEffect(() => {
+    if (resolvedId == null) return;
+
+    let cancelled = false;
+
+    statsService
+      .getUserStats(Number(resolvedId))
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {
+        // Non-critical — silently ignore on failure
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [resolvedId]);
 
   // ── Fetch friends list (current user's accepted friends)
@@ -343,16 +369,12 @@ export default function Profile() {
           </Card>
 
           {/* Stats card */}
-          <ProfileStats
-            wins={profile.wins}
-            losses={profile.losses}
-            draws={profile.draws}
-          />
+          {stats && <StatsCard stats={stats} />}
         </div>
 
         {/* RIGHT */}
         <div className="space-y-4">
-          {isMine ? (
+          {isMine && (
             <>
               {/* Friends list */}
               <Card variant="elevated">
@@ -397,11 +419,10 @@ export default function Profile() {
                 )}
               </Card>
             </>
-          ) : (
-            <Card variant="elevated">
-              <p className="text-pong-text/60">Match history coming soon.</p>
-            </Card>
           )}
+
+          {/* Match history — shown for all profiles */}
+          <MatchHistoryList userId={profile.id} />
         </div>
       </div>
     </div>

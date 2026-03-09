@@ -54,11 +54,7 @@ export const createGame = async (req: AuthRequest, res: Response) => {
     const game =
       player2Id != null && hasRematchContext
         ? await createOrGetRematchInDb(player1Id, player2Id, Number(sourceGameId))
-        : await createGameInDb(
-            player1Id,
-            player2Id ?? undefined,
-            selectedBoardSize,
-          );
+        : await createGameInDb(player1Id, player2Id ?? undefined, selectedBoardSize);
 
     return res.status(201).json(game);
   } catch (error: any) {

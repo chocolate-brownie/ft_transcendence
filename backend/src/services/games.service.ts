@@ -225,10 +225,7 @@ export type GameOverResult =
   | { gameOver: true; winner: null; isDraw: true; line: null }
   | { gameOver: false; winner: null; isDraw: false; line: null };
 
-export const checkGameOver = (
-  board: Board,
-  boardSize: BoardSize = 3,
-): GameOverResult => {
+export const checkGameOver = (board: Board, boardSize: BoardSize = 3): GameOverResult => {
   const winResult = checkWinnerWithLine(board, boardSize);
 
   if (winResult) {

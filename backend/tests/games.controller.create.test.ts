@@ -44,7 +44,6 @@ describe("createGame controller friendship behavior", () => {
       error: "Can only play with friends",
     });
 
-
     const req = {
       user: { id: 10 },
       body: { player2Id: 20 },
