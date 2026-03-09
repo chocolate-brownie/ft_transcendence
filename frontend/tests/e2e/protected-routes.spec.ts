@@ -61,6 +61,26 @@ test.describe("Protected routes — access control", () => {
       await expect(page).toHaveURL("/game");
     });
 
+    test("can access /tournaments after login", async ({ page }) => {
+      await loginAndGetToken(page);
+
+      await page.goto("/tournaments");
+      await page.waitForLoadState("networkidle");
+
+      await expect(page).not.toHaveURL("/login");
+      await expect(page).toHaveURL("/tournaments");
+    });
+
+    test("can access /tournaments/:id after login", async ({ page }) => {
+      await loginAndGetToken(page);
+
+      await page.goto("/tournaments/test-tournament-id");
+      await page.waitForLoadState("networkidle");
+
+      await expect(page).not.toHaveURL("/login");
+      await expect(page).toHaveURL("/tournaments/test-tournament-id");
+    });
+
     test("profile page displays user data (from GET /api/auth/me)", async ({ page }) => {
       await loginAndGetToken(page);
 
@@ -86,6 +106,20 @@ test.describe("Protected routes — access control", () => {
 
     test("redirects /game to /login when not logged in", async ({ page }) => {
       await page.goto("/game");
+      await page.waitForLoadState("networkidle");
+
+      await expect(page).toHaveURL("/login", { timeout: 5000 });
+    });
+
+    test("redirects /tournaments to /login when not logged in", async ({ page }) => {
+      await page.goto("/tournaments");
+      await page.waitForLoadState("networkidle");
+
+      await expect(page).toHaveURL("/login", { timeout: 5000 });
+    });
+
+    test("redirects /tournaments/:id to /login when not logged in", async ({ page }) => {
+      await page.goto("/tournaments/test-tournament-id");
       await page.waitForLoadState("networkidle");
 
       await expect(page).toHaveURL("/login", { timeout: 5000 });

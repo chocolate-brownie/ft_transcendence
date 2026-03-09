@@ -29,7 +29,7 @@ const statusClassMap: Record<string, string> = {
 export default function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { socket } = useSocket();
+  const { socket, setActiveTournamentId } = useSocket();
   const { user } = useAuth();
 
   const [tournament, setTournament] = useState<TournamentDetails | null>(null);
@@ -82,6 +82,32 @@ export default function TournamentDetail() {
   const handleSocketUpdate = useCallback(() => void load(), [load]);
   useTournamentSocket({ socket, onUpdate: handleSocketUpdate });
 
+  useEffect(() => {
+    if (!user || !tournament) return;
+
+    const isRegistered = tournament.participants.some((p) => p.userId === user.id);
+    const isActive =
+      tournament.status === "REGISTERING" || tournament.status === "IN_PROGRESS";
+
+    if (isRegistered && isActive) {
+      setActiveTournamentId(tournament.id);
+    } else {
+      setActiveTournamentId(null);
+    }
+  }, [user, tournament, setActiveTournamentId]);
+
+  useEffect(() => {
+    return () => {
+      if (!tournament) return;
+
+      const isActive =
+        tournament.status === "REGISTERING" || tournament.status === "IN_PROGRESS";
+
+      if (isActive) return;
+      setActiveTournamentId(null);
+    };
+  }, [tournament, setActiveTournamentId]);
+
   if (loading) {
     return (
       <div className="w-full max-w-5xl py-6">
@@ -104,6 +130,7 @@ export default function TournamentDetail() {
   }
 
   const isRegistering = tournament.status === "REGISTERING";
+  const participants = [...tournament.participants].sort((a, b) => a.seed - b.seed);
 
   return (
     <div className="w-full max-w-5xl py-6">
@@ -150,21 +177,32 @@ export default function TournamentDetail() {
       {/* Participants */}
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-pong-text/40">
-          Participants ({tournament.participants.length} / {tournament.maxPlayers})
+          Participants ({participants.length} / {tournament.maxPlayers})
         </h2>
         <div className="flex flex-wrap gap-2">
-          {tournament.participants.length > 0 ? (
-            tournament.participants.map((p) => (
+          {participants.length > 0 ? (
+            participants.map((p) => (
               <span
                 key={p.id}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm backdrop-blur-sm ${
+                className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm backdrop-blur-sm ${
                   p.eliminatedInRound !== null
                     ? "border-black/5 bg-white/20 text-pong-text/40"
-                    : "border-black/10 bg-white/40 text-pong-text"
+                    : "border-pong-accent/30 bg-pong-accent/10 text-pong-text"
                 }`}
               >
                 <span className="text-xs text-pong-text/40">#{p.seed}</span>
-                {p.user.username}
+
+                <img
+                  src={p.user.avatarUrl || "/default-avatar.png"}
+                  alt={`${p.user.username} avatar`}
+                  className="h-6 w-6 rounded-full border border-black/10 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/default-avatar.png";
+                  }}
+                />
+
+                <span className="truncate">{p.user.username}</span>
+
                 {p.eliminatedInRound !== null && (
                   <span className="text-xs text-pong-text/30">
                     · out R{p.eliminatedInRound}

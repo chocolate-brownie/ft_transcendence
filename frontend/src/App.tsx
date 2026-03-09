@@ -14,14 +14,16 @@ import Matchmaking from "./pages/Matchmaking";
 import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
 import Leaderboard from "./pages/Leaderboard";
+import AIGame from "./pages/AIGame";
 import { ChatWidget } from "./components/Chat/ChatWidget";
 import { ChatProvider } from "./context/ChatContext";
 import ActiveGameBanner from "./components/ActiveGameBanner";
+import ActiveTournamentBanner from "./components/ActiveTournamentBanner";
 import ToastContainer from "./components/Toast";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
-import { useParams } from "react-router-dom"; //
+import { useParams } from "react-router-dom";
 
 function HomeLayout() {
   return (
@@ -34,6 +36,7 @@ function HomeLayout() {
       <Footer />
       <ChatWidget />
       <ActiveGameBanner />
+      <ActiveTournamentBanner />
     </div>
   );
 }
@@ -56,16 +59,15 @@ function Layout() {
       <Footer />
       <ChatWidget />
       <ActiveGameBanner />
+      <ActiveTournamentBanner />
     </div>
   );
 }
 
-//
 function GameWrapper() {
   const { id } = useParams();
   return <Game key={id} />;
 }
-//
 
 function App() {
   return (
@@ -80,8 +82,6 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
@@ -93,8 +93,11 @@ function App() {
               <Route path="/lobby" element={<GameLobby />} />
               <Route path="/game" element={<Navigate to="/lobby" replace />} />
               <Route path="/game/local" element={<LocalGame />} />
-              <Route path="/game/:id" element={<GameWrapper />} /> {/**/}
+              <Route path="/game/:id" element={<GameWrapper />} />
               <Route path="/matchmaking" element={<Matchmaking />} />
+              <Route path="/ai-game" element={<AIGame />} />
+              <Route path="/tournaments" element={<Tournaments />} />
+              <Route path="/tournaments/:id" element={<TournamentDetail />} />
             </Route>
           </Route>
         </Routes>

@@ -1,0 +1,331 @@
+/**
+ * AIGame Page — Issue #183
+ *
+ * Full "Play vs AI" flow with three phases:
+ * - Setup: pick difficulty (Easy/Medium/Hard) and symbol (X/O), then start.
+ * - Playing: renders GameBoard + TurnIndicator, sends moves via aiService,
+ *   shows a 350ms "AI is thinking..." delay after each player move.
+ * - Finished: shows the final board + GameOverModal with "Play Again" (resets
+ *   to setup) or "New Game (Lobby)" (navigates to /lobby).
+ *
+ * Reuses existing GameBoard, GameOverModal, and TurnIndicator components.
+ * The board is always 3x3 (backend AI only supports 3x3).
+ */
+import { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
+import { aiService } from "../services/ai.service";
+import type { AiDifficulty } from "../services/ai.service";
+import GameBoard from "../components/Game/GameBoard";
+import GameOverModal from "../components/Game/GameOverModal";
+import TurnIndicator from "../components/Game/TurnIndicator";
+import DifficultySelector from "../components/AI/DifficultySelector";
+import SymbolSelector from "../components/AI/SymbolSelector";
+import Button from "../components/Button";
+import Card from "../components/Card";
+
+type GamePhase = "setup" | "playing" | "finished";
+
+interface GameState {
+  gameId: number;
+  board: CellValue[];
+  playerSymbol: PlayerSymbol;
+  aiSymbol: PlayerSymbol;
+  difficulty: AiDifficulty;
+  isPlayerTurn: boolean;
+  winner: string | null;
+  status: string;
+}
+
+/** Back-to-lobby arrow button — matches LocalGame pattern. */
+const backButtonClass =
+  "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
+  "transition-colors bg-pong-surface text-pong-text/70 " +
+  "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none";
+
+export default function AIGame() {
+  const navigate = useNavigate();
+
+  const [phase, setPhase] = useState<GamePhase>("setup");
+  const [difficulty, setDifficulty] = useState<AiDifficulty>("medium");
+  const [symbol, setSymbol] = useState<PlayerSymbol>("X");
+  const [game, setGame] = useState<GameState | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [aiThinking, setAiThinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [finalDuration, setFinalDuration] = useState(0);
+  const startTimeRef = useRef<number>(0);
+
+  const handleStartGame = useCallback(async () => {
+    setError(null);
+    setProcessing(true);
+    try {
+      const res = await aiService.createGame(difficulty, symbol);
+      const board = JSON.parse(res.game.boardState) as CellValue[];
+      const aiSym: PlayerSymbol = symbol === "X" ? "O" : "X";
+      setGame({
+        gameId: res.game.id,
+        board,
+        playerSymbol: symbol,
+        aiSymbol: aiSym,
+        difficulty,
+        isPlayerTurn: res.game.currentTurn === symbol,
+        winner: null,
+        status: "IN_PROGRESS",
+      });
+      startTimeRef.current = Date.now();
+      setPhase("playing");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create game");
+    } finally {
+      setProcessing(false);
+    }
+  }, [difficulty, symbol]);
+
+  const handleCellClick = useCallback(
+    async (index: number) => {
+      if (!game || processing || aiThinking || !game.isPlayerTurn) return;
+
+      setProcessing(true);
+      setError(null);
+      try {
+        const res = await aiService.makeMove(game.gameId, index);
+        const newBoard = res.game.boardState;
+        const isGameOver = res.game.status === "FINISHED" || res.game.status === "DRAW";
+
+        // Show player's move immediately, then simulate AI thinking delay
+        const boardAfterPlayer = [...newBoard];
+        if (res.aiMove) {
+          boardAfterPlayer[res.aiMove.moveIndex] = null;
+        }
+        setGame((prev) =>
+          prev ? { ...prev, board: boardAfterPlayer, isPlayerTurn: false } : prev,
+        );
+        setProcessing(false);
+
+        // Play AI thinking animation before revealing AI's move
+        if (res.aiMove) {
+          setAiThinking(true);
+          await new Promise((r) => setTimeout(r, 350));
+          setAiThinking(false);
+        }
+
+        // Reveal final board state (with AI move)
+        setGame((prev) =>
+          prev
+            ? {
+                ...prev,
+                board: newBoard,
+                isPlayerTurn: true,
+                winner: res.game.winner,
+                status: res.game.status,
+              }
+            : prev,
+        );
+
+        if (isGameOver) {
+          setFinalDuration(Math.round((Date.now() - startTimeRef.current) / 1000));
+          setPhase("finished");
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to make move");
+        setProcessing(false);
+      }
+    },
+    [game, processing, aiThinking],
+  );
+
+  const handlePlayAgain = useCallback(() => {
+    setGame(null);
+    setError(null);
+    setPhase("setup");
+  }, []);
+
+  const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
+
+  /* ── GameOverModal prop builders ──────────────────────────────────────────── */
+
+  const buildWinner = (): GameOverPlayerSummary | null => {
+    if (!game || !game.winner) return null;
+    const isPlayerWin = game.winner === game.playerSymbol;
+    return {
+      id: isPlayerWin ? 0 : -1,
+      username: isPlayerWin ? "You" : `AI (${game.difficulty})`,
+      symbol: game.winner as PlayerSymbol,
+    };
+  };
+
+  const buildLoser = (): GameOverPlayerSummary | null => {
+    if (!game || !game.winner) return null;
+    const isPlayerWin = game.winner === game.playerSymbol;
+    return {
+      id: isPlayerWin ? -1 : 0,
+      username: isPlayerWin ? `AI (${game.difficulty})` : "You",
+      symbol: (game.winner === "X" ? "O" : "X") as PlayerSymbol,
+    };
+  };
+
+  const buildOpponent = (): GameOverPlayerSummary | null => {
+    if (!game) return null;
+    return {
+      id: -1,
+      username: `AI (${game.difficulty})`,
+      symbol: game.aiSymbol,
+    };
+  };
+
+  /* ── Difficulty label for the in-game info bar ────────────────────────────── */
+  const difficultyColor =
+    game?.difficulty === "easy"
+      ? "text-emerald-400"
+      : game?.difficulty === "hard"
+        ? "text-red-400"
+        : "text-amber-400";
+
+  return (
+    <div className="min-h-screen w-full px-4 pt-4">
+      {/* Back button — always visible, matches LocalGame */}
+      <div className="flex w-full justify-start">
+        <button
+          type="button"
+          onClick={() => void navigate("/lobby")}
+          className={backButtonClass}
+        >
+          <span className="text-base leading-none">&larr;</span>
+          <span>Back to Lobby</span>
+        </button>
+      </div>
+
+      {/* ── Setup phase ───────────────────────────────────────────────────── */}
+      {phase === "setup" && (
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-8 py-8">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-pong-accent">Play vs AI</h1>
+            <p className="mt-2 text-sm text-pong-text/60">
+              Choose your difficulty and symbol to begin.
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-pong-accent" />
+              <span className="h-1.5 w-1.5 rounded-full bg-pong-secondary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-shadow-grey-300" />
+            </div>
+          </div>
+
+          {/* Difficulty */}
+          <Card
+            variant="elevated"
+            className="relative w-full overflow-hidden border border-pong-accent/30"
+          >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-accent" />
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Difficulty
+            </h2>
+            <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
+          </Card>
+
+          {/* Symbol */}
+          <Card
+            variant="elevated"
+            className="relative w-full overflow-hidden border border-pong-secondary/35"
+          >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-secondary" />
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Your Symbol
+            </h2>
+            <SymbolSelector selected={symbol} onSelect={setSymbol} />
+          </Card>
+
+          {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
+          {/* Actions */}
+          <div className="flex w-full max-w-xs flex-col gap-3">
+            <Button
+              variant="primary"
+              className="w-full py-3 text-base"
+              onClick={() => void handleStartGame()}
+              disabled={processing}
+            >
+              {processing ? "Creating game..." : "Start Game"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Playing phase ─────────────────────────────────────────────────── */}
+      {phase === "playing" && game && (
+        <div className="flex flex-col items-center gap-6 py-4">
+          {/* Title + info bar */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-pong-text">
+              vs AI{" "}
+              <span className={`text-sm font-semibold ${difficultyColor}`}>
+                ({game.difficulty})
+              </span>
+            </h1>
+            <p className="mt-1 text-xs text-pong-text/40">
+              You are{" "}
+              <span
+                className={
+                  game.playerSymbol === "X"
+                    ? "font-bold text-pong-accent"
+                    : "font-bold text-pong-secondary"
+                }
+              >
+                {game.playerSymbol}
+              </span>
+            </p>
+          </div>
+
+          <TurnIndicator
+            currentPlayer={game.isPlayerTurn ? game.playerSymbol : game.aiSymbol}
+            isYourTurn={game.isPlayerTurn && !aiThinking}
+            playerSymbol={game.playerSymbol}
+            textOverride={aiThinking ? "AI is thinking..." : ""}
+          />
+
+          <GameBoard
+            board={game.board}
+            onCellClick={(i) => void handleCellClick(i)}
+            disabled={processing || aiThinking || !game.isPlayerTurn}
+            currentTurnSymbol={game.isPlayerTurn ? game.playerSymbol : game.aiSymbol}
+            boardSize={3}
+            playerSymbol={game.playerSymbol}
+          />
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+        </div>
+      )}
+
+      {/* ── Finished phase ────────────────────────────────────────────────── */}
+      {phase === "finished" && game && (
+        <div className="flex flex-col items-center gap-6 py-4">
+          <GameBoard
+            board={game.board}
+            onCellClick={() => {}}
+            disabled
+            boardSize={3}
+            playerSymbol={game.playerSymbol}
+            gameOver
+            winnerSymbol={(game.winner as PlayerSymbol) ?? null}
+          />
+
+          <GameOverModal
+            open
+            result={game.status === "DRAW" ? "draw" : "win"}
+            winner={buildWinner()}
+            loser={buildLoser()}
+            opponent={buildOpponent()}
+            mySymbol={game.playerSymbol}
+            totalMoves={totalMoves}
+            durationSeconds={finalDuration}
+            onPlayAgain={handlePlayAgain}
+            onGoLobby={() => void navigate("/lobby")}
+            onClose={handlePlayAgain}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
