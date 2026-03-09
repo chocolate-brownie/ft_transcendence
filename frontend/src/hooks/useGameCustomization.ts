@@ -55,21 +55,21 @@ export function useGameCustomization() {
     saveCustomization(next);
   }, []);
 
-  const setTheme = useCallback(
-    (theme: Theme) => {
-      const next = { ...customization, theme };
-      setCustomization(next);
-    },
-    [customization, setCustomization],
-  );
+  const setTheme = useCallback((theme: Theme) => {
+    setCustomizationState((prev) => {
+      const next = { ...prev, theme };
+      saveCustomization(next);
+      return next;
+    });
+  }, []);
 
-  const setSymbols = useCallback(
-    (symbols: CustomSymbols) => {
-      const next = { ...customization, symbols };
-      setCustomization(next);
-    },
-    [customization, setCustomization],
-  );
+  const setSymbols = useCallback((symbols: CustomSymbols) => {
+    setCustomizationState((prev) => {
+      const next = { ...prev, symbols };
+      saveCustomization(next);
+      return next;
+    });
+  }, []);
 
   /* Whether a non-classic theme is active */
   const isThemed = customization.theme !== "classic";

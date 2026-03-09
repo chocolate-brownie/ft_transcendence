@@ -36,7 +36,7 @@ export default function GameBoard({
 
   /* Issue #209 — hover class changes based on theme mode */
   const turnHoverClass = themed
-    ? "hover:brightness-125"
+    ? "hover:brightness-[1.25]"
     : currentTurnSymbol === "X"
       ? "hover:bg-pong-accent/10"
       : currentTurnSymbol === "O"

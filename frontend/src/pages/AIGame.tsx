@@ -68,8 +68,11 @@ export default function AIGame() {
   const { customization, setTheme, setSymbols, isThemed, renderSymbol } =
     useGameCustomization();
 
-  /* Issue #209 — display symbol for the "You are ..." label */
-  const p1Display = customization.symbols.player1Symbol || "X";
+  /* Issue #209 — display symbol for the "You are ..." label (respects chosen side) */
+  const p1Display =
+    symbol === "X"
+      ? customization.symbols.player1Symbol || "X"
+      : customization.symbols.player2Symbol || "O";
 
   const handleStartGame = useCallback(async () => {
     setError(null);
