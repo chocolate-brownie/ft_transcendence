@@ -37,7 +37,6 @@ export interface GameState {
   startedAt: Date | null;
   finishedAt: Date | null; // "finished_at" in DB
 }
-
 // ── Helpers ───────────────────────────────────────────────────
 
 // Return Null Board

@@ -57,6 +57,7 @@ model Game {
   boardSize   Int         @default(3) @map("board_size")
   currentTurn String      @default("X") @map("current_turn")
   gameType    GameType    @default(CLASSIC) @map("game_type")
+  difficulty  Difficulty?
   status      GameStatus  @default(WAITING) @map("status")
   settings    Json?
   player1Symbol String    @default("X") @map("player1_symbol")
@@ -86,6 +87,12 @@ model Game {
   @@index([finishedAt])
 
   @@map("games")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
 }
 
 enum GameType {

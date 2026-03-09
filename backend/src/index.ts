@@ -21,6 +21,7 @@ import friendsRoutes from "./routes/friends.routes";
 import gamesRoutes from "./routes/games.routes";
 import chatRoutes from "./routes/chat.routes";
 import tournamentsRoutes from "./routes/tournaments.routes";
+import aiRoutes from "./routes/ai.routes";
 import leaderboardRoutes from "./routes/leaderboard.routes";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,6 +70,7 @@ app.use("/api/friends", friendsRoutes);
 app.use("/api/games", gamesRoutes);
 app.use("/api/messages", chatRoutes);
 app.use("/api/tournaments", tournamentsRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 
 // ─── Global error handler ──────────────────────────────────────────────────
