@@ -70,12 +70,9 @@ app.use("/api/friends", friendsRoutes);
 app.use("/api/games", gamesRoutes);
 app.use("/api/messages", chatRoutes);
 app.use("/api/tournaments", tournamentsRoutes);
-<<<<<<< HEAD
 app.use("/api/ai", aiRoutes);
-=======
 app.use("/api/leaderboard", leaderboardRoutes);
 
->>>>>>> origin/main
 // ─── Global error handler ──────────────────────────────────────────────────
 
 app.use(
