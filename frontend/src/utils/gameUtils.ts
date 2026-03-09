@@ -14,6 +14,8 @@ function getBoardSize(board: Board, boardSize?: BoardSize): BoardSize {
   return 3;
 }
 
+// NOTE: This logic is intentionally duplicated in backend/src/services/games.service.ts.
+// Keep both implementations in sync when changing board-size win rules.
 function getWinLength(boardSize: BoardSize): number {
   return boardSize === 3 ? 3 : 4;
 }

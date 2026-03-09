@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import prisma from "../lib/prisma";
 import { gameRoomService } from "../socket/services/gameRoom.service";
+import { handleTournamentGameOver } from "./gameOver.service";
 
 interface ForfeitTimer {
   gameId: number;
@@ -31,14 +32,24 @@ class DisconnectionService {
     return game;
   }
 
-  /* #248: Helper function: both players disconnected — abandon with no winner */
+  /* #248: Helper function: both players disconnected — abandon with no winner.
+     For tournament games, player1 (higher seed) advances by default so the
+     bracket isn't stuck. */
   private async handleBothDisconnected(io: Server, gameId: number, roomName: string) {
     try {
+      // Check if this is a tournament game — if so, award win to player1
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { player1Id: true, gameType: true },
+      });
+      const isTournament = game?.gameType === "TOURNAMENT";
+      const defaultWinnerId = isTournament ? game.player1Id : null;
+
       await prisma.game.update({
         where: { id: gameId },
         data: {
           status: "ABANDONED",
-          winnerId: null,
+          winnerId: defaultWinnerId,
           finishedAt: new Date(),
         },
       });
@@ -52,9 +63,10 @@ class DisconnectionService {
 
       io.to(roomName).emit("game_abandoned", payload);
 
-      console.log(
-        `[Game Over] Game ${gameId} abandoned. Reason: both players disconnected`,
-      );
+      // Issue #159 — Advance bracket when both players disconnect in a tournament game
+      if (isTournament && defaultWinnerId) {
+        await handleTournamentGameOver(io, gameId, defaultWinnerId);
+      }
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -205,7 +217,8 @@ class DisconnectionService {
       io.to(roomName).emit("game_forfeited", forfeitPayload);
       io.to(`user:${loser.id}`).emit("game_forfeited", forfeitPayload);
 
-      console.log(`[Game Over] Game ${gameId} forfeited. Winner: ${winner.username}`);
+      // Issue #159 — Advance bracket when a tournament game is forfeited
+      await handleTournamentGameOver(io, gameId, winner.id);
     } catch (error) {
       if (
         typeof error === "object" &&

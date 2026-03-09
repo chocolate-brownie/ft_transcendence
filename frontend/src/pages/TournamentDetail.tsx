@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../lib/apiClient";
 import {
@@ -6,6 +6,9 @@ import {
   type BracketResponse,
   type TournamentDetails,
 } from "../services/tournament.service";
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
+import { useTournamentSocket } from "../hooks/useTournamentSocket";
 import BracketView from "../components/Tournament/BracketView";
 import Button from "../components/Button";
 
@@ -26,51 +29,58 @@ const statusClassMap: Record<string, string> = {
 export default function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { socket } = useSocket();
+  const { user } = useAuth();
 
   const [tournament, setTournament] = useState<TournamentDetails | null>(null);
   const [bracket, setBracket] = useState<BracketResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const tournamentId = parseInt(id ?? "", 10);
+  const tournamentId = parseInt(id ?? "", 10);
+
+  const load = useCallback(async () => {
     if (isNaN(tournamentId)) {
       setError("Invalid tournament ID.");
       setLoading(false);
       return;
     }
 
-    async function load() {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const [details, bracketData] = await Promise.allSettled([
-          tournamentService.getTournament(tournamentId),
-          tournamentService.getBracket(tournamentId),
-        ]);
+    try {
+      const [details, bracketData] = await Promise.allSettled([
+        tournamentService.getTournament(tournamentId),
+        tournamentService.getBracket(tournamentId),
+      ]);
 
-        if (details.status === "fulfilled") {
-          setTournament(details.value);
-        } else {
-          const msg =
-            details.reason instanceof ApiError
-              ? details.reason.message
-              : "Failed to load tournament.";
-          setError(msg);
-        }
-
-        if (bracketData.status === "fulfilled") {
-          setBracket(bracketData.value);
-        }
-        // Bracket 404 is expected when tournament is still REGISTERING — not an error
-      } finally {
-        setLoading(false);
+      if (details.status === "fulfilled") {
+        setTournament(details.value);
+      } else {
+        const msg =
+          details.reason instanceof ApiError
+            ? details.reason.message
+            : "Failed to load tournament.";
+        setError(msg);
       }
-    }
 
+      if (bracketData.status === "fulfilled") {
+        setBracket(bracketData.value);
+      }
+      // Bracket 404 is expected when tournament is still REGISTERING — not an error
+    } finally {
+      setLoading(false);
+    }
+  }, [tournamentId]);
+
+  useEffect(() => {
     void load();
-  }, [id]);
+  }, [load]);
+
+  /* Issue #159 — Re-fetch tournament data when socket events arrive */
+  const handleSocketUpdate = useCallback(() => void load(), [load]);
+  useTournamentSocket({ socket, onUpdate: handleSocketUpdate });
 
   if (loading) {
     return (
@@ -198,7 +208,7 @@ export default function TournamentDetail() {
             </p>
           </div>
         ) : bracket ? (
-          <BracketView bracket={bracket} participants={tournament.participants} />
+          <BracketView bracket={bracket} participants={tournament.participants} currentUserId={user?.id} />
         ) : (
           <p className="text-sm text-pong-text/40">Bracket data unavailable.</p>
         )}

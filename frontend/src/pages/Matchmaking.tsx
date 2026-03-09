@@ -146,7 +146,7 @@ export default function Matchmaking() {
       setMatchData(null);
       setError(null);
       setStatus("searching");
-      emitFindGame();
+      socket.emit("find_game", { boardSize });
     }
 
     if (startedRef.current) return;

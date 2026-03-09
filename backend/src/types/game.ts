@@ -3,6 +3,10 @@ export type CellValue = "X" | "O" | null;
 export type BoardSize = 3 | 4 | 5;
 export type Board = CellValue[];
 
+export function isBoardSize(value: unknown): value is BoardSize {
+  return value === 3 || value === 4 || value === 5;
+}
+
 // ── Enums logiques ────────────────────────────────────────────
 export type GameStatus =
   | "WAITING"
@@ -19,7 +23,7 @@ export interface GameState {
   id: number;
 
   boardState: Board; // "board_state" in DB
-  boardSize: number; // 3 = 3x3, 4 = 4x4, 5 = 5x5
+  boardSize: BoardSize; // 3 = 3x3, 4 = 4x4, 5 = 5x5
   currentTurn: Player;
   status: GameStatus;
   winnerId: number | null; // FK in User (null = in_progress or nul)

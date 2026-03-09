@@ -2,7 +2,7 @@
 // Create game, validate moves, win detection, draw detection
 
 import prisma from "../lib/prisma";
-import { initializeBoard } from "../types/game";
+import { initializeBoard, isBoardSize } from "../types/game";
 import type {
   GameState,
   GameStatus,
@@ -124,6 +124,8 @@ export const validateMove = (
 
 //        CHECK WIN
 
+// NOTE: This logic is intentionally duplicated in frontend/src/utils/gameUtils.ts.
+// Keep both implementations in sync when changing board-size win rules.
 export function getWinLength(boardSize: BoardSize): number {
   return boardSize === 3 ? 3 : 4;
 }
@@ -443,7 +445,11 @@ export const createOrGetRematchInDb = async (
       return rematch;
     }
 
-    const boardSize = sourceGame.boardSize as BoardSize;
+    if (!isBoardSize(sourceGame.boardSize)) {
+      throw new Error("Invalid board size");
+    }
+
+    const boardSize = sourceGame.boardSize;
     const board = initializeBoard(boardSize);
 
     if (!isBoardShapeValid(board, boardSize)) {
@@ -485,7 +491,11 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     if (!game) throw new Error("Game not found");
 
-    const boardSize = game.boardSize as BoardSize;
+    if (!isBoardSize(game.boardSize)) {
+      throw new Error("Invalid board size");
+    }
+
+    const boardSize = game.boardSize;
     const currentBoard = game.boardState as CellValue[];
 
     if (!isBoardShapeValid(currentBoard, boardSize)) {
@@ -513,13 +523,16 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     if (result.gameOver && result.winner) {
       updateData.status = "FINISHED";
-      updateData.winnerId =
-        result.winner === game.player1Symbol ? game.player1Id : game.player2Id;
-      updateData.finishedAt = new Date();
+      updateData.winner = {
+        connect: {
+          id: result.winner === game.player1Symbol ? game.player1Id : game.player2Id,
+        },
+      };
       updateData.winningLine = result.line ?? null;
+      updateData.finishedAt = new Date();
     } else if (result.gameOver && result.isDraw) {
       updateData.status = "DRAW";
-      updateData.winnerId = null;
+      updateData.winner = { disconnect: true };
       updateData.finishedAt = new Date();
     } else {
       updateData.currentTurn = game.currentTurn === "X" ? "O" : "X";
