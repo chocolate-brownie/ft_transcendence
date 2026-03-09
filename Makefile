@@ -95,6 +95,9 @@ db-seed:			## Seed the database
 db-reset:			## Reset database (drop all data, re-apply migrations)
 	$(COMPOSE) exec backend npx prisma migrate reset --force
 
+seed-users:		## Create 4 test users (Alice, Bob, John, Sarah)
+	$(COMPOSE) exec backend npx tsx prisma/seed-users.ts
+
 # ── Help ────────────────────────────────────────────────────────────────────
 
 help:				## Show this help
