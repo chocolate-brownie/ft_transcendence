@@ -10,6 +10,7 @@ import GameBoard from "../components/Game/GameBoard";
 import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
+import { useGameCustomization } from "../hooks/useGameCustomization";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
@@ -20,6 +21,9 @@ export default function Game() {
   const { socket } = useSocket();
 
   const gameId = Number(id);
+
+  /* Issue #209 — shared customization hook (persisted to localStorage) */
+  const { customization, isThemed, renderSymbol } = useGameCustomization();
 
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
   const [joinRevision, setJoinRevision] = useState(0);
@@ -185,8 +189,11 @@ export default function Game() {
       ? `Game over: ${gameState.gameResultText}`
       : "Game over";
   return (
-    <div className="flex flex-col items-center gap-6">
-      <h1 className="text-2xl font-bold text-pong-text -mb-4">
+    <div
+      className={isThemed ? "game-theme-wrapper flex flex-col items-center gap-6" : "flex flex-col items-center gap-6"}
+      data-theme={isThemed ? customization.theme : undefined}
+    >
+      <h1 className={`text-2xl font-bold ${isThemed ? "" : "text-pong-text"} -mb-4`}>
         {gameId > 0 ? `Game #${gameId}` : "Game"}
       </h1>
 
@@ -361,6 +368,8 @@ export default function Game() {
         gameOver={isGameOver}
         disabled={boardDisabled}
         boardSize={boardSize}
+        themed={isThemed}
+        renderSymbol={renderSymbol}
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (

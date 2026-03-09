@@ -5,16 +5,14 @@
  *   1. Setup — pick board size, theme, and symbols before the game starts
  *   2. Play  — the actual game board wrapped in a theme container
  *
- * Online games (Game.tsx) are completely unaffected — themed mode is only
- * activated here via the `themed` and `renderSymbol` props on GameBoard.
+ * Issue #209 — uses useGameCustomization hook so theme/symbol preferences
+ * persist across all game modes (local, AI, online, tournament) via localStorage.
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import type { Board, BoardSize, CellValue } from "../types/game";
-import type { CustomSymbols, GameCustomization, Theme } from "../types/customization";
-import { DEFAULT_CUSTOMIZATION } from "../types/customization";
+import type { Board, BoardSize } from "../types/game";
 
 import GameBoard from "../components/Game/GameBoard";
 import TurnIndicator from "../components/Game/TurnIndicator";
@@ -23,6 +21,7 @@ import ThemeSelector from "../components/Customization/ThemeSelector";
 import SymbolSelector from "../components/Customization/SymbolSelector";
 import BoardSizeSelector from "../components/Customization/BoardSizeSelector";
 import { findWinningLine } from "../utils/gameUtils";
+import { useGameCustomization } from "../hooks/useGameCustomization";
 
 function parseBoardSize(value: string | null): BoardSize {
   if (value === "4") return 4;
@@ -39,14 +38,17 @@ export default function LocalGame() {
   const [searchParams] = useSearchParams();
 
   /* ------------------------------------------------------------------ */
-  /* Setup phase state — Issue #209                                     */
+  /* Issue #209 — shared customization hook (persisted to localStorage)  */
+  /* ------------------------------------------------------------------ */
+  const { customization, setTheme, setSymbols, isThemed, renderSymbol } =
+    useGameCustomization();
+
+  /* ------------------------------------------------------------------ */
+  /* Setup phase state                                                   */
   /* ------------------------------------------------------------------ */
   const [phase, setPhase] = useState<"setup" | "play">("setup");
   const [boardSize, setBoardSize] = useState<BoardSize>(() =>
     parseBoardSize(searchParams.get("boardSize")),
-  );
-  const [customization, setCustomization] = useState<GameCustomization>(
-    () => DEFAULT_CUSTOMIZATION,
   );
 
   /* ------------------------------------------------------------------ */
@@ -65,20 +67,6 @@ export default function LocalGame() {
   );
   const playerSymbol: "X" | "O" = "X";
   const isYourTurn = result === null && currentPlayer === playerSymbol;
-
-  /* Issue #209 — whether we're using a non-classic theme */
-  const isThemed = customization.theme !== "classic";
-
-  /* Issue #209 — custom symbol renderer for emoji / initials modes */
-  const renderSymbol = useCallback(
-    (cell: CellValue): React.ReactNode => {
-      if (cell === null) return null;
-      const { symbols } = customization;
-      if (symbols.type === "default") return cell;
-      return cell === "X" ? symbols.player1Symbol : symbols.player2Symbol;
-    },
-    [customization],
-  );
 
   /* Helpers for display names / symbols in the scoreboard */
   const p1Display = customization.symbols.player1Symbol || "X";
@@ -111,14 +99,6 @@ export default function LocalGame() {
     setBoard(createEmptyBoard(size));
     setCurrentPlayer("X");
     setResult(null);
-  }
-
-  function handleThemeChange(theme: Theme) {
-    setCustomization((prev) => ({ ...prev, theme }));
-  }
-
-  function handleSymbolsChange(symbols: CustomSymbols) {
-    setCustomization((prev) => ({ ...prev, symbols }));
   }
 
   function handleCellClick(index: number) {
@@ -208,7 +188,7 @@ export default function LocalGame() {
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Theme
             </h2>
-            <ThemeSelector selected={customization.theme} onSelect={handleThemeChange} />
+            <ThemeSelector selected={customization.theme} onSelect={setTheme} />
           </section>
 
           {/* Symbol picker — Issue #209 */}
@@ -216,10 +196,7 @@ export default function LocalGame() {
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Symbols
             </h2>
-            <SymbolSelector
-              symbols={customization.symbols}
-              onSelect={handleSymbolsChange}
-            />
+            <SymbolSelector symbols={customization.symbols} onSelect={setSymbols} />
           </section>
 
           <Button
@@ -281,9 +258,7 @@ export default function LocalGame() {
               gameOver={result !== null}
               disabled={result !== null}
               themed={isThemed}
-              renderSymbol={
-                customization.symbols.type !== "default" ? renderSymbol : undefined
-              }
+              renderSymbol={renderSymbol}
             />
 
             {result !== null && (

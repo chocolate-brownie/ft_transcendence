@@ -16,8 +16,6 @@ import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
-import type { CustomSymbols, GameCustomization, Theme } from "../types/customization";
-import { DEFAULT_CUSTOMIZATION } from "../types/customization";
 
 import { aiService } from "../services/ai.service";
 import type { AiDifficulty } from "../services/ai.service";
@@ -28,6 +26,7 @@ import DifficultySelector from "../components/AI/DifficultySelector";
 import SymbolSelector from "../components/AI/SymbolSelector";
 import Button from "../components/Button";
 import Card from "../components/Card";
+import { useGameCustomization } from "../hooks/useGameCustomization";
 
 /* Issue #209 — customization components shared with LocalGame */
 import ThemeSelector from "../components/Customization/ThemeSelector";
@@ -65,35 +64,12 @@ export default function AIGame() {
   const [finalDuration, setFinalDuration] = useState(0);
   const startTimeRef = useRef<number>(0);
 
-  /* Issue #209 — theme and symbol customization state */
-  const [customization, setCustomization] = useState<GameCustomization>(
-    () => DEFAULT_CUSTOMIZATION,
-  );
-
-  /* Issue #209 — whether we're using a non-classic theme */
-  const isThemed = customization.theme !== "classic";
-
-  /* Issue #209 — custom symbol renderer for emoji / initials modes */
-  const { symbols } = customization;
-  const renderSymbol = useCallback(
-    (cell: CellValue): React.ReactNode => {
-      if (cell === null) return null;
-      if (symbols.type === "default") return cell;
-      return cell === "X" ? symbols.player1Symbol : symbols.player2Symbol;
-    },
-    [symbols],
-  );
+  /* Issue #209 — shared customization hook (persisted to localStorage) */
+  const { customization, setTheme, setSymbols, isThemed, renderSymbol } =
+    useGameCustomization();
 
   /* Issue #209 — display symbol for the "You are ..." label */
   const p1Display = customization.symbols.player1Symbol || "X";
-
-  function handleThemeChange(theme: Theme) {
-    setCustomization((prev) => ({ ...prev, theme }));
-  }
-
-  function handleCustomSymbolsChange(symbols: CustomSymbols) {
-    setCustomization((prev) => ({ ...prev, symbols }));
-  }
 
   const handleStartGame = useCallback(async () => {
     setError(null);
@@ -284,7 +260,7 @@ export default function AIGame() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Theme
             </h2>
-            <ThemeSelector selected={customization.theme} onSelect={handleThemeChange} />
+            <ThemeSelector selected={customization.theme} onSelect={setTheme} />
           </Card>
 
           {/* Issue #209 — Custom symbol picker (emojis / initials) */}
@@ -298,7 +274,7 @@ export default function AIGame() {
             </h2>
             <CustomSymbolSelector
               symbols={customization.symbols}
-              onSelect={handleCustomSymbolsChange}
+              onSelect={setSymbols}
             />
           </Card>
 
