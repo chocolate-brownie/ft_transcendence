@@ -1,8 +1,11 @@
 /* Issue #159 — Tournament socket event listeners
-   Listens for all 6 tournament Socket.io events and shows toast notifications.
-   Optionally calls onUpdate when data changes so the page can refetch. */
+   Listens for all 7 tournament Socket.io events and shows toast notifications.
+   Optionally calls onUpdate when data changes so the page can refetch.
 
-import { useEffect } from "react";
+   Uses a ref for onUpdate so the effect only re-runs when socket changes,
+   preventing listener churn that can drop events. */
+
+import { useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
 import { showToast } from "../components/Toast";
 
@@ -12,40 +15,51 @@ interface UseTournamentSocketOptions {
 }
 
 export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOptions) {
+  /* Keep onUpdate in a ref so the socket listeners always call the latest
+     callback without needing to re-register on every reference change. */
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+
   useEffect(() => {
     if (!socket) return;
 
+    function onCreated(data: { tournamentName: string; creator: { username: string } }) {
+      showToast(`${data.creator.username} created "${data.tournamentName}"`);
+      onUpdateRef.current?.();
+    }
+
     function onPlayerJoined(data: { tournamentName: string; player: { username: string }; currentParticipants: number; maxPlayers: number }) {
       showToast(`${data.player.username} joined ${data.tournamentName} (${data.currentParticipants}/${data.maxPlayers})`);
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
     function onStarted(data: { tournamentName: string }) {
       showToast(`${data.tournamentName} has started!`, "success");
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
     function onYourTurn(data: { tournamentName: string; roundName: string; opponent: { username: string } }) {
       showToast(`Your ${data.roundName} match is ready! vs ${data.opponent.username}`, "warning");
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
     function onMatchCompleted(data: { winner: { username: string }; loser: { username: string } | null; round: number }) {
       const loserName = data.loser?.username ?? "opponent";
       showToast(`${data.winner.username} defeated ${loserName} in Round ${data.round}`);
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
     function onEliminated(data: { tournamentName: string; roundName: string }) {
       showToast(`You were eliminated in the ${data.roundName}. Better luck next time!`, "error");
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
     function onCompleted(data: { tournamentName: string; champion: { username: string } }) {
       showToast(`${data.champion.username} is the champion of ${data.tournamentName}!`, "success");
-      onUpdate?.();
+      onUpdateRef.current?.();
     }
 
+    socket.on("tournament_created", onCreated);
     socket.on("tournament_player_joined", onPlayerJoined);
     socket.on("tournament_started", onStarted);
     socket.on("tournament_your_turn", onYourTurn);
@@ -54,6 +68,7 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
     socket.on("tournament_completed", onCompleted);
 
     return () => {
+      socket.off("tournament_created", onCreated);
       socket.off("tournament_player_joined", onPlayerJoined);
       socket.off("tournament_started", onStarted);
       socket.off("tournament_your_turn", onYourTurn);
@@ -61,5 +76,5 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
       socket.off("tournament_eliminated", onEliminated);
       socket.off("tournament_completed", onCompleted);
     };
-  }, [socket, onUpdate]);
+  }, [socket]);
 }

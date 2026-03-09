@@ -253,7 +253,7 @@
 - [x] Frontend — Tournament list page (available, in progress, completed) — mgodawat
 - [x] Frontend — Tournament detail page with visual bracket — mgodawat
 - [x] Frontend — Registration button — mgodawat
-- [ ] Socket.io — Notify player when it's their turn in tournament
+- [ ] Socket.io — Notify player when it's their turn in tournament - mgodawat
 
 ### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi]
 
@@ -376,5 +376,5 @@ Module #2 (ORM) ────────────┤
 | mgodawat    | Project Manager + Fullstack Dev | Docker, HTTPS, Socket.io, chat system, GitHub Issues, code reviews |
 | mamahtal    | Backend Logic                   | Express API, auth, Prisma, friends API, message persistence        |
 | tzizi       | Backend Logic                   | Express API, auth, Prisma, AI opponent, tournament                 |
-| zamgar      | Frontend UI (Phases 1–3)        | React pages, profile UI, friends list, chat UI components          |
-| jayzatov    | Frontend UI (Phase 4+)          | Game UI, customization, statistics                                 |
+| zamgar      | Frontend UI                     | React pages, profile UI, friends list, chat UI components          |
+| jayzatov    | Frontend UI                     | Game UI, customization, statistics                                 |

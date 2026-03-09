@@ -43,9 +43,14 @@ async function notifyTournamentPlayerJoined(
   const { tournamentInfo, participant } = result;
   const participantUserIds = await getTournamentParticipantUserIds(tournamentInfo.id);
 
-  participantUserIds.forEach((userId) => {
-    if (userId === joinedUserId) return;
+  /* Also include the tournament creator — they should see join notifications
+     even before they themselves join as a participant. */
+  const creatorId = tournamentInfo.createdById;
+  const notifyUserIds = new Set(participantUserIds);
+  if (creatorId) notifyUserIds.add(creatorId);
 
+  notifyUserIds.forEach((userId) => {
+    if (userId === joinedUserId) return;
     io.to(`user:${userId}`).emit("tournament_player_joined", {
       tournamentId: tournamentInfo.id,
       tournamentName: tournamentInfo.name,
@@ -268,6 +273,20 @@ export async function createTournamentController(req: AuthRequest, res: Response
     }
 
     const tournament = await createTournament(trimmedName, mp as 4 | 8, req.user.id);
+
+    /* Issue #159 — Broadcast tournament_created to everyone EXCEPT the
+       creator so the Tournaments list page updates in real-time. The
+       creator already navigates to the detail page after creating. */
+    const io = req.app.get("io") as SocketIOServer | undefined;
+    if (io) {
+      const creatorRoom = `user:${req.user.id}`;
+      io.except(creatorRoom).emit("tournament_created", {
+        tournamentId: tournament.id,
+        tournamentName: tournament.name,
+        creator: { id: req.user.id, username: tournament.creator.username },
+        maxPlayers: tournament.maxPlayers,
+      });
+    }
 
     return res.status(201).json(tournament);
   } catch (error) {
