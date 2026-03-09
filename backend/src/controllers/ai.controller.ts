@@ -26,11 +26,14 @@ export const generateAIGame = async (req: AuthRequest, res: Response) => {
 
 export const RequestAIMove = async (req: AuthRequest, res: Response) => {
   try {
-    const gameId = Array.isArray(req.params.id) ? parseInt(req.params.id[0]) : parseInt(req.params.id);
+    const gameId = parseInt(req.params.id as string);
+    if (isNaN(gameId)) {
+      return res.status(400).json({ error: 'Invalid game ID' });
+    }
     const { moveIndex } = req.body;
     const userId = req.user?.id;
 
-    if (typeof moveIndex !== 'number' || moveIndex < 0 || moveIndex > 8) {
+    if (typeof moveIndex !== 'number' || !Number.isInteger(moveIndex) || moveIndex < 0 || moveIndex > 8) {
       return res.status(400).json({ error: 'Invalid move index' });
     }
 
@@ -48,10 +51,10 @@ export const RequestAIMove = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Not your game' });
     }
     if (error.message === 'Not your turn') {
-      return res.status(400).json({ error: `It's not your turn, current turn is: ${error.currentTurn}` });
+      return res.status(400).json({ error: "It's not your turn" });
     }
     if (error.message === 'Cell is already occupied') {
-      return res.status(400).json({ error: `Cell ${error.cellIndex} is already occupied` });
+      return res.status(400).json({ error: 'Cell is already occupied' });
     }
 
     console.error('Error trying to make move:', error);
@@ -61,7 +64,10 @@ export const RequestAIMove = async (req: AuthRequest, res: Response) => {
 
 export const getAIGame = async (req: AuthRequest, res: Response) => {
   try {
-    const gameId = Array.isArray(req.params.id) ? parseInt(req.params.id[0]) : parseInt(req.params.id);
+    const gameId = parseInt(req.params.id as string);
+    if (isNaN(gameId)) {
+      return res.status(400).json({ error: 'Invalid game ID' });
+    }
     const userId = req.user?.id;
 
     const game = await getAIGameById(gameId, userId);

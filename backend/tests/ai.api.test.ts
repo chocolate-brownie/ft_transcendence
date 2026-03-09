@@ -5,7 +5,9 @@ import prisma from "../src/lib/prisma";
 import { GameStatus, Difficulty } from "@prisma/client";
 import { Board } from "../src/types/game";
 
-describe("AI Game API Integration Tests", () => {
+const describeDb = process.env.RUN_DB_TESTS === "1" ? describe : describe.skip;
+
+describeDb("AI Game API Integration Tests", () => {
   const cleanDatabase = async () => {
     await prisma.game.deleteMany();
     await prisma.user.deleteMany();
@@ -117,7 +119,7 @@ describe("AI Game API Integration Tests", () => {
       expect(res.body.game.status).toBe(GameStatus.FINISHED);
       expect(res.body.game.winner).toBe("X");
       expect(res.body.aiMove).toBeNull();
-      expect(res.body.game.finsihedAt).not.toBeNull();
+      expect(res.body.game.finishedAt).not.toBeNull();
     });
 
     test("AI Wins - Response includes winning move", async () => {
@@ -172,7 +174,7 @@ describe("AI Game API Integration Tests", () => {
       expect(res.body.game.winner).toBe(null);
       expect(res.body.aiMove).toBeNull();
       expect((res.body.game.boardState as Board).every(c => c !== null)).toBe(true);
-      expect(res.body.game.finsihedAt).not.toBeNull();
+      expect(res.body.game.finishedAt).not.toBeNull();
     });
   });
 
