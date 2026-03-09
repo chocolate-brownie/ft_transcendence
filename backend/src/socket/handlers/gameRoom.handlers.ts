@@ -75,7 +75,7 @@ function buildJoinedPayload(
       createdAt: game.createdAt,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
-      winningLine: game.winningLine,
+      winningLine: game.winningLine ?? null,
     },
   };
 }

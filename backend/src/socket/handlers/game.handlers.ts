@@ -1,10 +1,11 @@
 import type { Server, Socket } from "socket.io";
+import prisma from "../../lib/prisma";
 import { makeMoveInDb, checkGameOver } from "../../services/games.service";
 import { getSocketUser, getGameRoomName, assertGameId } from "../helpers";
 import { processGameOver } from "../../services/gameOver.service";
+import { isBoardSize } from "../../types/game";
 import type { Board } from "../../types/game";
 import { disconnectionService } from "../../services/disconnection.service";
-import type { BoardSize } from "../../types/game";
 
 export function registerGameHandlers(io: Server, socket: Socket) {
   socket.on("make_move", async (payload: unknown) => {
@@ -21,9 +22,26 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       if (
         cellIndex === null ||
         cellIndex < 0 ||
-        cellIndex > 24 ||
         !Number.isInteger(cellIndex)
       ) {
+        socket.emit("move_error", { error: "Invalid cell index", cellIndex });
+        return;
+      }
+
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { boardSize: true },
+      });
+
+      if (!game) {
+        throw new Error("Game not found");
+      }
+
+      if (!isBoardSize(game.boardSize)) {
+        throw new Error("Invalid board size");
+      }
+
+      if (cellIndex >= game.boardSize * game.boardSize) {
         socket.emit("move_error", { error: "Invalid cell index", cellIndex });
         return;
       }
@@ -38,9 +56,13 @@ export function registerGameHandlers(io: Server, socket: Socket) {
           ? updatedGame.player1Symbol
           : updatedGame.player2Symbol;
 
+      if (!isBoardSize(updatedGame.boardSize)) {
+        throw new Error("Invalid board size");
+      }
+
       // 4. Vérification de la ligne gagnante (pour le frontend)
       const boardData = updatedGame.boardState as Board; // Cast pour s'assurer que c'est bien un Board
-      const gameOverResult = checkGameOver(boardData, updatedGame.boardSize as BoardSize);
+      const gameOverResult = checkGameOver(boardData, updatedGame.boardSize);
 
       // 5. Construction du payload de mise à jour standard
       const gameUpdate = {

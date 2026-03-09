@@ -1,5 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
+import type { BoardSize } from "../types/game";
+import { isBoardSize } from "../types/game";
 import {
   createGameInDb,
   createOrGetRematchInDb,
@@ -9,12 +11,6 @@ import {
   getGameByIdFromDb,
   getCompletedGamesFromDb,
 } from "../services/games.service";
-
-type BoardSize = 3 | 4 | 5;
-
-const isBoardSize = (value: unknown): value is BoardSize => {
-  return value === 3 || value === 4 || value === 5;
-};
 
 // ── createGame ────────────────────────────────────────
 export const createGame = async (req: AuthRequest, res: Response) => {
@@ -97,9 +93,18 @@ export const makeMove = async (req: AuthRequest, res: Response) => {
       cellIndex === undefined ||
       typeof cellIndex !== "number" ||
       !Number.isInteger(cellIndex) ||
-      cellIndex < 0 ||
-      cellIndex > 24
+      cellIndex < 0
     ) {
+      return res.status(400).json({ error: "Invalid cell index" });
+    }
+
+    const game = await getGameByIdFromDb(gameId, userId);
+
+    if (!isBoardSize(game.boardSize)) {
+      return res.status(400).json({ error: "Invalid board size" });
+    }
+
+    if (cellIndex >= game.boardSize * game.boardSize) {
       return res.status(400).json({ error: "Invalid cell index" });
     }
 

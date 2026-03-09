@@ -3,6 +3,7 @@ import type { Server, Socket } from "socket.io";
 import prisma from "../../lib/prisma";
 import { createGameInDb } from "../../services/games.service";
 import type { BoardSize } from "../../types/game";
+import { isBoardSize } from "../../types/game";
 import { gameRoomService } from "../services/gameRoom.service";
 import { disconnectionService } from "../../services/disconnection.service";
 import { getGameRoomName } from "../helpers";
@@ -11,10 +12,6 @@ import { matchmakingService } from "../services/matchmaking.service";
 type FindGamePayload = {
   boardSize?: unknown;
 };
-
-function isBoardSize(value: unknown): value is BoardSize {
-  return value === 3 || value === 4 || value === 5;
-}
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket) {
   const userId: number = socket.data.user.id;
