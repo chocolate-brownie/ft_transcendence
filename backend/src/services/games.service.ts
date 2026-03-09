@@ -528,6 +528,7 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
           id: result.winner === game.player1Symbol ? game.player1Id : game.player2Id,
         },
       };
+      updateData.winningLine = result.line ?? null;
       updateData.finishedAt = new Date();
     } else if (result.gameOver && result.isDraw) {
       updateData.status = "DRAW";
