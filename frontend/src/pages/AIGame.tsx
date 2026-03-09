@@ -23,6 +23,7 @@ import TurnIndicator from "../components/Game/TurnIndicator";
 import DifficultySelector from "../components/AI/DifficultySelector";
 import SymbolSelector from "../components/AI/SymbolSelector";
 import Button from "../components/Button";
+import Card from "../components/Card";
 
 type GamePhase = "setup" | "playing" | "finished";
 
@@ -36,6 +37,12 @@ interface GameState {
   winner: string | null;
   status: string;
 }
+
+/** Back-to-lobby arrow button — matches LocalGame pattern. */
+const backButtonClass =
+  "relative flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md " +
+  "transition-colors bg-pong-surface text-pong-text/70 " +
+  "hover:bg-pong-accent/10 hover:text-pong-accent focus:outline-none";
 
 export default function AIGame() {
   const navigate = useNavigate();
@@ -137,7 +144,8 @@ export default function AIGame() {
 
   const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
 
-  // Build GameOverModal props
+  /* ── GameOverModal prop builders ──────────────────────────────────────────── */
+
   const buildWinner = (): GameOverPlayerSummary | null => {
     if (!game || !game.winner) return null;
     const isPlayerWin = game.winner === game.playerSymbol;
@@ -167,61 +175,96 @@ export default function AIGame() {
     };
   };
 
+  /* ── Difficulty label for the in-game info bar ────────────────────────────── */
+  const difficultyColor =
+    game?.difficulty === "easy"
+      ? "text-emerald-400"
+      : game?.difficulty === "hard"
+        ? "text-red-400"
+        : "text-amber-400";
+
   return (
-    <div className="flex w-full max-w-2xl flex-col items-center py-6">
-      {/* Setup phase */}
+    <div className="min-h-screen w-full px-4 pt-4">
+      {/* Back button — always visible, matches LocalGame */}
+      <div className="flex w-full justify-start">
+        <button
+          type="button"
+          onClick={() => void navigate("/lobby")}
+          className={backButtonClass}
+        >
+          <span className="text-base leading-none">&larr;</span>
+          <span>Back to Lobby</span>
+        </button>
+      </div>
+
+      {/* ── Setup phase ───────────────────────────────────────────────────── */}
       {phase === "setup" && (
-        <div className="w-full space-y-8">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-8 py-8">
+          {/* Header */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-pong-accent">Play vs AI</h1>
-            <p className="mt-1 text-sm text-pong-text/60">
+            <p className="mt-2 text-sm text-pong-text/60">
               Choose your difficulty and symbol to begin.
             </p>
+            <div className="mt-3 flex items-center justify-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-pong-accent" />
+              <span className="h-1.5 w-1.5 rounded-full bg-pong-secondary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-shadow-grey-300" />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-pong-text/70">Difficulty</h2>
+          {/* Difficulty */}
+          <Card
+            variant="elevated"
+            className="relative w-full overflow-hidden border border-pong-accent/30"
+          >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-accent" />
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Difficulty
+            </h2>
             <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
-          </div>
+          </Card>
 
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-pong-text/70">Your Symbol</h2>
+          {/* Symbol */}
+          <Card
+            variant="elevated"
+            className="relative w-full overflow-hidden border border-pong-secondary/35"
+          >
+            <div className="absolute left-0 top-0 h-1 w-full bg-pong-secondary" />
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Your Symbol
+            </h2>
             <SymbolSelector selected={symbol} onSelect={setSymbol} />
-          </div>
+          </Card>
 
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
-          <div className="flex flex-col items-center gap-3">
+          {/* Actions */}
+          <div className="flex w-full max-w-xs flex-col gap-3">
             <Button
               variant="primary"
-              className="w-full max-w-xs"
+              className="w-full py-3 text-base"
               onClick={() => void handleStartGame()}
               disabled={processing}
             >
               {processing ? "Creating game..." : "Start Game"}
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full max-w-xs"
-              onClick={() => void navigate("/lobby")}
-            >
-              Back to Lobby
-            </Button>
           </div>
         </div>
       )}
 
-      {/* Playing phase */}
+      {/* ── Playing phase ─────────────────────────────────────────────────── */}
       {phase === "playing" && game && (
-        <div className="flex w-full flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-6 py-4">
+          {/* Title + info bar */}
           <div className="text-center">
             <h1 className="text-2xl font-bold text-pong-text">
               vs AI{" "}
-              <span className="text-sm font-normal text-pong-text/50">
+              <span className={`text-sm font-semibold ${difficultyColor}`}>
                 ({game.difficulty})
               </span>
             </h1>
-            <p className="text-xs text-pong-text/40">
+            <p className="mt-1 text-xs text-pong-text/40">
               You are{" "}
               <span
                 className={
@@ -255,9 +298,9 @@ export default function AIGame() {
         </div>
       )}
 
-      {/* Finished phase */}
+      {/* ── Finished phase ────────────────────────────────────────────────── */}
       {phase === "finished" && game && (
-        <div className="flex w-full flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-6 py-4">
           <GameBoard
             board={game.board}
             onCellClick={() => {}}

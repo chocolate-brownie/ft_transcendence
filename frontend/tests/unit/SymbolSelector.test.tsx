@@ -45,7 +45,7 @@ describe("SymbolSelector", () => {
     const { container } = render(<SymbolSelector selected="O" onSelect={vi.fn()} />);
 
     const buttons = container.querySelectorAll("button");
-    expect(buttons[0].className).toContain("border-transparent");
+    expect(buttons[0].className).toContain("border-white/10");
     expect(buttons[1].className).toContain("border-pong-secondary");
   });
 
@@ -54,6 +54,6 @@ describe("SymbolSelector", () => {
 
     const buttons = container.querySelectorAll("button");
     expect(buttons[0].className).toContain("border-pong-accent");
-    expect(buttons[1].className).toContain("border-transparent");
+    expect(buttons[1].className).toContain("border-white/10");
   });
 });

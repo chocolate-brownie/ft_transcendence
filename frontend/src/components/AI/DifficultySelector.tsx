@@ -57,7 +57,7 @@ export default function DifficultySelector({
             className={`rounded-xl border-2 p-4 text-left transition-all ${
               isActive
                 ? lvl.selectedBorder
-                : "border-transparent bg-black/10 hover:bg-black/15"
+                : "border-white/10 bg-white/10 hover:border-white/20 hover:bg-white/20"
             }`}
           >
             <p className={`text-lg font-bold ${lvl.color}`}>{lvl.label}</p>

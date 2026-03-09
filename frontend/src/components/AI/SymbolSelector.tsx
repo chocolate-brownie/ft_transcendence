@@ -30,7 +30,7 @@ export default function SymbolSelector({ selected, onSelect }: SymbolSelectorPro
               className={`flex h-20 w-20 items-center justify-center rounded-xl border-2 text-4xl font-bold transition-all ${
                 isActive
                   ? `${borderClass} ${colorClass}`
-                  : "border-transparent bg-black/10 text-pong-text/40 hover:bg-black/15"
+                  : "border-white/10 bg-white/10 text-pong-text/40 hover:border-white/20 hover:bg-white/20"
               }`}
             >
               {symbol}

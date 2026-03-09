@@ -53,7 +53,7 @@ describe("DifficultySelector", () => {
 
     const buttons = container.querySelectorAll("button");
     expect(buttons[2].className).toContain("border-red-400");
-    expect(buttons[0].className).toContain("border-transparent");
-    expect(buttons[1].className).toContain("border-transparent");
+    expect(buttons[0].className).toContain("border-white/10");
+    expect(buttons[1].className).toContain("border-white/10");
   });
 });
