@@ -253,7 +253,12 @@
 - [x] Frontend — Tournament list page (available, in progress, completed) — mgodawat
 - [x] Frontend — Tournament detail page with visual bracket — mgodawat
 - [x] Frontend — Registration button — mgodawat
-- [ ] Socket.io — Notify player when it's their turn in tournament - mgodawat
+- [x] Socket.io — 7 real-time tournament events (created, joined, started, your_turn, match_completed, eliminated, completed) — mgodawat
+- [x] Auto-create Game records when bracket matches are ready (Round 1 + later rounds) — mgodawat
+- [x] Auto-advance bracket on game completion, forfeit, and both-disconnect — mgodawat
+- [x] Bracket "Play Now" buttons (restricted to assigned players only) — mgodawat
+- [x] Tournament game-over modal with "Back to Tournament" button — mgodawat
+- [x] Toast notification system (action buttons, sticky duration) — mgodawat
 
 ### AI Opponent (Module #9 — 2pts) — [Backend: mamahtal, tzizi]
 
@@ -292,7 +297,7 @@
 
 ### Modules Progressed
 
-- Module #8 — Tournament: **In Progress**
+- Module #8 — Tournament: **Completed**
 - Module #9 — AI Opponent: **Not Started**
 - Module #10 — Customization: **Not Started**
 - Module #11 — Statistics: **Not Started**
