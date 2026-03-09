@@ -65,10 +65,8 @@ export default function GameLobby() {
             title="Play vs AI"
             description="Challenge the computer"
             buttonText="Start AI Game"
-            onClick={() => {}}
-            color="neutral"
-            disabled
-            badgeText="Coming Soon"
+            onClick={() => void navigate(`/ai-game?difficulty=${aiDifficulty}`)}
+            color="blue"
           >
             <div className="w-full">
               <label
