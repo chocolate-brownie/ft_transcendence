@@ -11,6 +11,8 @@ import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
 import { useGameCustomization } from "../hooks/useGameCustomization";
+import ThemeSelector from "../components/Customization/ThemeSelector";
+import CustomSymbolSelector from "../components/Customization/SymbolSelector";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
@@ -23,7 +25,8 @@ export default function Game() {
   const gameId = Number(id);
 
   /* Issue #209 — shared customization hook (persisted to localStorage) */
-  const { customization, isThemed, renderSymbol } = useGameCustomization();
+  const { customization, setTheme, setSymbols, isThemed, renderSymbol } =
+    useGameCustomization();
 
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
   const [joinRevision, setJoinRevision] = useState(0);
@@ -219,18 +222,40 @@ export default function Game() {
       ) : null}
 
       {!gameState.error && gameState.serverStatus === "WAITING" ? (
-        <div className="w-full max-w-xl rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
-          <p className="text-base font-semibold text-pong-text">{waitingText}</p>
-          <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent" />
-            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-secondary [animation-delay:180ms]" />
-            <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent [animation-delay:360ms]" />
-            <span>Waiting for second player</span>
+        <div className="w-full max-w-xl space-y-4">
+          <div className="rounded-lg border border-black/10 bg-pong-surface px-6 py-4 text-center">
+            <p className="text-base font-semibold text-pong-text">{waitingText}</p>
+            <div className="mt-2 inline-flex items-center gap-2 text-sm text-pong-text/60">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-pong-secondary [animation-delay:180ms]" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-pong-accent [animation-delay:360ms]" />
+              <span>Waiting for second player</span>
+            </div>
+            <div className="mt-4">
+              <Button variant="secondary" onClick={backToLobby}>
+                Cancel Game
+              </Button>
+            </div>
           </div>
-          <div className="mt-4">
-            <Button variant="secondary" onClick={backToLobby}>
-              Cancel Game
-            </Button>
+
+          {/* Issue #209 — customize while waiting */}
+          <div className="rounded-lg border border-pong-accent/20 bg-pong-surface px-6 py-4">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
+              Customize while you wait
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Theme</h3>
+                <ThemeSelector selected={customization.theme} onSelect={setTheme} />
+              </div>
+              <div>
+                <h3 className="mb-2 text-xs font-medium text-pong-text/40">Symbols</h3>
+                <CustomSymbolSelector
+                  symbols={customization.symbols}
+                  onSelect={setSymbols}
+                />
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
