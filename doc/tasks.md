@@ -286,21 +286,23 @@
 - [ ] Default options clearly available (subject requirement)
 - [ ] If AI module is implemented, AI must work with custom settings
 
-### Game Statistics & Match History (Module #11 — 1pt) — [Frontend: zamgar, jayzatov + Backend: mamahtal, tzizi]
+### Game Statistics & Match History (Module #11 — 1pt) — [Backend: mgodawat (Issue #289) + Frontend: mgodawat (Issues #290, #291)]
 
-- [ ] `GET /api/users/:id/stats` — wins, losses, draws, win rate, total games
-- [ ] `GET /api/users/:id/matches` — paginated match history (most recent first)
-- [ ] `GET /api/leaderboard` — top players sorted by wins
-- [ ] Frontend — Stats section on profile page (wins, losses, draws, win rate percentage)
-- [ ] Frontend — Match history list (date, opponent name, result: W/L/D, game mode)
-- [ ] Frontend — Leaderboard page (rank, username, avatar, wins, losses)
+- [x] `GET /api/users/:id/stats` — wins, losses, draws, win rate, total games, gamesByType breakdown — mgodawat (PR #292)
+- [x] `GET /api/users/:id/matches` — paginated match history with opponent info, result, duration — mgodawat (PR #292)
+- [x] `GET /api/leaderboard` — top players sorted by wins, win rate tiebreaker — mgodawat (PR #292)
+- [x] Backend — `updateGameStatistics()` atomically increments User.wins/losses/draws on game completion (AI games excluded) — mgodawat (PR #292)
+- [x] Frontend — StatsCard on profile page (total games, wins, losses, draws, win rate bar, games-by-type, last played) — mgodawat (PR #300)
+- [x] Frontend — MatchHistoryList on profile page (paginated, opponent avatar, result badge, duration, game type) — mgodawat (PR #300)
+- [x] Frontend — Leaderboard page (ranked table, gold/silver/bronze top-3, click-to-profile, Show More, Refresh) — mgodawat (PR #301)
+- [x] 21 automated backend tests for stats endpoints — mgodawat (PR #292)
 
 ### Modules Progressed
 
 - Module #8 — Tournament: **Completed**
 - Module #9 — AI Opponent: **Not Started**
 - Module #10 — Customization: **Not Started**
-- Module #11 — Statistics: **Not Started**
+- Module #11 — Statistics: **Completed** (Issues #289, #290, #291)
 
 ---
 
@@ -344,8 +346,8 @@
 - [ ] AI test: play vs bot on each difficulty, verify appropriate challenge level
 - [ ] Tournament test: create → join (enough players) → play through bracket → winner declared
 - [ ] Customization test: change theme + symbols, verify they apply in game
-- [ ] Statistics test: play a few games, verify stats update on profile
-- [ ] Leaderboard test: verify it shows correct rankings
+- [ ] Statistics test: play a few games, verify stats update on profile (StatsCard + MatchHistoryList)
+- [ ] Leaderboard test: verify `/leaderboard` shows correct rankings, click-to-profile works
 
 ### Documentation — [Tech Lead + PM]
 

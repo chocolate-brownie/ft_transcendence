@@ -115,6 +115,52 @@ Running 13 tests using 1 worker
 
 ---
 
+## Part C — Stats & Leaderboard API Tests (Jest + Supertest)
+
+These tests cover the statistics endpoints added in Issue #289. Same mocking pattern as the auth tests.
+
+### Run
+
+```bash
+cd backend
+npm test -- tests/stats.test.ts
+```
+
+### What they cover (`backend/tests/stats.test.ts`)
+
+- `GET /api/users/:id/stats` — returns correct aggregate stats (wins, losses, draws, winRate, gamesByType)
+- `GET /api/users/:id/stats` — returns 404 for non-existent user
+- `GET /api/users/:id/stats` — returns 401 without auth token
+- `GET /api/users/:id/stats` — handles user with 0 games (all zeros)
+- `GET /api/users/:id/matches` — returns paginated match history with opponent info
+- `GET /api/users/:id/matches` — draw result displays correctly
+- `GET /api/users/:id/matches` — returns empty list for user with no games
+- `GET /api/users/:id/matches` — respects page and limit query params
+- `GET /api/leaderboard` — returns ranked players sorted by wins
+- `GET /api/leaderboard` — win rate tiebreaker when wins are equal
+- `GET /api/leaderboard` — respects limit parameter
+- `GET /api/leaderboard` — returns empty leaderboard when no players have games
+
+### Expected output
+
+```
+PASS tests/stats.test.ts
+  Stats & Leaderboard API
+    GET /api/users/:id/stats
+      ✓ returns user stats with correct shape
+      ✓ returns 404 for missing user
+      ...
+    GET /api/users/:id/matches
+      ✓ returns paginated match history
+      ...
+    GET /api/leaderboard
+      ✓ returns ranked leaderboard
+      ...
+Tests: 21 passed
+```
+
+---
+
 ## Adding tests for a new feature
 
 When you implement a new backend endpoint or frontend page, follow this pattern:
