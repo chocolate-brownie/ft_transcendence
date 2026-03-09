@@ -1,15 +1,23 @@
 /* Issue #159 — Minimal toast notification component
    Fixed bottom-right stack. Auto-dismisses after a timeout.
+   Supports optional action button (e.g. "Play Now" for tournament matches).
    No external dependencies — just React + Tailwind. */
 
 import { useCallback, useEffect, useState } from "react";
 
 type ToastVariant = "info" | "success" | "warning" | "error";
 
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface ToastItem {
   id: number;
   message: string;
   variant: ToastVariant;
+  action?: ToastAction;
+  duration: number;
 }
 
 const variantStyles: Record<ToastVariant, string> = {
@@ -19,22 +27,46 @@ const variantStyles: Record<ToastVariant, string> = {
   error: "border-red-200 bg-red-50 text-red-800",
 };
 
-let nextId = 0;
-let globalAddToast: ((message: string, variant?: ToastVariant) => void) | null = null;
+const actionStyles: Record<ToastVariant, string> = {
+  info: "bg-blue-600 hover:bg-blue-700",
+  success: "bg-emerald-600 hover:bg-emerald-700",
+  warning: "bg-amber-600 hover:bg-amber-700",
+  error: "bg-red-600 hover:bg-red-700",
+};
 
-/* Call this from anywhere to show a toast. */
-export function showToast(message: string, variant: ToastVariant = "info") {
-  globalAddToast?.(message, variant);
+let nextId = 0;
+let globalAddToast: ((
+  message: string,
+  variant?: ToastVariant,
+  opts?: { action?: ToastAction; duration?: number },
+) => void) | null = null;
+
+/* Call this from anywhere to show a toast.
+   Pass opts.action for a clickable button, opts.duration to override auto-dismiss. */
+export function showToast(
+  message: string,
+  variant: ToastVariant = "info",
+  opts?: { action?: ToastAction; duration?: number },
+) {
+  globalAddToast?.(message, variant, opts);
 }
 
 /* Render this once at the app root (e.g. in App.tsx). */
 export default function ToastContainer() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const addToast = useCallback((message: string, variant: ToastVariant = "info") => {
-    const id = nextId++;
-    setToasts((prev) => [...prev, { id, message, variant }]);
-  }, []);
+  const addToast = useCallback(
+    (
+      message: string,
+      variant: ToastVariant = "info",
+      opts?: { action?: ToastAction; duration?: number },
+    ) => {
+      const id = nextId++;
+      const duration = opts?.duration ?? 5000;
+      setToasts((prev) => [...prev, { id, message, variant, action: opts?.action, duration }]);
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -65,10 +97,12 @@ function ToastMessage({
   toast: ToastItem;
   onDismiss: (id: number) => void;
 }) {
+  /* duration === 0 means sticky — user must dismiss manually or click the action */
   useEffect(() => {
-    const timer = setTimeout(() => onDismiss(toast.id), 5000);
+    if (toast.duration === 0) return;
+    const timer = setTimeout(() => onDismiss(toast.id), toast.duration);
     return () => clearTimeout(timer);
-  }, [toast.id, onDismiss]);
+  }, [toast.id, toast.duration, onDismiss]);
 
   return (
     <div
@@ -84,6 +118,18 @@ function ToastMessage({
           x
         </button>
       </div>
+      {toast.action && (
+        <button
+          type="button"
+          className={`mt-2 w-full rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-colors ${actionStyles[toast.variant]}`}
+          onClick={() => {
+            toast.action!.onClick();
+            onDismiss(toast.id);
+          }}
+        >
+          {toast.action.label}
+        </button>
+      )}
     </div>
   );
 }

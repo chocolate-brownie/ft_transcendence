@@ -92,6 +92,9 @@ db-studio:			## Open Prisma Studio (DB browser)
 db-seed:			## Seed the database
 	$(COMPOSE) exec backend npx prisma db seed
 
+db-reset:			## Reset database (drop all data, re-apply migrations)
+	$(COMPOSE) exec backend npx prisma migrate reset --force
+
 # ── Help ────────────────────────────────────────────────────────────────────
 
 help:				## Show this help

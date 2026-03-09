@@ -50,8 +50,6 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   const roomName = getGameRoomName(id);
   io.to(roomName).emit("game_over", payload);
 
-  console.log(`[Game Over] ID: ${id} | Result: ${payload.result}`);
-
   // Issue #159 — Auto-record tournament result when a tournament game finishes
   if (updatedGame.status === "FINISHED" && winnerId) {
     await handleTournamentGameOver(io, id, winnerId);
@@ -60,7 +58,7 @@ export async function processGameOver(io: Server, updatedGame: any, gameOverResu
   // Post-Game Cleanup: keep the room 5 minutes for chat
   const cleanupTimer = setTimeout(
     () => {
-      console.log(`[Room Cleanup] Closing post-game window for ${roomName}`);
+      /* Room cleanup: post-game window closed */
     },
     5 * 60 * 1000,
   );
@@ -82,7 +80,6 @@ async function handleTournamentGameOver(
     const tournamentMatch = await prisma.tournamentMatch.findFirst({
       where: { gameId },
     });
-
     if (!tournamentMatch) return;
 
     const { tournamentId, id: matchId } = tournamentMatch;

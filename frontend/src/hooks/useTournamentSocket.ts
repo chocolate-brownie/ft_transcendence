@@ -1,8 +1,11 @@
 /* Issue #159 — Tournament socket event listeners
-   Listens for all 7 tournament Socket.io events and shows toast notifications.
+   Listens for tournament Socket.io events and shows toast notifications.
    Optionally calls onUpdate when data changes so the page can refetch.
 
-   Uses a ref for onUpdate so the effect only re-runs when socket changes,
+   Players navigate to games via the bracket "Play Now" buttons — no toast
+   notification is needed for tournament_your_turn (bracket UI is cleaner).
+
+   Uses refs for callbacks so the effect only re-runs when socket changes,
    preventing listener churn that can drop events. */
 
 import { useEffect, useRef } from "react";
@@ -15,8 +18,6 @@ interface UseTournamentSocketOptions {
 }
 
 export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOptions) {
-  /* Keep onUpdate in a ref so the socket listeners always call the latest
-     callback without needing to re-register on every reference change. */
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
 
@@ -38,10 +39,8 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
       onUpdateRef.current?.();
     }
 
-    function onYourTurn(data: { tournamentName: string; roundName: string; opponent: { username: string }; gameId?: number | null }) {
-      // Issue #159 — Show gameId in toast so players know which game to join
-      const gameInfo = data.gameId ? ` (Game #${data.gameId})` : "";
-      showToast(`Your ${data.roundName} match is ready! vs ${data.opponent.username}${gameInfo}`, "warning");
+    function onYourTurn() {
+      // Bracket "Play Now" buttons handle navigation — just refetch data
       onUpdateRef.current?.();
     }
 

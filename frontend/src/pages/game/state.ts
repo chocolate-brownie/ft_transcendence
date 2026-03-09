@@ -27,6 +27,9 @@ export type GameViewState = {
   disconnectCountdown: number | null;
   disconnectedOpponentName: string | null;
   reconnectedOpponentName: string | null;
+  /* Issue #159 — Track tournament context to adjust game-over UI */
+  isTournament: boolean;
+  tournamentId: number | null;
 };
 
 export type GameAction =
@@ -88,6 +91,8 @@ export const initialGameState: GameViewState = {
   disconnectCountdown: null,
   disconnectedOpponentName: null,
   reconnectedOpponentName: null,
+  isTournament: false,
+  tournamentId: null,
 };
 
 export function gameReducer(state: GameViewState, action: GameAction): GameViewState {
@@ -133,6 +138,8 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         disconnectCountdown: game.opponentDisconnected?.remainingTime ?? null,
         disconnectedOpponentName: game.opponentDisconnected?.username ?? null,
         reconnectedOpponentName: null,
+        isTournament: game.gameType === "TOURNAMENT",
+        tournamentId: game.tournamentId ?? null,
       };
     }
 

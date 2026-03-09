@@ -116,7 +116,11 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
   const isPending = status === "pending";
   const isScheduled = status === "scheduled";
   const isInProgress = status === "in_progress";
-  const isClickable = isComplete && match.gameId !== null;
+  /* Issue #159 — Match is clickable if it has a gameId (completed = view result,
+     scheduled/in_progress = play the game) */
+  const hasGame = match.gameId !== null;
+  const isClickable = hasGame;
+  const isPlayable = hasGame && !isComplete && !isPending;
   const isNotStarted = isPending || isScheduled;
   const goToGame = () => {
     if (!isClickable) return;
@@ -197,8 +201,11 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
             Live
           </span>
         )}
-        {isComplete && match.gameId !== null && (
+        {isComplete && hasGame && (
           <span className="shrink-0 text-[10px] text-pong-text/30">view ↗</span>
+        )}
+        {isPlayable && (
+          <span className="shrink-0 text-[10px] font-semibold text-pong-accent">play ↗</span>
         )}
       </div>
 
@@ -210,11 +217,17 @@ function MatchCard({ match, currentRound, totalRounds, seedMap }: MatchCardProps
       </div>
 
       {/* Footer */}
-      {isNotStarted && (
+      {isPlayable ? (
+        <div className="border-t border-pong-accent/20 bg-pong-accent/5 px-3 py-1.5 text-center">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-pong-accent">
+            Play Now →
+          </span>
+        </div>
+      ) : isNotStarted ? (
         <div className="border-t border-black/5 px-3 py-1 text-center">
           <span className="text-[10px] text-pong-text/30">Waiting for players</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

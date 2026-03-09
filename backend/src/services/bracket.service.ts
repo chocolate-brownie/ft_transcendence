@@ -54,11 +54,12 @@ export async function createGameForMatch(
       boardState: board,
       boardSize: 3,
       currentTurn: "X",
-      status: "WAITING",
+      status: "IN_PROGRESS",
       gameType: "TOURNAMENT",
       player1Symbol: "X",
       player2Symbol: "O",
       tournamentId,
+      startedAt: new Date(),
     },
   });
 
@@ -66,7 +67,6 @@ export async function createGameForMatch(
     where: { id: matchId },
     data: { gameId: game.id },
   });
-
   return game.id;
 }
 
