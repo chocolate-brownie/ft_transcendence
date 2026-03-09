@@ -38,8 +38,10 @@ export function useTournamentSocket({ socket, onUpdate }: UseTournamentSocketOpt
       onUpdateRef.current?.();
     }
 
-    function onYourTurn(data: { tournamentName: string; roundName: string; opponent: { username: string } }) {
-      showToast(`Your ${data.roundName} match is ready! vs ${data.opponent.username}`, "warning");
+    function onYourTurn(data: { tournamentName: string; roundName: string; opponent: { username: string }; gameId?: number | null }) {
+      // Issue #159 — Show gameId in toast so players know which game to join
+      const gameInfo = data.gameId ? ` (Game #${data.gameId})` : "";
+      showToast(`Your ${data.roundName} match is ready! vs ${data.opponent.username}${gameInfo}`, "warning");
       onUpdateRef.current?.();
     }
 

@@ -97,6 +97,7 @@ async function notifyYourTurn(
     round: number;
     player1Id: number | null;
     player2Id: number | null;
+    gameId?: number | null; // Issue #159 — include gameId for frontend navigation
   },
   maxPlayers: number,
 ): Promise<void> {
@@ -117,10 +118,12 @@ async function notifyYourTurn(
 
   const roundName = getRoundName(match.round, maxPlayers);
 
+  // Issue #159 — Include gameId so frontend can navigate directly to the game
   io.to(`user:${player1.id}`).emit("tournament_your_turn", {
     tournamentId,
     tournamentName,
     matchId: match.id,
+    gameId: match.gameId ?? null,
     round: match.round,
     roundName,
     opponent: {
@@ -134,6 +137,7 @@ async function notifyYourTurn(
     tournamentId,
     tournamentName,
     matchId: match.id,
+    gameId: match.gameId ?? null,
     round: match.round,
     roundName,
     opponent: {
