@@ -124,6 +124,8 @@ export const validateMove = (
 
 //        CHECK WIN
 
+// NOTE: This logic is intentionally duplicated in frontend/src/utils/gameUtils.ts.
+// Keep both implementations in sync when changing board-size win rules.
 export function getWinLength(boardSize: BoardSize): number {
   return boardSize === 3 ? 3 : 4;
 }
@@ -521,13 +523,15 @@ export const makeMoveInDb = async (gameId: number, cellIndex: number, userId: nu
 
     if (result.gameOver && result.winner) {
       updateData.status = "FINISHED";
-      updateData.winnerId =
-        result.winner === game.player1Symbol ? game.player1Id : game.player2Id;
+      updateData.winner = {
+        connect: {
+          id: result.winner === game.player1Symbol ? game.player1Id : game.player2Id,
+        },
+      };
       updateData.finishedAt = new Date();
-      updateData.winningLine = result.line ?? null;
     } else if (result.gameOver && result.isDraw) {
       updateData.status = "DRAW";
-      updateData.winnerId = null;
+      updateData.winner = { disconnect: true };
       updateData.finishedAt = new Date();
     } else {
       updateData.currentTurn = game.currentTurn === "X" ? "O" : "X";
