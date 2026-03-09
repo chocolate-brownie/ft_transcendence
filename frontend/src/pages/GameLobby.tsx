@@ -2,11 +2,10 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import type { BoardSize } from "../types/game";
+import type { AiDifficulty } from "../services/ai.service";
 import GameModeCard from "../components/Lobby/GameModeCard";
 import Button from "../components/Button";
 import BoardSizeSelector from "../components/Customization/BoardSizeSelector";
-
-type AiDifficulty = "easy" | "medium" | "hard";
 
 export default function GameLobby() {
   const navigate = useNavigate();

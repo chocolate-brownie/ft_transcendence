@@ -10,6 +10,10 @@ import type { CellValue, PlayerSymbol } from "../types/game";
 
 export type AiDifficulty = "easy" | "medium" | "hard";
 
+/**
+ * createGame/getGame return boardState as a JSON string (raw Prisma record).
+ * makeMove returns boardState as a pre-parsed CellValue[] array.
+ */
 export interface AIGameResponse {
   game: {
     id: number;

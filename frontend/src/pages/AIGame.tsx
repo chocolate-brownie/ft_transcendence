@@ -40,7 +40,9 @@ interface GameState {
 export default function AIGame() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initDifficulty = (searchParams.get("difficulty") as AiDifficulty) || "medium";
+  const raw = searchParams.get("difficulty");
+  const initDifficulty: AiDifficulty =
+    raw === "easy" || raw === "medium" || raw === "hard" ? raw : "medium";
 
   const [phase, setPhase] = useState<GamePhase>("setup");
   const [difficulty, setDifficulty] = useState<AiDifficulty>(initDifficulty);
@@ -49,6 +51,7 @@ export default function AIGame() {
   const [processing, setProcessing] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [finalDuration, setFinalDuration] = useState(0);
   const startTimeRef = useRef<number>(0);
 
   const handleStartGame = useCallback(async () => {
@@ -64,7 +67,7 @@ export default function AIGame() {
         playerSymbol: symbol,
         aiSymbol: aiSym,
         difficulty,
-        isPlayerTurn: true,
+        isPlayerTurn: res.game.currentTurn === symbol,
         winner: null,
         status: "IN_PROGRESS",
       });
@@ -88,36 +91,33 @@ export default function AIGame() {
         const newBoard = res.game.boardState;
         const isGameOver = res.game.status === "FINISHED" || res.game.status === "DRAW";
 
-        if (isGameOver) {
-          setGame((prev) =>
-            prev
-              ? { ...prev, board: newBoard, winner: res.game.winner, status: res.game.status }
-              : prev,
-          );
-          setProcessing(false);
-          setPhase("finished");
-          return;
-        }
-
         // Show player's move immediately, then simulate AI thinking delay
         const boardAfterPlayer = [...newBoard];
         if (res.aiMove) {
-          boardAfterPlayer[res.aiMove.moveIndex] = null as CellValue;
+          boardAfterPlayer[res.aiMove.moveIndex] = null;
         }
         setGame((prev) =>
           prev ? { ...prev, board: boardAfterPlayer, isPlayerTurn: false } : prev,
         );
         setProcessing(false);
 
+        // Play AI thinking animation before revealing AI's move
         if (res.aiMove) {
           setAiThinking(true);
           await new Promise((r) => setTimeout(r, 350));
-          setGame((prev) =>
-            prev
-              ? { ...prev, board: newBoard, isPlayerTurn: true }
-              : prev,
-          );
           setAiThinking(false);
+        }
+
+        // Reveal final board state (with AI move)
+        setGame((prev) =>
+          prev
+            ? { ...prev, board: newBoard, isPlayerTurn: true, winner: res.game.winner, status: res.game.status }
+            : prev,
+        );
+
+        if (isGameOver) {
+          setFinalDuration(Math.round((Date.now() - startTimeRef.current) / 1000));
+          setPhase("finished");
         }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to make move");
@@ -134,9 +134,6 @@ export default function AIGame() {
   }, []);
 
   const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
-  const durationSeconds = game
-    ? Math.round((Date.now() - startTimeRef.current) / 1000)
-    : 0;
 
   // Build GameOverModal props
   const buildWinner = (): GameOverPlayerSummary | null => {
@@ -285,7 +282,7 @@ export default function AIGame() {
             opponent={buildOpponent()}
             mySymbol={game.playerSymbol}
             totalMoves={totalMoves}
-            durationSeconds={durationSeconds}
+            durationSeconds={finalDuration}
             onPlayAgain={handlePlayAgain}
             onGoLobby={() => void navigate("/lobby")}
             onClose={handlePlayAgain}
