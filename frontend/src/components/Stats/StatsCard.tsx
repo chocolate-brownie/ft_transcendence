@@ -68,8 +68,8 @@ export default function StatsCard({ stats }: StatsCardProps) {
         Stats
       </p>
 
-      {/* Top stat tiles — 2-col on mobile, 4-col on desktop */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* Top stat tiles — always 2-col (parent column is only 260px wide) */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
         <StatTile label="Total" value={totalGames} />
         <StatTile label="Wins" value={wins} tint="bg-green-500/10" />
         <StatTile label="Losses" value={losses} tint="bg-red-500/10" />
@@ -97,7 +97,7 @@ export default function StatsCard({ stats }: StatsCardProps) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
           By Type
         </p>
-        <div className="grid grid-cols-4 gap-1 text-center">
+        <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
           {(
             [
               ["Classic", gamesByType.classic ?? 0],
