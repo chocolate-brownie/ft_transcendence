@@ -75,7 +75,7 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
     };
   }
 
-  const aiMove = getAIMove(board, aiSymbol as Player, game.difficulty);
+  const aiMove = getAIMove(board, aiSymbol as Player, game.difficulty as Difficulty);
   board[aiMove] = aiSymbol as CellValue;
 
   const aiWinner = checkGameOver(board, 3);
@@ -121,4 +121,27 @@ export const makeAIMove = async (gameId: number, userId: number, moveIndex: numb
       symbol: aiSymbol,
     }
   };
+}
+
+
+export const getAIGameById = async (gameId: number, userId: number) => {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      player1: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+        }
+      }
+    }
+  });
+  if (!game) {
+    throw new Error('Game not found');
+  }
+  if (game.player1Id !== userId) {
+    throw new Error('Not your game');
+  }
+  return game;
 }
