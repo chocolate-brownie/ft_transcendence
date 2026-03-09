@@ -71,6 +71,15 @@ export default function Matchmaking() {
     }
     if (!socket.connected) {
       setStatus("connecting");
+      socket.once("connect", () => {
+        startedRef.current = true;
+        setQueuePosition(null);
+        setMatchData(null);
+        setError(null);
+        clearRedirectTimer();
+        setStatus("searching");
+        emitFindGame();
+      });
       socket.connect();
       return;
     }

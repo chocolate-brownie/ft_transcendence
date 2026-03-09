@@ -20,6 +20,9 @@ import type {
 import { DEFAULT_CUSTOMIZATION } from "../types/customization";
 
 const STORAGE_KEY = "game-customization";
+const VALID_THEMES = new Set<string>(["classic", "neon", "retro"]);
+const VALID_SYMBOL_TYPES = new Set<string>(["default", "emoji", "initials"]);
+const MAX_SYMBOL_LEN = 2;
 
 /** Read persisted customization from localStorage, falling back to defaults. */
 function loadCustomization(): GameCustomization {
@@ -27,8 +30,16 @@ function loadCustomization(): GameCustomization {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_CUSTOMIZATION;
     const parsed = JSON.parse(raw) as GameCustomization;
-    /* Validate the shape minimally — ignore corrupt data */
-    if (parsed.theme && parsed.symbols?.type) return parsed;
+    if (
+      VALID_THEMES.has(parsed.theme) &&
+      VALID_SYMBOL_TYPES.has(parsed.symbols?.type) &&
+      typeof parsed.symbols.player1Symbol === "string" &&
+      typeof parsed.symbols.player2Symbol === "string" &&
+      parsed.symbols.player1Symbol.length <= MAX_SYMBOL_LEN &&
+      parsed.symbols.player2Symbol.length <= MAX_SYMBOL_LEN
+    ) {
+      return parsed;
+    }
   } catch {
     /* ignore parse errors */
   }
@@ -82,7 +93,7 @@ export function useGameCustomization() {
       if (symbols.type === "default") return cell;
       return cell === "X" ? symbols.player1Symbol : symbols.player2Symbol;
     },
-    [symbols],
+    [symbols.type, symbols.player1Symbol, symbols.player2Symbol],
   );
 
   /* Whether we need the renderSymbol callback */
