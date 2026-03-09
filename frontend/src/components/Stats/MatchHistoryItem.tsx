@@ -17,7 +17,7 @@ interface MatchHistoryItemProps {
  */
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
@@ -54,7 +54,7 @@ export default function MatchHistoryItem({ match }: MatchHistoryItemProps) {
       {/* Opponent avatar */}
       <img
         src={avatarSrc}
-        alt={opponent.username}
+        alt={`${opponent.username} avatar`}
         className="h-8 w-8 flex-shrink-0 rounded-full border border-black/10 object-cover"
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";

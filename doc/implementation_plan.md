@@ -87,7 +87,7 @@ This lets the team focus on delivering polished auth, chat, profiles, and tourna
 | :-- | :------------------------------ | :-- | :--- | :-------------------------------- | :----------- | :------------- |
 | 9   | AI Opponent                     | 2   | 8–9  | mamahtal, tzizi                   | #6           | 🔲 Not Started |
 | 10  | Game customization              | 1   | 8–9  | zamgar, jayzatov                  | #6           | 🔲 Not Started |
-| 11  | Game statistics & match history | 1   | 9–10 | zamgar, jayzatov, mamahtal, tzizi | #5, #6       | 🔲 Not Started |
+| 11  | Game statistics & match history | 1   | 9–10 | mgodawat                          | #5, #6       | ✅ Completed   |
 
 ### Drop Strategy
 
@@ -362,7 +362,7 @@ If running out of time, drop in reverse order: #11 → #10 → #9 → #8. This k
 - Code reviews
 - Performance check: multiple concurrent games
 
-**Modules progressed:** #9 (AI Opponent), #10 (Customization), #11 (Statistics)
+**Modules progressed:** #9 (AI Opponent), #10 (Customization), #11 (Statistics — ✅ completed by mgodawat)
 
 ---
 

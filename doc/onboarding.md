@@ -94,9 +94,11 @@ ft_transcendence/
 │       ├── App.tsx                 # React Router + Layout
 │       ├── pages/                  # One component per route
 │       ├── components/             # Reusable UI (Navbar, Footer, etc.)
+│       │   ├── Stats/              # StatsCard, MatchHistoryItem, MatchHistoryList
+│       │   └── Leaderboard/        # LeaderboardRow, LeaderboardTable
 │       ├── context/                # React Context (auth state, etc.)
-│       ├── services/               # API call functions
-│       └── types/index.ts          # TypeScript interfaces
+│       ├── services/               # API call functions (auth, users, stats, leaderboard, etc.)
+│       └── types/                  # TypeScript interfaces (index.ts, stats.ts, leaderboard.ts)
 └── doc/
     ├── implementation_plan.md      # Architecture + timeline
     ├── tasks.md                    # YOUR TASKS — find your role here

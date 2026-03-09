@@ -39,7 +39,8 @@ export async function getLeaderboard(limit: number) {
   const ranked = users
     .map((u) => {
       const totalGames = u.wins + u.losses + u.draws;
-      const winRate = totalGames > 0 ? Math.round((u.wins / totalGames) * 10000) / 100 : 0;
+      const winRate =
+        totalGames > 0 ? Math.round((u.wins / totalGames) * 10000) / 100 : 0;
       return { ...u, totalGames, winRate };
     })
     .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate)

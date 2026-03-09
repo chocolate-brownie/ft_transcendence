@@ -19,10 +19,10 @@ export interface UserStats {
   gamesAsPlayer1: number;
   gamesAsPlayer2: number;
   gamesByType: {
-    classic: number;
-    custom: number;
-    tournament: number;
-    ai: number;
+    classic?: number;
+    custom?: number;
+    tournament?: number;
+    ai?: number;
   };
   lastGameAt: string | null;
 }

@@ -68,8 +68,8 @@ export default function StatsCard({ stats }: StatsCardProps) {
         Stats
       </p>
 
-      {/* Top stat tiles — 2-col on mobile, 4-col on desktop */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* Top stat tiles — always 2-col (parent column is only 260px wide) */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
         <StatTile label="Total" value={totalGames} />
         <StatTile label="Wins" value={wins} tint="bg-green-500/10" />
         <StatTile label="Losses" value={losses} tint="bg-red-500/10" />
@@ -80,7 +80,9 @@ export default function StatsCard({ stats }: StatsCardProps) {
       <div className="mb-4">
         <div className="mb-1 flex items-center justify-between text-xs">
           <span className="text-pong-text/50">Win Rate</span>
-          <span className="font-semibold text-pong-text">{winRate.toFixed(1)}%</span>
+          <span className="font-semibold text-pong-text">
+            {(winRate ?? 0).toFixed(1)}%
+          </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-black/10">
           <div
@@ -95,13 +97,13 @@ export default function StatsCard({ stats }: StatsCardProps) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-pong-text/50">
           By Type
         </p>
-        <div className="grid grid-cols-4 gap-1 text-center">
+        <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
           {(
             [
-              ["Classic", gamesByType.classic],
-              ["Custom", gamesByType.custom],
-              ["Tourney", gamesByType.tournament],
-              ["AI", gamesByType.ai],
+              ["Classic", gamesByType.classic ?? 0],
+              ["Custom", gamesByType.custom ?? 0],
+              ["Tourney", gamesByType.tournament ?? 0],
+              ["AI", gamesByType.ai ?? 0],
             ] as [string, number][]
           ).map(([label, count]) => (
             <div key={label}>
