@@ -25,7 +25,7 @@ build:				## Build all Docker images
 up:					## Start containers (detached)
 	@echo "$(GREEN)Starting $(NAME)...$(RESET)"
 	$(COMPOSE) up -d
-	@echo "$(GREEN)✔ Frontend : https://localhost:5173$(RESET)"
+	@echo "$(GREEN)✔ Frontend : http://localhost:5173$(RESET)"
 	@echo "$(GREEN)✔ Backend  : https://localhost:3000$(RESET)"
 	@echo "$(GREEN)✔ Database : localhost:5432$(RESET)"
 

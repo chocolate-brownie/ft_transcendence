@@ -239,10 +239,10 @@ _(Schema managed via Prisma — see `backend/prisma/schema.prisma` for the sourc
 | Tic-Tac-Toe Game (local)             | ✅ Done        | zamgar, jayzatov, mgodawat        | React component grid, game logic, win detection                |
 | Remote Multiplayer                   | ✅ Done        | mgodawat, DarkWhiteOff            | Online 1v1 via WebSockets with turn synchronization            |
 | Disconnection & Reconnection         | ✅ Done        | mgodawat, DarkWhiteOff            | Forfeit timer, state restore, opponent notifications           |
-| Tournament System                    | 🔧 In Progress | mamahtal, mgodawat                | Bracket generation, matchmaking, progression                   |
-| AI Opponent                          | 🔲 Planned     | mamahtal, tzizi                   | Minimax algorithm with adjustable difficulty                   |
-| Game Customization                   | 🔲 Planned     | zamgar, jayzatov                  | Board themes, X/O symbols, grid size variants                  |
-| Game Statistics & Match History      | 🔲 Planned     | zamgar, jayzatov, mamahtal, tzizi | Wins/losses, rankings, match history, leaderboard              |
+| Tournament System                    | ✅ Done        | mamahtal, mgodawat                | Bracket generation, matchmaking, progression                   |
+| AI Opponent                          | ✅ Done        | mamahtal, tzizi                   | Minimax algorithm with adjustable difficulty                   |
+| Game Customization                   | ✅ Done        | zamgar, jayzatov                  | Board themes, X/O symbols, grid size variants                  |
+| Game Statistics & Match History      | ✅ Done        | zamgar, jayzatov, mamahtal, tzizi | Wins/losses, rankings, match history, leaderboard              |
 | Privacy Policy Page                  | ✅ Done        | mgodawat                          | Accessible from footer, relevant content                       |
 | Terms of Service Page                | ✅ Done        | mgodawat                          | Accessible from footer, relevant content                       |
 
