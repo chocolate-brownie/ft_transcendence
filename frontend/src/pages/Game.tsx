@@ -418,26 +418,43 @@ export default function Game() {
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
         <div className="flex flex-wrap justify-center gap-3">
-          <Button
-            variant="primary"
-            onClick={() => void handlePlayAgain()}
-            disabled={gameState.isCreatingRematch}
-          >
-            {gameState.isCreatingRematch
-              ? "Creating rematch…"
-              : gameState.isForfeit
-                ? "Find New Game"
-                : "Play Again"}
-          </Button>
+          {/* Play Again / Find New Game hidden for tournament games — would
+              incorrectly route to matchmaking. Modal handles rematch for draws.
+              Game.tsx inline buttons — tournament UX fix. */}
+          {!gameState.isTournament && (
+            <Button
+              variant="primary"
+              onClick={() => void handlePlayAgain()}
+              disabled={gameState.isCreatingRematch}
+            >
+              {gameState.isCreatingRematch
+                ? "Creating rematch…"
+                : gameState.isForfeit
+                  ? "Find New Game"
+                  : "Play Again"}
+            </Button>
+          )}
           <Button
             variant="secondary"
             onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
           >
             View Result
           </Button>
-          <Button variant="secondary" onClick={backToLobby}>
-            Back to Lobby
-          </Button>
+          {/* Tournament: go directly to bracket — skip lobby → banner two-click flow */}
+          {gameState.isTournament ? (
+            <Button
+              variant="primary"
+              onClick={() =>
+                void navigate(`/tournaments/${gameState.tournamentId}`)
+              }
+            >
+              Back to Tournament
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={backToLobby}>
+              Back to Lobby
+            </Button>
+          )}
         </div>
       ) : null}
 
