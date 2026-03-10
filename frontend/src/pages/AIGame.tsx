@@ -11,10 +11,11 @@
  * Reuses existing GameBoard, GameOverModal, and TurnIndicator components.
  * The board is always 3x3 (backend AI only supports 3x3).
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
+import { findWinningLine } from "../utils/gameUtils";
 import { aiService } from "../services/ai.service";
 import type { AiDifficulty } from "../services/ai.service";
 import GameBoard from "../components/Game/GameBoard";
@@ -55,7 +56,16 @@ export default function AIGame() {
   const [aiThinking, setAiThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalDuration, setFinalDuration] = useState(0);
+  const [showModal, setShowModal] = useState(false);
   const startTimeRef = useRef<number>(0);
+  const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up the modal delay timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (modalTimerRef.current !== null) clearTimeout(modalTimerRef.current);
+    };
+  }, []);
 
   const handleStartGame = useCallback(async () => {
     setError(null);
@@ -127,6 +137,10 @@ export default function AIGame() {
         if (isGameOver) {
           setFinalDuration(Math.round((Date.now() - startTimeRef.current) / 1000));
           setPhase("finished");
+          // Delay the modal so the winning line highlight is visible first.
+          modalTimerRef.current = setTimeout(() => {
+            setShowModal(true);
+          }, 700);
         }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to make move");
@@ -137,6 +151,8 @@ export default function AIGame() {
   );
 
   const handlePlayAgain = useCallback(() => {
+    if (modalTimerRef.current !== null) clearTimeout(modalTimerRef.current);
+    setShowModal(false);
     setGame(null);
     setError(null);
     setPhase("setup");
@@ -309,10 +325,11 @@ export default function AIGame() {
             playerSymbol={game.playerSymbol}
             gameOver
             winnerSymbol={(game.winner as PlayerSymbol) ?? null}
+            winningLine={findWinningLine(game.board, 3) ?? undefined}
           />
 
           <GameOverModal
-            open
+            open={showModal}
             result={game.status === "DRAW" ? "draw" : "win"}
             winner={buildWinner()}
             loser={buildLoser()}

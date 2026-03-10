@@ -160,6 +160,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         isForfeit: false,
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
+        serverWinningLine: action.payload.winningLine ?? state.serverWinningLine,
         gameResultText:
           action.payload.result === "draw"
             ? "Draw game"
@@ -167,7 +168,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
               ? "You won"
               : "You lost",
         gameOverPayload: action.payload,
-        showGameOverModal: true,
+        showGameOverModal: false,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,
