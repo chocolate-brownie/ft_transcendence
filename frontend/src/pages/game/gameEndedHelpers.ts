@@ -39,14 +39,32 @@ export function buildRoomJoinedGame(game: EndedGameData, status: ServerStatus) {
 
 /** Resolve winner/loser players and symbols from winnerId. */
 export function resolveWinnerLoser(game: EndedGameData) {
+  if (game.winnerId == null) {
+    return {
+      winnerPlayer: undefined,
+      loserPlayer: undefined,
+      winnerSymbol: undefined,
+      loserSymbol: undefined,
+    };
+  }
+
   const isP1Winner = game.winnerId === game.player1?.id;
+  const isP2Winner = game.winnerId === game.player2?.id;
+
+  if (!isP1Winner && !isP2Winner) {
+    return {
+      winnerPlayer: undefined,
+      loserPlayer: undefined,
+      winnerSymbol: undefined,
+      loserSymbol: undefined,
+    };
+  }
+
   return {
     winnerPlayer: isP1Winner ? game.player1 : game.player2,
     loserPlayer: isP1Winner ? game.player2 : game.player1,
-    winnerSymbol:
-      (isP1Winner ? game.player1Symbol : game.player2Symbol) ?? ("X" as PlayerSymbol),
-    loserSymbol:
-      (isP1Winner ? game.player2Symbol : game.player1Symbol) ?? ("O" as PlayerSymbol),
+    winnerSymbol: isP1Winner ? game.player1Symbol : game.player2Symbol,
+    loserSymbol: isP1Winner ? game.player2Symbol : game.player1Symbol,
   };
 }
 

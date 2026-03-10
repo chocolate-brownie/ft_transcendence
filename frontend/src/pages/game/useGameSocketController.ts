@@ -212,6 +212,15 @@ export function useGameSocketController({
       const { winnerPlayer, loserPlayer, winnerSymbol, loserSymbol } =
         resolveWinnerLoser(game);
 
+      const duration =
+        game.startedAt && game.finishedAt
+          ? Math.round(
+              (new Date(game.finishedAt).getTime() -
+                new Date(game.startedAt).getTime()) /
+                1000,
+            )
+          : undefined;
+
       // Restore board state for any terminal status
       dispatch({ type: "ROOM_JOINED", game: buildRoomJoinedGame(game, game.status!) });
 
@@ -236,6 +245,7 @@ export function useGameSocketController({
                   symbol: loserSymbol,
                 }
               : undefined,
+            duration,
           },
           didWin: didPlayerWin(game),
         });
@@ -244,14 +254,7 @@ export function useGameSocketController({
 
       if (game.status === "FINISHED" || game.status === "DRAW") {
         const isDraw = game.status === "DRAW";
-        const duration =
-          game.startedAt && game.finishedAt
-            ? Math.round(
-                (new Date(game.finishedAt).getTime() -
-                  new Date(game.startedAt).getTime()) /
-                  1000,
-              )
-            : undefined;
+
         dispatch({
           type: "GAME_OVER",
           payload: {
