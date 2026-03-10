@@ -231,20 +231,22 @@ export function useGameSocketController({
             gameId: id,
             finalBoard: game.boardState,
             result: "win",
-            winner: winnerPlayer
-              ? {
-                  id: winnerPlayer.id,
-                  username: winnerPlayer.username,
-                  symbol: winnerSymbol,
-                }
-              : undefined,
-            loser: loserPlayer
-              ? {
-                  id: loserPlayer.id,
-                  username: loserPlayer.username,
-                  symbol: loserSymbol,
-                }
-              : undefined,
+            winner:
+              winnerPlayer && winnerSymbol
+                ? {
+                    id: winnerPlayer.id,
+                    username: winnerPlayer.username,
+                    symbol: winnerSymbol,
+                  }
+                : undefined,
+            loser:
+              loserPlayer && loserSymbol
+                ? {
+                    id: loserPlayer.id,
+                    username: loserPlayer.username,
+                    symbol: loserSymbol,
+                  }
+                : undefined,
             duration,
           },
           didWin: didPlayerWin(game),
@@ -262,7 +264,7 @@ export function useGameSocketController({
             finalBoard: game.boardState,
             result: isDraw ? "draw" : "win",
             winner:
-              !isDraw && winnerPlayer
+              !isDraw && winnerPlayer && winnerSymbol
                 ? {
                     id: winnerPlayer.id,
                     username: winnerPlayer.username,
@@ -270,7 +272,7 @@ export function useGameSocketController({
                   }
                 : undefined,
             loser:
-              !isDraw && loserPlayer
+              !isDraw && loserPlayer && loserSymbol
                 ? {
                     id: loserPlayer.id,
                     username: loserPlayer.username,
