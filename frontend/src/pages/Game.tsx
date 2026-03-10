@@ -13,6 +13,7 @@ import { findWinningLine } from "../utils/gameUtils";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
+import { useTournamentSocket } from "../hooks/useTournamentSocket";
 import { gamesService } from "../services/games.service";
 
 export default function Game() {
@@ -36,6 +37,10 @@ export default function Game() {
     navigate,
     dispatch,
     stateRef,
+  });
+
+  useTournamentSocket({
+    socket: gameState.isTournament ? socket : null,
   });
 
   // Emit leave_game_room on tab close / refresh so the server cleans up

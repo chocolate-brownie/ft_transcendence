@@ -130,7 +130,7 @@ function MatchCard({
   const isMyMatch =
     currentUserId != null &&
     (player1?.id === currentUserId || player2?.id === currentUserId);
-  const isClickable = hasGame && (isComplete || isMyMatch);
+  const isClickable = hasGame && isMyMatch;
   const isPlayable = hasGame && !isComplete && !isPending && isMyMatch;
   const isNotStarted = isPending || isScheduled;
 
@@ -212,7 +212,7 @@ function MatchCard({
             Live
           </span>
         )}
-        {isComplete && hasGame && (
+        {isComplete && hasGame && isMyMatch && (
           <span className="shrink-0 text-[10px] text-pong-text/30">view ↗</span>
         )}
         {isPlayable && (
