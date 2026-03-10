@@ -303,7 +303,22 @@ export default function AIGame() {
 
       {/* ── Finished phase ────────────────────────────────────────────────── */}
       {phase === "finished" && game && (
-        <div className="flex flex-col items-center gap-6 py-4">
+        // [transform:translateZ(0)] creates a containing block for the fixed
+        // GameOverModal overlay, keeping it anchored to this section rather
+        // than the full viewport (prevents the board from appearing to move).
+        <div className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center gap-6 py-4 [transform:translateZ(0)]">
+          {/* Result header — mirrors playing-phase title height so the board
+              stays in roughly the same vertical position. */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-pong-text">
+              {game.status === "DRAW"
+                ? "It's a Draw! 🤝"
+                : game.winner === game.playerSymbol
+                  ? "You Won! 🎉"
+                  : "You Lost 😢"}
+            </h1>
+          </div>
+
           <GameBoard
             board={game.board}
             onCellClick={() => {}}
