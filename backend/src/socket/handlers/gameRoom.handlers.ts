@@ -60,11 +60,12 @@ function buildJoinedPayload(
   return {
     gameId: game.id,
     game: {
-      // AI games store boardState as a JSON string in the DB; parse it so
-      // the frontend always receives a CellValue[] array (never a raw string).
-      boardState: typeof game.boardState === "string"
-        ? JSON.parse(game.boardState)
-        : game.boardState,
+      /* AI games store boardState as a JSON string in the DB; parse it so
+      the frontend always receives a CellValue[] array (never a raw string). */
+      boardState:
+        typeof game.boardState === "string"
+          ? JSON.parse(game.boardState)
+          : game.boardState,
       boardSize: game.boardSize,
       currentTurn: game.currentTurn,
       status: game.status,
@@ -118,6 +119,12 @@ function scheduleDeferredForfeit(
         });
 
         if (!game || game.status !== "IN_PROGRESS") return;
+
+        // If the player already rejoined within the grace period (e.g. the
+        // ActiveGameBanner showed immediately because activeGameId was still
+        // set from a prior reconnect), skip the forfeit — they're already back.
+        const playersInRoom = gameRoomService.getPlayersInRoom(gameId);
+        if (playersInRoom.some((p) => p.userId === user.id)) return;
 
         const { opponent, yourSymbol, opponentSymbol } = resolveRoles(game, user.id);
         if (!opponent) return;

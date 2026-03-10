@@ -331,7 +331,7 @@ describe("AIGame — finished phase winning line (Issue #322)", () => {
     expect(cells.length).toBeGreaterThan(0);
   });
 
-  it("modal is not open immediately — appears after the 700ms delay", async () => {
+  it("modal is not open immediately — View Result button opens it", async () => {
     createGameMock.mockResolvedValueOnce(fakeCreateResponse("X"));
     const finalBoard = ["X", "X", "X", "O", "O", null, null, null, null];
     makeMoveMock.mockResolvedValueOnce({
@@ -346,16 +346,18 @@ describe("AIGame — finished phase winning line (Issue #322)", () => {
     const cells = screen.getAllByRole("button", { name: /^Cell/ });
     fireEvent.click(cells[0]);
 
-    // Winning line visible immediately — modal still closed
+    // Winning line visible — modal still closed, View Result button present
     await waitFor(() =>
       expect(
         screen.getAllByRole("button", { name: /winning cell/i }).length,
       ).toBeGreaterThan(0),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
 
-    // After the 700ms delay, modal opens
-    await new Promise((r) => setTimeout(r, 750));
+    // Click View Result — modal opens, button stays in DOM (invisible)
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-  }, 10_000);
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
+  });
 });
