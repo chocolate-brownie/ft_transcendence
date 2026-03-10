@@ -42,6 +42,9 @@ GEMINI.md
 # Generic AI agent instructions (keep AGENTS.md private)
 AGENTS.md
 
+# ── Private docs ──────────────────────────────────────────────────────────
+doc/subject2.md
+
 # ── Logs ──────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*
