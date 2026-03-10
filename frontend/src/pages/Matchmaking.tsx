@@ -236,6 +236,11 @@ export default function Matchmaking() {
             <CustomSymbolSelector symbols={customization.symbols} onSelect={setSymbols} />
           </section>
 
+          <p className="text-center text-xs text-pong-text/50">
+            These preferences only affect your view — your opponent sees their
+            own.
+          </p>
+
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
           <Button
