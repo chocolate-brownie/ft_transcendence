@@ -94,11 +94,15 @@ ft_transcendence/
 │       ├── App.tsx                 # React Router + Layout
 │       ├── pages/                  # One component per route
 │       ├── components/             # Reusable UI (Navbar, Footer, etc.)
+│       │   ├── AI/                 # DifficultySelector, SymbolSelector (X/O picker)
+│       │   ├── Customization/      # ThemeSelector, SymbolSelector (emoji/initials), BoardSizeSelector
+│       │   ├── Game/               # GameBoard, GameOverModal, TurnIndicator
 │       │   ├── Stats/              # StatsCard, MatchHistoryItem, MatchHistoryList
 │       │   └── Leaderboard/        # LeaderboardRow, LeaderboardTable
 │       ├── context/                # React Context (auth state, etc.)
 │       ├── services/               # API call functions (auth, users, stats, leaderboard, etc.)
-│       └── types/                  # TypeScript interfaces (index.ts, stats.ts, leaderboard.ts)
+│       ├── styles/                 # CSS (themes.css — game theme definitions)
+│       └── types/                  # TypeScript interfaces (index.ts, stats.ts, leaderboard.ts, customization.ts, game.ts)
 └── doc/
     ├── implementation_plan.md      # Architecture + timeline
     ├── tasks.md                    # YOUR TASKS — find your role here
@@ -116,7 +120,7 @@ Open `doc/tasks.md` and find tasks tagged with your role:
 | Role      | Focus                                  |
 | :-------- | :------------------------------------- |
 | Tech Lead | Docker, HTTPS, code reviews            |
-| Frontend  | React pages, TailwindCSS, game board   |
+| Frontend  | React pages, TailwindCSS, game board, customization |
 | Backend   | Express API, Prisma, auth, AI logic    |
 | Real-Time | Socket.io, multiplayer, chat           |
 | PM        | GitHub Issues, QA, Privacy Policy, ToS |

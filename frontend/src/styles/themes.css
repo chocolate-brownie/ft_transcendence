@@ -1,0 +1,210 @@
+/*
+ * Game Theme Definitions — Issue #209
+ *
+ * Three visual themes for local games, activated via data-theme attribute
+ * on a .game-theme-wrapper div. Online games never use this wrapper.
+ *
+ * Themes:
+ *   classic — neutral white, uses existing pong design system colors
+ *   neon    — dark purple with cyan/pink glow effects
+ *   retro   — warm cream with pixel font and earthy tones
+ */
+
+/* ------------------------------------------------------------------ */
+/* Classic theme — clean, neutral, inherits design system defaults    */
+/* ------------------------------------------------------------------ */
+.game-theme-wrapper[data-theme="classic"] {
+  --theme-bg: #ffffff;
+  --theme-grid: #d1d5db;
+  --theme-cell-bg: #f9fafb;
+  --theme-cell-hover: #f3f4f6;
+  --theme-p1: #f08b0f;
+  --theme-p2: #759933;
+  --theme-font: inherit;
+  --theme-text: #111827;
+}
+
+/* ------------------------------------------------------------------ */
+/* Neon theme — dark purple background, cyan grid, glowing accents    */
+/* ------------------------------------------------------------------ */
+.game-theme-wrapper[data-theme="neon"] {
+  --theme-bg: #1a0a2e;
+  --theme-grid: #00fff7;
+  --theme-cell-bg: rgba(0, 255, 247, 0.05);
+  --theme-cell-hover: rgba(0, 255, 247, 0.12);
+  --theme-p1: #ff2d95;
+  --theme-p2: #00fff7;
+  --theme-font: inherit;
+  --theme-text: #e0e0e0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Retro theme — warm cream background, earthy palette, pixel font    */
+/* ------------------------------------------------------------------ */
+.game-theme-wrapper[data-theme="retro"] {
+  --theme-bg: #fdf6e3;
+  --theme-grid: #8b6914;
+  --theme-cell-bg: #faf0d7;
+  --theme-cell-hover: #f5e6c0;
+  --theme-p1: #c0392b;
+  --theme-p2: #2471a3;
+  --theme-font: "Press Start 2P", monospace;
+  --theme-text: #3e2c1a;
+}
+
+/* ================================================================== */
+/* Theme wrapper base styles                                          */
+/* ================================================================== */
+.game-theme-wrapper {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  font-family: var(--theme-font);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ================================================================== */
+/* Themed board — the 3x3 grid container                              */
+/* ================================================================== */
+.themed-board {
+  border: 2px solid var(--theme-grid);
+  border-radius: 0.5rem;
+}
+
+/* Neon board glow effect */
+.game-theme-wrapper[data-theme="neon"] .themed-board {
+  box-shadow:
+    0 0 8px var(--theme-grid),
+    0 0 20px rgba(0, 255, 247, 0.3);
+}
+
+/* ================================================================== */
+/* Themed cell — individual board squares                             */
+/* ================================================================== */
+.themed-cell {
+  background-color: var(--theme-cell-bg);
+  border: 1px solid var(--theme-grid);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.themed-cell:hover {
+  background-color: var(--theme-cell-hover);
+}
+
+/* Neon cell hover glow */
+.game-theme-wrapper[data-theme="neon"] .themed-cell:hover {
+  box-shadow:
+    inset 0 0 8px rgba(0, 255, 247, 0.2),
+    0 0 6px rgba(0, 255, 247, 0.15);
+}
+
+/* Retro cell border — thicker, more pronounced pixel-art feel */
+.game-theme-wrapper[data-theme="retro"] .themed-cell {
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--theme-grid);
+}
+
+/* ================================================================== */
+/* Player symbol colors                                               */
+/* ================================================================== */
+.themed-p1 {
+  color: var(--theme-p1);
+}
+
+.themed-p2 {
+  color: var(--theme-p2);
+}
+
+/* ================================================================== */
+/* Winner cell highlights — Issue #209                                 */
+/* themed-winner-win/loss are referenced by GameBoard.tsx when themed  */
+/* ================================================================== */
+.themed-winner-win {
+  animation: winner-pop 500ms ease-out;
+  background-color: rgba(16, 185, 129, 0.28);
+  border: 3px solid rgba(5, 150, 105, 1);
+  box-shadow:
+    inset 0 0 0 1px rgba(236, 253, 245, 0.7),
+    0 0 0 2px rgba(5, 150, 105, 0.4),
+    0 0 16px rgba(5, 150, 105, 0.28);
+}
+
+.themed-winner-loss {
+  animation: winner-pop 500ms ease-out;
+  background-color: rgba(239, 68, 68, 0.28);
+  border: 3px solid rgba(220, 38, 38, 1);
+  box-shadow:
+    inset 0 0 0 1px rgba(254, 242, 242, 0.7),
+    0 0 0 2px rgba(220, 38, 38, 0.4),
+    0 0 16px rgba(220, 38, 38, 0.28);
+}
+
+/* ================================================================== */
+/* Neon winner cell glow effects — overrides themed-winner-* above     */
+/* Pink glow when Player 1 (X) wins, cyan glow when Player 2 (O) wins */
+/* ================================================================== */
+.game-theme-wrapper[data-theme="neon"] .themed-winner-win {
+  background-color: rgba(0, 255, 247, 0.15);
+  border-color: var(--theme-p2);
+  box-shadow:
+    0 0 10px var(--theme-p2),
+    0 0 25px rgba(0, 255, 247, 0.4),
+    inset 0 0 10px rgba(0, 255, 247, 0.2);
+}
+
+.game-theme-wrapper[data-theme="neon"] .themed-winner-loss {
+  background-color: rgba(255, 45, 149, 0.15);
+  border-color: var(--theme-p1);
+  box-shadow:
+    0 0 10px var(--theme-p1),
+    0 0 25px rgba(255, 45, 149, 0.4),
+    inset 0 0 10px rgba(255, 45, 149, 0.2);
+}
+
+/* ================================================================== */
+/* Themed action buttons — Play Again, View Result                    */
+/* Replaces pong-accent bg which clashes with neon/retro backgrounds  */
+/* PR #306 — themed button styles                                     */
+/* ================================================================== */
+.themed-btn-primary {
+  background-color: var(--theme-p1);
+  color: var(--theme-bg);
+  transition: filter 0.15s ease;
+}
+
+.themed-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.18);
+}
+
+/* Neon: add a subtle glow matching Player 1 (pink) */
+.game-theme-wrapper[data-theme="neon"] .themed-btn-primary {
+  box-shadow:
+    0 0 10px var(--theme-p1),
+    0 0 22px rgba(255, 45, 149, 0.35);
+}
+
+/* ================================================================== */
+/* Themed back / secondary buttons — Back to Setup, Back to Lobby     */
+/* ================================================================== */
+.themed-btn-back {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--theme-text);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background-color 0.15s ease;
+}
+
+.themed-btn-back:hover {
+  background-color: rgba(255, 255, 255, 0.13);
+}
+
+/* Neon back button: cyan border to match grid colour */
+.game-theme-wrapper[data-theme="neon"] .themed-btn-back {
+  border-color: rgba(0, 255, 247, 0.3);
+  color: var(--theme-grid);
+}

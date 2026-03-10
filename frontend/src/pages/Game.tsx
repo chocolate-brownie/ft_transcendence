@@ -10,6 +10,7 @@ import GameBoard from "../components/Game/GameBoard";
 import Scoreboard from "../components/Game/Scoreboard";
 import TurnIndicator from "../components/Game/TurnIndicator";
 import { findWinningLine } from "../utils/gameUtils";
+import { useGameCustomization } from "../hooks/useGameCustomization";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
@@ -26,6 +27,16 @@ export default function Game() {
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState);
   const [joinRevision, setJoinRevision] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  /* Issue #209 — shared customization hook (persisted to localStorage).
+   * Disabled for tournament games to avoid extra complexity. */
+  const {
+    customization,
+    isThemed: _isThemed,
+    renderSymbol: _renderSymbol,
+  } = useGameCustomization();
+  const isThemed = gameState.isTournament ? false : _isThemed;
+  const renderSymbol = gameState.isTournament ? undefined : _renderSymbol;
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
@@ -144,8 +155,7 @@ export default function Game() {
     } catch (error) {
       dispatch({
         type: "REMATCH_REQUEST_FAILED",
-        message:
-          error instanceof Error ? error.message : "Failed to create rematch.",
+        message: error instanceof Error ? error.message : "Failed to create rematch.",
       });
     }
   }
@@ -224,8 +234,15 @@ export default function Game() {
       ? `Game over: ${gameState.gameResultText}`
       : "Game over";
   return (
-    <div className="flex flex-col items-center gap-6">
-      <h1 className="text-2xl font-bold text-pong-text -mb-4">
+    <div
+      className={
+        isThemed
+          ? "game-theme-wrapper flex flex-col items-center gap-6"
+          : "flex flex-col items-center gap-6"
+      }
+      data-theme={isThemed ? customization.theme : undefined}
+    >
+      <h1 className={`text-2xl font-bold ${isThemed ? "" : "text-pong-text"} -mb-4`}>
         {gameId > 0 ? `Game #${gameId}` : "Game"}
       </h1>
 
@@ -401,30 +418,47 @@ export default function Game() {
         gameOver={isGameOver}
         disabled={boardDisabled}
         boardSize={boardSize}
+        themed={isThemed}
+        renderSymbol={renderSymbol}
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
         <div className="flex flex-wrap justify-center gap-3">
-          <Button
-            variant="primary"
-            onClick={() => void handlePlayAgain()}
-            disabled={gameState.isCreatingRematch}
-          >
-            {gameState.isCreatingRematch
-              ? "Creating rematch…"
-              : gameState.isForfeit
-                ? "Find New Game"
-                : "Play Again"}
-          </Button>
+          {/* Play Again / Find New Game hidden for tournament games — would
+              incorrectly route to matchmaking. Modal handles rematch for draws.
+              Game.tsx inline buttons — tournament UX fix. */}
+          {!gameState.isTournament && (
+            <Button
+              variant="primary"
+              onClick={() => void handlePlayAgain()}
+              disabled={gameState.isCreatingRematch}
+            >
+              {gameState.isCreatingRematch
+                ? "Creating rematch…"
+                : gameState.isForfeit
+                  ? "Find New Game"
+                  : "Play Again"}
+            </Button>
+          )}
           <Button
             variant="secondary"
             onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
           >
             View Result
           </Button>
-          <Button variant="secondary" onClick={backToLobby}>
-            Back to Lobby
-          </Button>
+          {/* Tournament: go directly to bracket — skip lobby → banner two-click flow */}
+          {gameState.isTournament ? (
+            <Button
+              variant="primary"
+              onClick={() => void navigate(`/tournaments/${gameState.tournamentId}`)}
+            >
+              Back to Tournament
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={backToLobby}>
+              Back to Lobby
+            </Button>
+          )}
         </div>
       ) : null}
 
