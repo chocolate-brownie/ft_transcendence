@@ -30,8 +30,11 @@ export default function Game() {
 
   /* Issue #209 — shared customization hook (persisted to localStorage).
    * Disabled for tournament games to avoid extra complexity. */
-  const { customization, isThemed: _isThemed, renderSymbol: _renderSymbol } =
-    useGameCustomization();
+  const {
+    customization,
+    isThemed: _isThemed,
+    renderSymbol: _renderSymbol,
+  } = useGameCustomization();
   const isThemed = gameState.isTournament ? false : _isThemed;
   const renderSymbol = gameState.isTournament ? undefined : _renderSymbol;
 
@@ -152,8 +155,7 @@ export default function Game() {
     } catch (error) {
       dispatch({
         type: "REMATCH_REQUEST_FAILED",
-        message:
-          error instanceof Error ? error.message : "Failed to create rematch.",
+        message: error instanceof Error ? error.message : "Failed to create rematch.",
       });
     }
   }
@@ -233,7 +235,11 @@ export default function Game() {
       : "Game over";
   return (
     <div
-      className={isThemed ? "game-theme-wrapper flex flex-col items-center gap-6" : "flex flex-col items-center gap-6"}
+      className={
+        isThemed
+          ? "game-theme-wrapper flex flex-col items-center gap-6"
+          : "flex flex-col items-center gap-6"
+      }
       data-theme={isThemed ? customization.theme : undefined}
     >
       <h1 className={`text-2xl font-bold ${isThemed ? "" : "text-pong-text"} -mb-4`}>
@@ -444,9 +450,7 @@ export default function Game() {
           {gameState.isTournament ? (
             <Button
               variant="primary"
-              onClick={() =>
-                void navigate(`/tournaments/${gameState.tournamentId}`)
-              }
+              onClick={() => void navigate(`/tournaments/${gameState.tournamentId}`)}
             >
               Back to Tournament
             </Button>

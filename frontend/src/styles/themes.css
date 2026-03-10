@@ -184,7 +184,9 @@
 
 /* Neon: add a subtle glow matching Player 1 (pink) */
 .game-theme-wrapper[data-theme="neon"] .themed-btn-primary {
-  box-shadow: 0 0 10px var(--theme-p1), 0 0 22px rgba(255, 45, 149, 0.35);
+  box-shadow:
+    0 0 10px var(--theme-p1),
+    0 0 22px rgba(255, 45, 149, 0.35);
 }
 
 /* ================================================================== */

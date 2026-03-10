@@ -169,7 +169,7 @@ export default function AIGame() {
       game && game.status !== "DRAW"
         ? (findWinningLine(game.board, 3) ?? undefined)
         : undefined,
-    [game?.board, game?.status],
+    [game], // game is replaced by reference on every state update
   );
 
   /* ── GameOverModal prop builders ──────────────────────────────────────────── */
@@ -286,10 +286,7 @@ export default function AIGame() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Custom Symbols
             </h2>
-            <CustomSymbolSelector
-              symbols={customization.symbols}
-              onSelect={setSymbols}
-            />
+            <CustomSymbolSelector symbols={customization.symbols} onSelect={setSymbols} />
           </Card>
 
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
@@ -359,7 +356,9 @@ export default function AIGame() {
               boardSize={3}
               playerSymbol={game.playerSymbol}
               themed={isThemed}
-              renderSymbol={renderSymbol} /* hook returns undefined when default — PR #306 fix */
+              renderSymbol={
+                renderSymbol
+              } /* hook returns undefined when default — PR #306 fix */
             />
 
             {error && <p className="text-sm text-red-400">{error}</p>}
@@ -431,7 +430,9 @@ export default function AIGame() {
               }
               winningLine={winningLine}
               themed={isThemed}
-              renderSymbol={renderSymbol} /* hook returns undefined when default — PR #306 fix */
+              renderSymbol={
+                renderSymbol
+              } /* hook returns undefined when default — PR #306 fix */
             />
 
             {/* themed-btn-primary adapts colour to neon/retro — PR #306 */}

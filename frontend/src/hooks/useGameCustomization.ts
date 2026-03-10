@@ -12,11 +12,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { CellValue } from "../types/game";
-import type {
-  CustomSymbols,
-  GameCustomization,
-  Theme,
-} from "../types/customization";
+import type { CustomSymbols, GameCustomization, Theme } from "../types/customization";
 import { DEFAULT_CUSTOMIZATION } from "../types/customization";
 
 const STORAGE_KEY = "game-customization";
@@ -56,9 +52,8 @@ function saveCustomization(c: GameCustomization) {
 }
 
 export function useGameCustomization() {
-  const [customization, setCustomizationState] = useState<GameCustomization>(
-    loadCustomization,
-  );
+  const [customization, setCustomizationState] =
+    useState<GameCustomization>(loadCustomization);
 
   /** Update customization and persist to localStorage. */
   const setCustomization = useCallback((next: GameCustomization) => {

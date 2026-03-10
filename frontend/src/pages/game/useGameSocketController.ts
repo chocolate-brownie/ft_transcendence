@@ -215,8 +215,7 @@ export function useGameSocketController({
       const duration =
         game.startedAt && game.finishedAt
           ? Math.round(
-              (new Date(game.finishedAt).getTime() -
-                new Date(game.startedAt).getTime()) /
+              (new Date(game.finishedAt).getTime() - new Date(game.startedAt).getTime()) /
                 1000,
             )
           : undefined;

@@ -101,7 +101,6 @@ export default function Home() {
             </Link>
           </div>
         )}
-
       </div>
 
       {/* System Status — dev only */}

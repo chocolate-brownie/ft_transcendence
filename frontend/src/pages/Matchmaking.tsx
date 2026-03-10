@@ -233,10 +233,7 @@ export default function Matchmaking() {
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pong-text/50">
               Symbols
             </h2>
-            <CustomSymbolSelector
-              symbols={customization.symbols}
-              onSelect={setSymbols}
-            />
+            <CustomSymbolSelector symbols={customization.symbols} onSelect={setSymbols} />
           </section>
 
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
