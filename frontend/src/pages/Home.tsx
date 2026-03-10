@@ -102,33 +102,6 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-wrap justify-center gap-2 pt-2">
-          {[
-            { label: "Real-Time", icon: "/realtime.svg", to: "/game" },
-            { label: "Minimax AI", icon: "/aibot.svg", to: null },
-            { label: "Tournaments", icon: "/tournement.svg", to: "/tournaments" },
-          ].map(({ label, icon, to }) =>
-            to ? (
-              <Link
-                key={label}
-                to={to}
-                className="flex items-center gap-3 rounded-full border border-pong-text/20 bg-white/5 px-3.5 py-1.5 text-sm font-semibold uppercase tracking-wide text-pong-text/70 transition hover:border-pong-secondary hover:bg-pong-secondary hover:text-white"
-              >
-                <img src={icon} alt="" className="h-5 w-5" />
-                {label}
-              </Link>
-            ) : (
-              <span
-                key={label}
-                title="Coming soon"
-                className="flex items-center gap-3 rounded-full border border-pong-text/10 bg-white/5 px-3.5 py-1.5 text-sm font-semibold uppercase tracking-wide text-pong-text/30 cursor-not-allowed select-none"
-              >
-                <img src={icon} alt="" className="h-5 w-5 opacity-40" />
-                {label}
-              </span>
-            ),
-          )}
-        </div>
       </div>
 
       {/* System Status — dev only */}
