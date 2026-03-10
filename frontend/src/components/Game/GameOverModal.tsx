@@ -199,13 +199,34 @@ export default function GameOverModal({
         {/* Issue #159 — Tournament games: show "Back to Tournament" instead of rematch */}
         <div className="mt-5 space-y-3">
           {isTournament ? (
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={onBackToTournament ?? onGoLobby}
-            >
-              Back to Tournament
-            </Button>
+            result === "draw" ? (
+              <>
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  onClick={onPlayAgain}
+                  disabled={rematchLoading}
+                >
+                  {rematchLoading ? "Creating rematch..." : "Play Again"}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={onBackToTournament ?? onGoLobby}
+                >
+                  Back to Tournament
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={onBackToTournament ?? onGoLobby}
+              >
+                Back to Tournament
+              </Button>
+            )
           ) : (
             <>
               <Button
@@ -220,6 +241,7 @@ export default function GameOverModal({
                     ? "Find New Game"
                     : "Play Again"}
               </Button>
+
               <Button variant="secondary" className="w-full" onClick={onGoLobby}>
                 New Game (Lobby)
               </Button>

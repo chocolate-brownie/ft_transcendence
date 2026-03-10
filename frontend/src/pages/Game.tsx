@@ -13,6 +13,7 @@ import { findWinningLine } from "../utils/gameUtils";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
+import { gamesService } from "../services/games.service";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -106,9 +107,42 @@ export default function Game() {
     void navigate("/lobby");
   }
 
-  function handlePlayAgain() {
-    emitLeaveRoomOnce();
-    void navigate("/matchmaking");
+  async function handlePlayAgain() {
+    if (gameState.isCreatingRematch) return;
+
+    if (!gameState.isTournament || gameState.serverStatus !== "DRAW") {
+      emitLeaveRoomOnce();
+      void navigate("/matchmaking");
+      return;
+    }
+
+    const opponent =
+      gameState.yourSymbol === gameState.player1Symbol
+        ? gameState.player2
+        : gameState.player1;
+
+    if (!opponent) {
+      dispatch({ type: "REMATCH_OPPONENT_MISSING" });
+      return;
+    }
+
+    dispatch({ type: "REMATCH_REQUEST_START" });
+
+    try {
+      const rematch = await gamesService.createGame({
+        player2Id: opponent.id,
+        sourceGameId: gameId,
+      });
+
+      emitLeaveRoomOnce();
+      void navigate(`/game/${rematch.id}`);
+    } catch (error) {
+      dispatch({
+        type: "REMATCH_REQUEST_FAILED",
+        message:
+          error instanceof Error ? error.message : "Failed to create rematch.",
+      });
+    }
   }
 
   function handleRetry() {
