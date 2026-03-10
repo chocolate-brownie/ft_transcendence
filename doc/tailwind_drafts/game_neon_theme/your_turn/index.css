@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.neon-player-1-selected {
+  box-shadow: 0 0 20px #ff006e,
+              0 0 40px #ff006e, 
+              inset 0 0 15px #ff006e;
+  border-color: #ff006e;
+  /* background-color: #1a1a2e; */
+}
+
+.neon-player-1 {
+  box-shadow: 0 0 10px #ff006e,
+              0 0 10px #ff006e, 
+              inset 0 0 10px #ff006e;
+  border-color: #ff006e;
+  background-color: #1a1a2e;
+}
+
+.neon-player-2-selected {
+  box-shadow: 0 0 20px #00d9ff,
+              0 0 40px #00d9ff, 
+              inset 0 0 15px #00d9ff;
+  border-color: #00d9ff;
+}
+
+.neon-player-2 {
+  box-shadow: 0 0 10px #00d9ff,
+              0 0 10px #00d9ff, 
+              inset 0 0 10px #00d9ff;
+  border-color: #00d9ff;
+  background-color: #1a1a2e;
+}
+
+.neon-button {
+  border: 0.25px solid #00d9ff;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0.15em 0.05px #00d9ff,
+              0 0 0.15em 0.05px #00d9ff;
+  transition: all 0.3s;
+}
+
+.neon-button:hover {
+  box-shadow: 0 0 0.5em 0.25px #00d9ff,
+              0 0 0.35em 1px #00d9ff,
+              inset 0 0 0.1em 0.25px #00d9ff;
+}
+
+.neon-button:active {
+  box-shadow: 0 0 0.5em 0.5px #00d9ff,
+              0 0 0.35em 1px #00d9ff,
+              inset 0 0 0.2em 1px #00d9ff;
+}
+
+.neon-button-inactive {
+  border: 0.25px solid #00d9ff;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0.5em 0.125px #00d9ff,
+              0 0 0.25em 1px #00d9ff;
+  transition: all 0.3s;
+}
