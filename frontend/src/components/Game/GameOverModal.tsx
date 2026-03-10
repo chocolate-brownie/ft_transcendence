@@ -146,19 +146,21 @@ export default function GameOverModal({
             <p className="text-lg font-semibold text-pong-text">
               {result === "draw" ? (
                 "Draw"
-              ) : (
+              ) : winner ? (
                 <>
-                  {winner?.username ?? "Unknown"}{" "}
+                  {winner.username}{" "}
                   <span
                     className={
-                      winner?.symbol === "X"
+                      winner.symbol === "X"
                         ? "font-bold text-pong-accent"
                         : "font-bold text-pong-secondary"
                     }
                   >
-                    ({winner?.symbol ?? "?"})
+                    ({winner.symbol})
                   </span>
                 </>
+              ) : (
+                "N/A"
               )}
             </p>
           </div>
