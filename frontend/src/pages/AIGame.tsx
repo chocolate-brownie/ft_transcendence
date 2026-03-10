@@ -324,8 +324,14 @@ export default function AIGame() {
             boardSize={3}
             playerSymbol={game.playerSymbol}
             gameOver
-            winnerSymbol={(game.winner as PlayerSymbol) ?? null}
-            winningLine={findWinningLine(game.board, 3) ?? undefined}
+            winnerSymbol={
+              game.status !== "DRAW" ? ((game.winner as PlayerSymbol) ?? null) : null
+            }
+            winningLine={
+              game.status !== "DRAW"
+                ? (findWinningLine(game.board, 3) ?? undefined)
+                : undefined
+            }
           />
 
           <GameOverModal

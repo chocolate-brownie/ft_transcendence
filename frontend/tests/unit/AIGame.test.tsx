@@ -204,7 +204,9 @@ async function reachFinishedPlayerWin() {
 
   // Wait for finished phase — GameBoard is disabled and still mounted
   await waitFor(() =>
-    expect(screen.getAllByRole("button", { name: /winning cell/i }).length).toBeGreaterThan(0),
+    expect(
+      screen.getAllByRole("button", { name: /winning cell/i }).length,
+    ).toBeGreaterThan(0),
   );
 }
 
@@ -232,7 +234,9 @@ async function reachFinishedAiWin() {
   fireEvent.click(cells[3]);
 
   await waitFor(() =>
-    expect(screen.getAllByRole("button", { name: /winning cell/i }).length).toBeGreaterThan(0),
+    expect(
+      screen.getAllByRole("button", { name: /winning cell/i }).length,
+    ).toBeGreaterThan(0),
   );
 }
 
@@ -310,6 +314,15 @@ describe("AIGame — finished phase winning line (Issue #322)", () => {
     expect(winningCells).toHaveLength(0);
   });
 
+  it("no cell has winner-cell class on a draw (issue #323)", async () => {
+    await reachFinishedDraw();
+
+    const allCells = screen.getAllByRole("button", { name: /^Cell/ });
+    allCells.forEach((cell) => {
+      expect(cell.className).not.toContain("winner-cell");
+    });
+  });
+
   it("board remains rendered in finished phase (not hidden before modal)", async () => {
     await reachFinishedPlayerWin();
 
@@ -335,7 +348,9 @@ describe("AIGame — finished phase winning line (Issue #322)", () => {
 
     // Winning line visible immediately — modal still closed
     await waitFor(() =>
-      expect(screen.getAllByRole("button", { name: /winning cell/i }).length).toBeGreaterThan(0),
+      expect(
+        screen.getAllByRole("button", { name: /winning cell/i }).length,
+      ).toBeGreaterThan(0),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 

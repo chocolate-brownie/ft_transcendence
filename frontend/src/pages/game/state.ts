@@ -354,7 +354,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
     case "RESET_FOR_ROUTE_CHANGE":
       // Don't reset if game results are already showing — prevents a StrictMode
       // race where this action fires after game_already_ended has set the state.
-      if (state.showGameOverModal) return state;
+      if (state.showGameOverModal || state.gameOverPayload !== null) return state;
       return { ...state, status: "idle" };
 
     default:

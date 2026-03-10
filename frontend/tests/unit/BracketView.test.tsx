@@ -68,7 +68,9 @@ const bracket: BracketResponse = {
 describe("BracketView", () => {
   it("navigates to game on Enter and Space for completed clickable card", () => {
     navigateMock.mockReset();
-    render(<BracketView bracket={bracket} participants={participants} />);
+    render(
+      <BracketView bracket={bracket} participants={participants} currentUserId={10} />,
+    );
 
     const [card] = screen.getAllByRole("button", { name: /final/i });
     expect(card).toBeDefined();
