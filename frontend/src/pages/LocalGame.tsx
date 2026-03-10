@@ -282,7 +282,12 @@ export default function LocalGame() {
                   {gameOverText}
                 </span>
 
-                <Button variant="primary" onClick={handlePlayAgain}>
+                {/* themed-btn-primary adapts colour to neon/retro — PR #306 */}
+                <Button
+                  variant="primary"
+                  onClick={handlePlayAgain}
+                  className={isThemed ? "themed-btn-primary" : ""}
+                >
                   Play Again
                 </Button>
               </div>

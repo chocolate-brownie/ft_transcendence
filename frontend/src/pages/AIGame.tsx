@@ -434,11 +434,12 @@ export default function AIGame() {
               renderSymbol={renderSymbol} /* hook returns undefined when default — PR #306 fix */
             />
 
+            {/* themed-btn-primary adapts colour to neon/retro — PR #306 */}
             <Button
               variant="primary"
               onClick={() => setShowModal(true)}
               aria-label="View result"
-              className={showModal ? "invisible" : ""}
+              className={`${showModal ? "invisible" : ""} ${isThemed ? "themed-btn-primary" : ""}`.trim()}
             >
               View Result
             </Button>

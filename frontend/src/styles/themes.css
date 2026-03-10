@@ -166,3 +166,43 @@
     0 0 25px rgba(255, 45, 149, 0.4),
     inset 0 0 10px rgba(255, 45, 149, 0.2);
 }
+
+/* ================================================================== */
+/* Themed action buttons — Play Again, View Result                    */
+/* Replaces pong-accent bg which clashes with neon/retro backgrounds  */
+/* PR #306 — themed button styles                                     */
+/* ================================================================== */
+.themed-btn-primary {
+  background-color: var(--theme-p1);
+  color: var(--theme-bg);
+  transition: filter 0.15s ease;
+}
+
+.themed-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.18);
+}
+
+/* Neon: add a subtle glow matching Player 1 (pink) */
+.game-theme-wrapper[data-theme="neon"] .themed-btn-primary {
+  box-shadow: 0 0 10px var(--theme-p1), 0 0 22px rgba(255, 45, 149, 0.35);
+}
+
+/* ================================================================== */
+/* Themed back / secondary buttons — Back to Setup, Back to Lobby     */
+/* ================================================================== */
+.themed-btn-back {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--theme-text);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background-color 0.15s ease;
+}
+
+.themed-btn-back:hover {
+  background-color: rgba(255, 255, 255, 0.13);
+}
+
+/* Neon back button: cyan border to match grid colour */
+.game-theme-wrapper[data-theme="neon"] .themed-btn-back {
+  border-color: rgba(0, 255, 247, 0.3);
+  color: var(--theme-grid);
+}
