@@ -181,3 +181,192 @@ describe("AIGame — playing phase", () => {
     });
   });
 });
+
+/* ── Helpers for finished-phase tests ──────────────────────────────────────── */
+
+/** Drives the component from setup → playing → finished (player wins top row). */
+async function reachFinishedPlayerWin() {
+  // Board after player wins: X fills top row, O has col 1 rows 1–2.
+  // [X, X, X, O, O, null, null, null, null]
+  const finalBoard = ["X", "X", "X", "O", "O", null, null, null, null];
+
+  createGameMock.mockResolvedValueOnce(fakeCreateResponse("X"));
+  makeMoveMock.mockResolvedValueOnce({
+    game: {
+      boardState: finalBoard,
+      status: "FINISHED",
+      winner: "X",
+      currentTurn: "O",
+    },
+    aiMove: null,
+  });
+
+  render(<AIGame />);
+  fireEvent.click(screen.getByRole("button", { name: /start game/i }));
+
+  // Wait for playing phase
+  await waitFor(() => expect(screen.getByText(/vs AI/)).toBeInTheDocument());
+
+  // Click cell 0 — triggers the winning move
+  const cells = screen.getAllByRole("button", { name: /^Cell/ });
+  fireEvent.click(cells[0]);
+
+  // Wait for finished phase — GameBoard is disabled and still mounted
+  await waitFor(() =>
+    expect(
+      screen.getAllByRole("button", { name: /winning cell/i }).length,
+    ).toBeGreaterThan(0),
+  );
+}
+
+/** Drives the component from setup → playing → finished (AI wins top row). */
+async function reachFinishedAiWin() {
+  const finalBoard = ["O", "O", "O", "X", "X", null, null, null, null];
+
+  createGameMock.mockResolvedValueOnce(fakeCreateResponse("X"));
+  makeMoveMock.mockResolvedValueOnce({
+    game: {
+      boardState: finalBoard,
+      status: "FINISHED",
+      winner: "O",
+      currentTurn: "X",
+    },
+    aiMove: null,
+  });
+
+  render(<AIGame />);
+  fireEvent.click(screen.getByRole("button", { name: /start game/i }));
+
+  await waitFor(() => expect(screen.getByText(/vs AI/)).toBeInTheDocument());
+
+  const cells = screen.getAllByRole("button", { name: /^Cell/ });
+  fireEvent.click(cells[3]);
+
+  await waitFor(() =>
+    expect(
+      screen.getAllByRole("button", { name: /winning cell/i }).length,
+    ).toBeGreaterThan(0),
+  );
+}
+
+/** Drives the component from setup → playing → finished (draw). */
+async function reachFinishedDraw() {
+  // Full board with no winner: X O X / O X X / O X O
+  const finalBoard = ["X", "O", "X", "O", "X", "X", "O", "X", "O"];
+
+  createGameMock.mockResolvedValueOnce(fakeCreateResponse("X"));
+  makeMoveMock.mockResolvedValueOnce({
+    game: {
+      boardState: finalBoard,
+      status: "DRAW",
+      winner: null,
+      currentTurn: "O",
+    },
+    aiMove: null,
+  });
+
+  render(<AIGame />);
+  fireEvent.click(screen.getByRole("button", { name: /start game/i }));
+
+  await waitFor(() => expect(screen.getByText(/vs AI/)).toBeInTheDocument());
+
+  const cells = screen.getAllByRole("button", { name: /^Cell/ });
+  fireEvent.click(cells[0]);
+
+  // Wait for finished phase — board is still rendered with no winning cells
+  await waitFor(() => {
+    const allCells = screen.getAllByRole("button", { name: /^Cell/ });
+    expect(allCells.length).toBeGreaterThan(0);
+  });
+}
+
+describe("AIGame — finished phase winning line (Issue #322)", () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    createGameMock.mockReset();
+    makeMoveMock.mockReset();
+  });
+
+  afterEach(cleanup);
+
+  it("highlights the winning cells when the player wins", async () => {
+    await reachFinishedPlayerWin();
+
+    // Cells 0, 1, 2 should have the "winning cell" aria-label
+    const winningCells = screen.getAllByRole("button", { name: /winning cell/i });
+    expect(winningCells).toHaveLength(3);
+  });
+
+  it("applies winner-cell-win class to winning cells when player wins", async () => {
+    await reachFinishedPlayerWin();
+
+    const winningCells = screen.getAllByRole("button", { name: /winning cell/i });
+    winningCells.forEach((cell) => {
+      expect(cell.className).toContain("winner-cell-win");
+    });
+  });
+
+  it("applies winner-cell-loss class to winning cells when AI wins", async () => {
+    await reachFinishedAiWin();
+
+    const winningCells = screen.getAllByRole("button", { name: /winning cell/i });
+    expect(winningCells.length).toBeGreaterThan(0);
+    winningCells.forEach((cell) => {
+      expect(cell.className).toContain("winner-cell-loss");
+    });
+  });
+
+  it("shows no winning cell labels on a draw", async () => {
+    await reachFinishedDraw();
+
+    const winningCells = screen.queryAllByRole("button", { name: /winning cell/i });
+    expect(winningCells).toHaveLength(0);
+  });
+
+  it("no cell has winner-cell class on a draw (issue #323)", async () => {
+    await reachFinishedDraw();
+
+    const allCells = screen.getAllByRole("button", { name: /^Cell/ });
+    allCells.forEach((cell) => {
+      expect(cell.className).not.toContain("winner-cell");
+    });
+  });
+
+  it("board remains rendered in finished phase (not hidden before modal)", async () => {
+    await reachFinishedPlayerWin();
+
+    // Board cells should still be in the DOM
+    const cells = screen.getAllByRole("button", { name: /^Cell/ });
+    expect(cells.length).toBeGreaterThan(0);
+  });
+
+  it("modal is not open immediately — View Result button opens it", async () => {
+    createGameMock.mockResolvedValueOnce(fakeCreateResponse("X"));
+    const finalBoard = ["X", "X", "X", "O", "O", null, null, null, null];
+    makeMoveMock.mockResolvedValueOnce({
+      game: { boardState: finalBoard, status: "FINISHED", winner: "X", currentTurn: "O" },
+      aiMove: null,
+    });
+
+    render(<AIGame />);
+    fireEvent.click(screen.getByRole("button", { name: /start game/i }));
+    await waitFor(() => expect(screen.getByText(/vs AI/)).toBeInTheDocument());
+
+    const cells = screen.getAllByRole("button", { name: /^Cell/ });
+    fireEvent.click(cells[0]);
+
+    // Winning line visible — modal still closed, View Result button present
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("button", { name: /winning cell/i }).length,
+      ).toBeGreaterThan(0),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
+
+    // Click View Result — modal opens, button stays in DOM (invisible)
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
+  });
+});

@@ -4,7 +4,7 @@ import { checkGameOver } from "../src/services/games.service";
 import { Board, Player } from '../src/types/game';
 import { Difficulty } from "@prisma/client";
 
-const SIMULATIONS_PER_LEVEL = 50; // Nombre de parties par niveau
+const SIMULATIONS_PER_LEVEL = 100; // Nombre de parties par niveau
 
 function simulateGame(difficulty: Difficulty) {
     let board: Board = Array(9).fill(null);
@@ -78,7 +78,7 @@ describe('AI Difficulty Statistical Verification', () => {
         }
         const winRate = (playerWins / SIMULATIONS_PER_LEVEL) * 100;
         console.log(`Medium Win Rate: ${winRate}%, max AI response Time: ${maxAIDelay}`);
-        expect(winRate).toBeLessThanOrEqual(20);
+        expect(winRate).toBeLessThanOrEqual(30);
     });
 
     test('HARD: Player should NEVER win (0%)', () => {

@@ -14,6 +14,8 @@ import { useGameCustomization } from "../hooks/useGameCustomization";
 
 import { gameReducer, initialGameState } from "./game/state";
 import { useGameSocketController } from "./game/useGameSocketController";
+import { useTournamentSocket } from "../hooks/useTournamentSocket";
+import { gamesService } from "../services/games.service";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -43,6 +45,10 @@ export default function Game() {
     navigate,
     dispatch,
     stateRef,
+  });
+
+  useTournamentSocket({
+    socket: gameState.isTournament ? socket : null,
   });
 
   // Emit leave_game_room on tab close / refresh so the server cleans up
@@ -114,9 +120,42 @@ export default function Game() {
     void navigate("/lobby");
   }
 
-  function handlePlayAgain() {
-    emitLeaveRoomOnce();
-    void navigate("/matchmaking");
+  async function handlePlayAgain() {
+    if (gameState.isCreatingRematch) return;
+
+    if (!gameState.isTournament || gameState.serverStatus !== "DRAW") {
+      emitLeaveRoomOnce();
+      void navigate("/matchmaking");
+      return;
+    }
+
+    const opponent =
+      gameState.yourSymbol === gameState.player1Symbol
+        ? gameState.player2
+        : gameState.player1;
+
+    if (!opponent) {
+      dispatch({ type: "REMATCH_OPPONENT_MISSING" });
+      return;
+    }
+
+    dispatch({ type: "REMATCH_REQUEST_START" });
+
+    try {
+      const rematch = await gamesService.createGame({
+        player2Id: opponent.id,
+        sourceGameId: gameId,
+      });
+
+      emitLeaveRoomOnce();
+      void navigate(`/game/${rematch.id}`);
+    } catch (error) {
+      dispatch({
+        type: "REMATCH_REQUEST_FAILED",
+        message:
+          error instanceof Error ? error.message : "Failed to create rematch.",
+      });
+    }
   }
 
   function handleRetry() {
@@ -355,12 +394,13 @@ export default function Game() {
         </div>
       ) : null}
 
-      {gameState.moveError ? (
-        <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p>
-      ) : null}
-      {gameState.isSendingMove ? (
-        <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p>
-      ) : null}
+      {/* Single reserved-height line prevents the board from shifting when
+          move status appears/disappears ("trembling" effect). */}
+      <p
+        className={`-mt-4 text-xs ${gameState.moveError ? "text-red-400" : "text-pong-text/60"} ${!gameState.moveError && !gameState.isSendingMove ? "invisible" : ""}`}
+      >
+        {gameState.moveError ?? (gameState.isSendingMove ? "Sending move…" : "\u00A0")}
+      </p>
 
       <GameBoard
         board={gameState.board}
@@ -377,12 +417,28 @@ export default function Game() {
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button
-          variant="secondary"
-          onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
-        >
-          View Result
-        </Button>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            variant="primary"
+            onClick={() => void handlePlayAgain()}
+            disabled={gameState.isCreatingRematch}
+          >
+            {gameState.isCreatingRematch
+              ? "Creating rematch…"
+              : gameState.isForfeit
+                ? "Find New Game"
+                : "Play Again"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
+          >
+            View Result
+          </Button>
+          <Button variant="secondary" onClick={backToLobby}>
+            Back to Lobby
+          </Button>
+        </div>
       ) : null}
 
       <GameOverModal

@@ -16,7 +16,7 @@ import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
-
+import { findWinningLine } from "../utils/gameUtils";
 import { aiService } from "../services/ai.service";
 import type { AiDifficulty } from "../services/ai.service";
 import GameBoard from "../components/Game/GameBoard";
@@ -62,6 +62,7 @@ export default function AIGame() {
   const [aiThinking, setAiThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalDuration, setFinalDuration] = useState(0);
+  const [showModal, setShowModal] = useState(false);
   const startTimeRef = useRef<number>(0);
 
   /* Issue #209 — shared customization hook (persisted to localStorage) */
@@ -154,12 +155,17 @@ export default function AIGame() {
   );
 
   const handlePlayAgain = useCallback(() => {
+    setShowModal(false);
     setGame(null);
     setError(null);
     setPhase("setup");
   }, []);
 
   const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
+  const winningLine =
+    game && game.status !== "DRAW"
+      ? (findWinningLine(game.board, 3) ?? undefined)
+      : undefined;
 
   /* ── GameOverModal prop builders ──────────────────────────────────────────── */
 
@@ -365,7 +371,51 @@ export default function AIGame() {
           className={isThemed ? "game-theme-wrapper mx-auto mt-4 max-w-lg" : ""}
           data-theme={isThemed ? customization.theme : undefined}
         >
-          <div className="flex flex-col items-center gap-6 py-4">
+          {/* [transform:translateZ(0)] creates a containing block for the fixed
+              GameOverModal overlay, keeping it anchored to this section. */}
+          <div className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center gap-6 py-4 [transform:translateZ(0)]">
+            {/* Same title block as playing phase — keeps layout stable. */}
+            <div className="text-center">
+              <h1 className={`text-2xl font-bold ${isThemed ? "" : "text-pong-text"}`}>
+                vs AI{" "}
+                <span className={`text-sm font-semibold ${difficultyColor}`}>
+                  ({game.difficulty})
+                </span>
+              </h1>
+              <p
+                className={`mt-1 text-xs ${isThemed ? "opacity-40" : "text-pong-text/40"}`}
+              >
+                You are{" "}
+                <span
+                  className={
+                    game.playerSymbol === "X"
+                      ? isThemed
+                        ? "font-bold themed-p1"
+                        : "font-bold text-pong-accent"
+                      : isThemed
+                        ? "font-bold themed-p2"
+                        : "font-bold text-pong-secondary"
+                  }
+                >
+                  {p1Display}
+                </span>
+              </p>
+            </div>
+
+            {/* Result shown where "Your turn / AI's turn" was during play. */}
+            <TurnIndicator
+              currentPlayer={game.playerSymbol}
+              isYourTurn={false}
+              playerSymbol={game.playerSymbol}
+              textOverride={
+                game.status === "DRAW"
+                  ? "It's a Draw! 🤝"
+                  : game.winner === game.playerSymbol
+                    ? "You Won! 🎉"
+                    : "You Lost 😢"
+              }
+            />
+
             <GameBoard
               board={game.board}
               onCellClick={() => {}}
@@ -373,15 +423,27 @@ export default function AIGame() {
               boardSize={3}
               playerSymbol={game.playerSymbol}
               gameOver
-              winnerSymbol={(game.winner as PlayerSymbol) ?? null}
+              winnerSymbol={
+                game.status !== "DRAW" ? ((game.winner as PlayerSymbol) ?? null) : null
+              }
+              winningLine={winningLine}
               themed={isThemed}
               renderSymbol={
                 customization.symbols.type !== "default" ? renderSymbol : undefined
               }
             />
 
+            <Button
+              variant="primary"
+              onClick={() => setShowModal(true)}
+              aria-label="View result"
+              className={showModal ? "invisible" : ""}
+            >
+              View Result
+            </Button>
+
             <GameOverModal
-              open
+              open={showModal}
               result={game.status === "DRAW" ? "draw" : "win"}
               winner={buildWinner()}
               loser={buildLoser()}
@@ -391,7 +453,7 @@ export default function AIGame() {
               durationSeconds={finalDuration}
               onPlayAgain={handlePlayAgain}
               onGoLobby={() => void navigate("/lobby")}
-              onClose={handlePlayAgain}
+              onClose={() => setShowModal(false)}
             />
           </div>
         </div>

@@ -60,17 +60,28 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         return null;
       });
     }
+    // Clear activeGameId when the player successfully rejoins a game room so
+    // the ActiveGameBanner doesn't reappear immediately on the next navigate-away
+    // (which would cause a race with the 1500ms deferred-forfeit grace period).
+    function onRoomJoined({ gameId }: { gameId?: number }) {
+      setActiveGameId((current) => {
+        if (gameId !== undefined && gameId !== current) return current;
+        return null;
+      });
+    }
 
     socket.on("active_game", onActiveGame);
     socket.on("game_over", onGameEnd);
     socket.on("game_forfeited", onGameEnd);
     socket.on("game_already_ended", onGameEnd);
+    socket.on("room_joined", onRoomJoined);
 
     return () => {
       socket.off("active_game", onActiveGame);
       socket.off("game_over", onGameEnd);
       socket.off("game_forfeited", onGameEnd);
       socket.off("game_already_ended", onGameEnd);
+      socket.off("room_joined", onRoomJoined);
     };
   }, [socket]);
 

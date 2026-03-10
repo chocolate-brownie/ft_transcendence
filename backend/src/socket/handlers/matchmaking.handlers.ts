@@ -26,6 +26,39 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         return socket.emit("error", { message: "Already searching for a game" });
       }
 
+      const activeTournamentEntry = await prisma.tournamentParticipant.findFirst({
+        where: {
+          userId,
+          tournament: {
+            status: {
+              in: ["REGISTERING", "IN_PROGRESS"],
+            },
+          },
+        },
+        select: {
+          tournamentId: true,
+        },
+      });
+
+      if (activeTournamentEntry) {
+        const activeTournamentMatch = await prisma.tournamentMatch.findFirst({
+          where: {
+            tournamentId: activeTournamentEntry.tournamentId,
+            winnerId: null,
+            OR: [{ player1Id: userId }, { player2Id: userId }],
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        return socket.emit("error", {
+          message: activeTournamentMatch
+            ? "Already in an active tournament match"
+            : "Already in a tournament",
+        });
+      }
+
       const activeGame = await prisma.game.findFirst({
         where: {
           OR: [{ player1Id: userId }, { player2Id: userId }],
@@ -43,7 +76,18 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
         const isInRoom = playersInRoom.some((p) => p.userId === userId);
 
         if (isInRoom) {
-          return socket.emit("error", { message: "Already in an active game" });
+          return socket.emit("error", {
+            message:
+              activeGame.gameType === "TOURNAMENT"
+                ? "Already in an active tournament match"
+                : "Already in an active game",
+          });
+        }
+
+        if (activeGame.gameType === "TOURNAMENT") {
+          return socket.emit("error", {
+            message: "Already in an active tournament match",
+          });
         }
 
         // Player is not in the room — auto-forfeit the stale game
@@ -113,6 +157,44 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
       }
 
       for (const player of [player1, player2]) {
+        const activeTournamentEntry = await prisma.tournamentParticipant.findFirst({
+          where: {
+            userId: player.userId,
+            tournament: {
+              status: {
+                in: ["REGISTERING", "IN_PROGRESS"],
+              },
+            },
+          },
+          select: {
+            tournamentId: true,
+          },
+        });
+
+        if (activeTournamentEntry) {
+          const other = player === player1 ? player2 : player1;
+          matchmakingService.requeueAtFront(other);
+
+          const activeTournamentMatch = await prisma.tournamentMatch.findFirst({
+            where: {
+              tournamentId: activeTournamentEntry.tournamentId,
+              winnerId: null,
+              OR: [{ player1Id: player.userId }, { player2Id: player.userId }],
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          io.sockets.sockets.get(player.socketId)?.emit("error", {
+            message: activeTournamentMatch
+              ? "Already in an active tournament match"
+              : "Already in a tournament",
+          });
+
+          return;
+        }
+
         const active = await prisma.game.findFirst({
           where: {
             OR: [{ player1Id: player.userId }, { player2Id: player.userId }],
@@ -125,7 +207,10 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket) {
           matchmakingService.requeueAtFront(other);
 
           io.sockets.sockets.get(player.socketId)?.emit("error", {
-            message: "Already in an active game",
+            message:
+              active.gameType === "TOURNAMENT"
+                ? "Already in an active tournament match"
+                : "Already in an active game",
           });
 
           return;

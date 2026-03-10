@@ -151,7 +151,7 @@ describe("Game page socket wiring", () => {
     expect(screen.getByText("Already searching for a game")).toBeInTheDocument();
   });
 
-  it("shows game over modal and closes when user clicks close button", () => {
+  it("shows game over modal when View Result is clicked and closes when user clicks close button", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -170,6 +170,10 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    // Modal does not auto-open — board with winning line is visible first
+    expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
+
     const modal = screen.getByTestId("game-over-modal");
     expect(modal).toBeInTheDocument();
     expect(within(modal).getByText("It's a Draw! 🤝")).toBeInTheDocument();
@@ -180,7 +184,7 @@ describe("Game page socket wiring", () => {
     expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
 
-  it("renders lose-state message and closes on Escape key", () => {
+  it("renders lose-state message in modal and closes on Escape key", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -199,6 +203,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     const modal = screen.getByTestId("game-over-modal");
     expect(within(modal).getByText("You Lost 😢")).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "Escape" });
@@ -224,11 +229,12 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     fireEvent.click(screen.getByRole("button", { name: /play again/i }));
     expect(navigateMock).toHaveBeenCalledWith("/matchmaking");
   });
 
-  it("reopens modal after closing when another game_over event arrives", () => {
+  it("View Result button still present after a second game_over event arrives", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -247,6 +253,8 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    // Open and close the modal from the first game_over
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
 
@@ -262,10 +270,12 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    // Second game_over: View Result still available, modal opens on click
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     expect(screen.getByTestId("game-over-modal")).toBeInTheDocument();
   });
 
-  it("reopens game over modal when View Result is clicked", () => {
+  it("reopens game over modal when View Result is clicked after closing", () => {
     const socket = new MockSocket();
     useSocketMock.mockReturnValue({ socket });
 
@@ -284,6 +294,8 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    // Open → close → reopen
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.queryByTestId("game-over-modal")).not.toBeInTheDocument();
 
@@ -326,6 +338,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     const modal = screen.getByTestId("game-over-modal");
     expect(within(modal).getByText("bob (O)")).toBeInTheDocument();
     expect(within(modal).getByAltText("bob avatar")).toBeInTheDocument();
@@ -338,6 +351,7 @@ describe("Game page socket wiring", () => {
     render(<Game />);
     joinRoom(socket);
 
+    // Not present during an active game
     expect(
       screen.queryByRole("button", { name: /view result/i }),
     ).not.toBeInTheDocument();
@@ -354,9 +368,16 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    // Modal does not auto-open — View Result is immediately available
+    expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
+
+    // Once modal is open, View Result is hidden
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     expect(
       screen.queryByRole("button", { name: /view result/i }),
     ).not.toBeInTheDocument();
+
+    // After closing modal, View Result reappears
     fireEvent.click(screen.getByRole("button", { name: /close game over modal/i }));
     expect(screen.getByRole("button", { name: /view result/i })).toBeInTheDocument();
   });
@@ -380,6 +401,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     const playAgainButton = screen.getByRole("button", { name: /play again/i });
     fireEvent.click(playAgainButton);
     fireEvent.click(playAgainButton);
@@ -406,6 +428,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     const playAgainButton = screen.getByRole("button", { name: /play again/i });
     expect(playAgainButton).not.toBeDisabled();
 
@@ -744,6 +767,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
   });
@@ -767,6 +791,7 @@ describe("Game page socket wiring", () => {
       });
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /view result/i }));
     fireEvent.click(screen.getByRole("button", { name: /new game \(lobby\)/i }));
     expect(navigateMock).toHaveBeenCalledWith("/lobby");
   });

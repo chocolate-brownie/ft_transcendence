@@ -14,7 +14,12 @@ export default function ActiveTournamentBanner() {
     activeTournamentId !== null &&
     location.pathname === `/tournaments/${activeTournamentId}`;
 
-  if (!activeTournamentId || isOnTournamentPage) return null;
+  const isOnGamePage =
+    activeTournamentId !== null && location.pathname.startsWith("/game/");
+
+  if (!activeTournamentId || isOnTournamentPage || isOnGamePage) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-16 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-pong-secondary/30 bg-pong-surface/95 px-4 py-2.5 shadow-lg backdrop-blur-md">
