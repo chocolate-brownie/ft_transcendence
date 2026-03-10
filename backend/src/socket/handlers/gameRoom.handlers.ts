@@ -43,6 +43,21 @@ function resolveRoles(
   };
 }
 
+/** Normalize a raw DB boardState value to a CellValue array.
+ *  AI games persist boardState as a JSON string; all other games store it as a
+ *  native Prisma JSON value. Returns an empty array on parse failure. */
+function parseBoardState(raw: unknown): unknown[] {
+  if (typeof raw === "string") {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
 /** Send an error to the socket and optionally ack the callback. */
 function emitError(socket: Socket, message: string, callback?: AckCallback) {
   socket.emit("error", { message });
@@ -60,7 +75,7 @@ function buildJoinedPayload(
   return {
     gameId: game.id,
     game: {
-      boardState: game.boardState,
+      boardState: parseBoardState(game.boardState),
       boardSize: game.boardSize,
       currentTurn: game.currentTurn,
       status: game.status,
@@ -114,6 +129,12 @@ function scheduleDeferredForfeit(
         });
 
         if (!game || game.status !== "IN_PROGRESS") return;
+
+        /* If the player already rejoined within the grace period (e.g. the
+        ActiveGameBanner showed immediately because activeGameId was still
+        set from a prior reconnect), skip the forfeit — they're already back. */
+        const playersInRoom = gameRoomService.getPlayersInRoom(gameId);
+        if (playersInRoom.some((p) => p.userId === user.id)) return;
 
         const { opponent, yourSymbol, opponentSymbol } = resolveRoles(game, user.id);
         if (!opponent) return;
@@ -322,7 +343,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
 
         callback?.({
           gameId: game.id,
-          boardState: game.boardState,
+          boardState: parseBoardState(game.boardState),
           boardSize: game.boardSize,
           currentTurn: game.currentTurn,
           status: game.status,

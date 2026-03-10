@@ -160,6 +160,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
         isForfeit: false,
         board: action.payload.finalBoard,
         serverStatus: action.payload.result === "draw" ? "DRAW" : "FINISHED",
+        serverWinningLine: action.payload.winningLine ?? state.serverWinningLine,
         gameResultText:
           action.payload.result === "draw"
             ? "Draw game"
@@ -167,7 +168,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
               ? "You won"
               : "You lost",
         gameOverPayload: action.payload,
-        showGameOverModal: true,
+        showGameOverModal: false,
         opponentConnection: "online",
         disconnectCountdown: null,
         disconnectedOpponentName: null,
@@ -353,7 +354,7 @@ export function gameReducer(state: GameViewState, action: GameAction): GameViewS
     case "RESET_FOR_ROUTE_CHANGE":
       // Don't reset if game results are already showing — prevents a StrictMode
       // race where this action fires after game_already_ended has set the state.
-      if (state.showGameOverModal) return state;
+      if (state.showGameOverModal || state.gameOverPayload !== null) return state;
       return { ...state, status: "idle" };
 
     default:

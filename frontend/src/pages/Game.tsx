@@ -383,12 +383,13 @@ export default function Game() {
         </div>
       ) : null}
 
-      {gameState.moveError ? (
-        <p className="-mt-4 text-xs text-red-400">{gameState.moveError}</p>
-      ) : null}
-      {gameState.isSendingMove ? (
-        <p className="-mt-4 text-xs text-pong-text/60">Sending move…</p>
-      ) : null}
+      {/* Single reserved-height line prevents the board from shifting when
+          move status appears/disappears ("trembling" effect). */}
+      <p
+        className={`-mt-4 text-xs ${gameState.moveError ? "text-red-400" : "text-pong-text/60"} ${!gameState.moveError && !gameState.isSendingMove ? "invisible" : ""}`}
+      >
+        {gameState.moveError ?? (gameState.isSendingMove ? "Sending move…" : "\u00A0")}
+      </p>
 
       <GameBoard
         board={gameState.board}
@@ -403,12 +404,28 @@ export default function Game() {
       />
 
       {isGameOver && gameState.gameOverPayload && !gameState.showGameOverModal ? (
-        <Button
-          variant="secondary"
-          onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
-        >
-          View Result
-        </Button>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            variant="primary"
+            onClick={() => void handlePlayAgain()}
+            disabled={gameState.isCreatingRematch}
+          >
+            {gameState.isCreatingRematch
+              ? "Creating rematch…"
+              : gameState.isForfeit
+                ? "Find New Game"
+                : "Play Again"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => dispatch({ type: "OPEN_GAME_OVER_MODAL" })}
+          >
+            View Result
+          </Button>
+          <Button variant="secondary" onClick={backToLobby}>
+            Back to Lobby
+          </Button>
+        </div>
       ) : null}
 
       <GameOverModal

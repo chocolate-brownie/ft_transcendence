@@ -42,6 +42,10 @@ export function registerPresenceHandlers(io: Server, socket: Socket) {
     .findFirst({
       where: {
         status: "IN_PROGRESS",
+        // AI games are excluded: their board state is in-memory only and
+        // cannot be restored after a page refresh, so showing a "Rejoin"
+        // banner would route the player to the wrong page with no game state.
+        NOT: { gameType: "AI" },
         OR: [{ player1Id: userId }, { player2Id: userId }],
       },
       select: { id: true },
