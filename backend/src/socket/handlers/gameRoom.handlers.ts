@@ -120,9 +120,9 @@ function scheduleDeferredForfeit(
 
         if (!game || game.status !== "IN_PROGRESS") return;
 
-        // If the player already rejoined within the grace period (e.g. the
-        // ActiveGameBanner showed immediately because activeGameId was still
-        // set from a prior reconnect), skip the forfeit — they're already back.
+        /* If the player already rejoined within the grace period (e.g. the
+        ActiveGameBanner showed immediately because activeGameId was still
+        set from a prior reconnect), skip the forfeit — they're already back. */
         const playersInRoom = gameRoomService.getPlayersInRoom(gameId);
         if (playersInRoom.some((p) => p.userId === user.id)) return;
 

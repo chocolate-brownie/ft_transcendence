@@ -307,17 +307,41 @@ export default function AIGame() {
         // GameOverModal overlay, keeping it anchored to this section rather
         // than the full viewport (prevents the board from appearing to move).
         <div className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center gap-6 py-4 [transform:translateZ(0)]">
-          {/* Result header — mirrors playing-phase title height so the board
-              stays in roughly the same vertical position. */}
+          {/* Same title block as playing phase — keeps layout stable. */}
           <div className="text-center">
             <h1 className="text-2xl font-bold text-pong-text">
-              {game.status === "DRAW"
+              vs AI{" "}
+              <span className={`text-sm font-semibold ${difficultyColor}`}>
+                ({game.difficulty})
+              </span>
+            </h1>
+            <p className="mt-1 text-xs text-pong-text/40">
+              You are{" "}
+              <span
+                className={
+                  game.playerSymbol === "X"
+                    ? "font-bold text-pong-accent"
+                    : "font-bold text-pong-secondary"
+                }
+              >
+                {game.playerSymbol}
+              </span>
+            </p>
+          </div>
+
+          {/* Result shown where "Your turn / AI's turn" was during play. */}
+          <TurnIndicator
+            currentPlayer={game.playerSymbol}
+            isYourTurn={false}
+            playerSymbol={game.playerSymbol}
+            textOverride={
+              game.status === "DRAW"
                 ? "It's a Draw! 🤝"
                 : game.winner === game.playerSymbol
                   ? "You Won! 🎉"
-                  : "You Lost 😢"}
-            </h1>
-          </div>
+                  : "You Lost 😢"
+            }
+          />
 
           <GameBoard
             board={game.board}
