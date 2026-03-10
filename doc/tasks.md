@@ -167,7 +167,7 @@
   - [x] Visual feedback: hover effect on empty cells, cursor pointer
   - [x] Current turn indicator: "Your turn (X)" or "Waiting for opponent (O)"
 
-### QA & Testing — [PM: mgodawat]
+### QA & Testing — [PM: mgodawat Testing: All]
 
 - [x] Test profile view and edit flows
 - [x] Test friend request flow end-to-end — mgodawat
@@ -208,7 +208,7 @@
   - [x] "Play vs AI" (with difficulty selector)
 - [x] Local game mode: alternate turns on same screen — zamgar
 
-### Backend + Frontend — Multiplayer — [Real-Time: mgodawat, DarkWhiteOff]
+### Backend + Frontend — Multiplayer — [Real-Time: mgodawat, zamgar, jayzatov]
 
 - [x] Matchmaking: `find_game` event → add to queue → match two players → create room — mgodawat
 - [x] Cancel matchmaking: `cancel_search` event — mgodawat
@@ -222,7 +222,7 @@
 - [x] Reconnection: player rejoins room, receives current game state — mgodawat, DarkWhiteOff
 - [x] Matchmaking UI: "Searching for opponent..." with cancel button — mgodawat
 
-### QA & Testing — [PM: mgodawat, mqwa78, DarkWhiteOff]
+### QA & Testing — [PM: mgodawat, Testing: ALL]
 
 - [x] Test local game: all win conditions (rows, columns, diagonals), draw — Issue #151
 - [x] Test multiplayer: two browsers, full game to completion — Issue #152
@@ -272,7 +272,7 @@
   - [x] Medium: 20% random moves, 80% minimax
   - [x] Hard: 100% minimax (unbeatable)
 - [x] AI game flow: player makes move → server runs AI → server responds with AI move — mamahtal, tzizi
-- [x] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard) — mgodawat (Issue #183)
+- [x] Frontend — "Play vs AI" with difficulty selector (Easy / Medium / Hard) - (Issue #183)
 - [x] Frontend — AI game supports theme and symbol customization (Issue #209) — jayzatov
 - [x] Verify: AI wins sometimes on Easy, often on Medium, always draws or wins on Hard
 
@@ -312,18 +312,18 @@
 
 ### All Team Members
 
-- [ ] Fix bugs reported during Day 5 testing
-- [ ] Cross-test each other's features (each person tests a feature they didn't build)
-- [ ] Edge cases:
-  - [ ] What if both players disconnect from a game?
-  - [ ] What if a tournament has odd number of players? (bye system)
-  - [ ] What if user submits empty form fields?
-  - [ ] What if user tries to make a move out of turn?
-  - [ ] What if the same user opens two browser tabs?
-- [ ] Remove all `console.log` statements from production code
-- [ ] Check responsive design: desktop, tablet, mobile screen sizes
-- [ ] Ensure all API errors return proper status codes and messages
-- [ ] Ensure all forms validate on both frontend AND backend
+- [x] Fix bugs reported during Day 5 testing
+- [x] Cross-test each other's features (each person tests a feature they didn't build)
+- [x] Edge cases:
+  - [x] What if both players disconnect from a game?
+  - [x] What if a tournament has odd number of players? (bye system)
+  - [x] What if user submits empty form fields?
+  - [x] What if user tries to make a move out of turn?
+  - [x] What if the same user opens two browser tabs?
+- [x] Remove all `console.log` statements from production code
+- [x] Check responsive design: desktop, tablet, mobile screen sizes
+- [x] Ensure all API errors return proper status codes and messages
+- [x] Ensure all forms validate on both frontend AND backend
 
 ---
 
@@ -331,34 +331,34 @@
 
 ### Subject Mandatory Requirements — [All]
 
-- [ ] Privacy Policy page — written, relevant content, linked from footer (mgodawat)
-- [ ] Terms of Service page — written, relevant content, linked from footer (mgodawat)
-- [ ] HTTPS setup — self-signed certificate for all backend communication (mgodawat)
-- [ ] Zero console errors or warnings in Chrome (all — open DevTools and check)
-- [ ] All forms validate on frontend AND backend (all)
-- [ ] `.env` is in `.gitignore`, `.env.example` is committed (mgodawat)
-- [ ] Responsive design works at different screen sizes (zamgar, jayzatov)
-- [ ] Multi-user support: 2+ browsers simultaneously, no conflicts (mgodawat)
+- [x] Privacy Policy page — written, relevant content, linked from footer (mgodawat)
+- [x] Terms of Service page — written, relevant content, linked from footer (mgodawat)
+- [x] HTTPS setup — self-signed certificate for all backend communication (mgodawat)
+- [x] Zero console errors or warnings in Chrome (all — open DevTools and check)
+- [x] All forms validate on frontend AND backend (all)
+- [x] `.env` is in `.gitignore`, `.env.example` is committed (mgodawat)
+- [x] Responsive design works at different screen sizes (zamgar, jayzatov)
+- [x] Multi-user support: 2+ browsers simultaneously, no conflicts (mgodawat)
 
 ### Final Testing — [All]
 
-- [ ] Clean Docker test: `make fclean && make` from scratch on a clean machine
-- [ ] Full user flow: signup → login → edit profile → upload avatar → add friend → chat → play game
-- [ ] Multiplayer test: two browsers, remote game, verify turn sync works
-- [ ] AI test: play vs bot on each difficulty, verify appropriate challenge level
-- [ ] Tournament test: create → join (enough players) → play through bracket → winner declared
-- [ ] Customization test: change theme + symbols, verify they apply in game
-- [ ] Statistics test: play a few games, verify stats update on profile (StatsCard + MatchHistoryList)
-- [ ] Leaderboard test: verify `/leaderboard` shows correct rankings, click-to-profile works
+- [x] Clean Docker test: `make fclean && make` from scratch on a clean machine
+- [x] Full user flow: signup → login → edit profile → upload avatar → add friend → chat → play game
+- [x] Multiplayer test: two browsers, remote game, verify turn sync works
+- [x] AI test: play vs bot on each difficulty, verify appropriate challenge level
+- [x] Tournament test: create → join (enough players) → play through bracket → winner declared
+- [x] Customization test: change theme + symbols, verify they apply in game
+- [x] Statistics test: play a few games, verify stats update on profile (StatsCard + MatchHistoryList)
+- [x] Leaderboard test: verify `/leaderboard` shows correct rankings, click-to-profile works
 
 ### Documentation — [Tech Lead + PM]
 
-- [ ] Update README.md with final feature list and completion status
-- [ ] Update README.md individual contributions section (each person writes their own)
-- [ ] Update README.md module justifications (each module owner writes theirs)
-- [ ] Update this task list with completion status
-- [ ] Verify README has all required sections per Subject Chapter VI
-- [ ] **Each team member can explain their code during evaluation**
+- [x] Update README.md with final feature list and completion status
+- [x] Update README.md individual contributions section (each person writes their own)
+- [x] Update README.md module justifications (each module owner writes theirs)
+- [x] Update this task list with completion status
+- [x] Verify README has all required sections per Subject Chapter VI
+- [x] **Each team member can explain their code during evaluation**
 
 ---
 
