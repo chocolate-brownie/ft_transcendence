@@ -411,6 +411,77 @@ export const createOrGetRematchInDb = async (
       throw new Error(CREATE_ERRORS.REMATCH_NOT_ALLOWED);
     }
 
+    if (sourceGame.gameType === "TOURNAMENT") {
+      if (sourceGame.status !== "DRAW" || sourceGame.tournamentId == null) {
+        throw new Error(CREATE_ERRORS.REMATCH_NOT_ALLOWED);
+      }
+
+      const tournamentMatch = await tx.tournamentMatch.findFirst({
+        where: {
+          tournamentId: sourceGame.tournamentId,
+          winnerId: null,
+          player1Id: sourceGame.player1Id,
+          player2Id: sourceGame.player2Id,
+        },
+      });
+
+      if (!tournamentMatch) {
+        throw new Error(CREATE_ERRORS.INVALID_REMATCH_SOURCE);
+      }
+
+      if (tournamentMatch.gameId && tournamentMatch.gameId !== sourceGameId) {
+        const existingGame = await tx.game.findUnique({
+          where: { id: tournamentMatch.gameId },
+          include: {
+            player1: playerSelect,
+            player2: playerSelect,
+          },
+        });
+
+        if (existingGame) {
+          return existingGame;
+        }
+      }
+
+      if (!isBoardSize(sourceGame.boardSize)) {
+        throw new Error("Invalid board size");
+      }
+
+      const boardSize = sourceGame.boardSize;
+      const board = initializeBoard(boardSize);
+
+      if (!isBoardShapeValid(board, boardSize)) {
+        throw new Error("Invalid board state");
+      }
+
+      const rematch = await tx.game.create({
+        data: {
+          player1Id: sourceGame.player1Id,
+          player2Id: sourceGame.player2Id,
+          boardState: board,
+          boardSize,
+          currentTurn: "X",
+          status: "IN_PROGRESS",
+          player1Symbol: "X",
+          player2Symbol: "O",
+          gameType: "TOURNAMENT",
+          tournamentId: sourceGame.tournamentId,
+          startedAt: new Date(),
+        },
+        include: {
+          player1: playerSelect,
+          player2: playerSelect,
+        },
+      });
+
+      await tx.tournamentMatch.update({
+        where: { id: tournamentMatch.id },
+        data: { gameId: rematch.id },
+      });
+
+      return rematch;
+    }
+
     const rematch = await tx.game.findFirst({
       where: {
         id: { not: sourceGameId },
