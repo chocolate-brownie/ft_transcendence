@@ -12,7 +12,7 @@
  * as LocalGame (ThemeSelector, SymbolSelector from Customization/).
  * The board is always 3x3 (backend AI only supports 3x3).
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { PlayerSymbol, CellValue, GameOverPlayerSummary } from "../types/game";
@@ -162,10 +162,15 @@ export default function AIGame() {
   }, []);
 
   const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
-  const winningLine =
-    game && game.status !== "DRAW"
-      ? (findWinningLine(game.board, 3) ?? undefined)
-      : undefined;
+  /* Memoize to avoid recomputing on every render (e.g. showModal toggle).
+   * Mirrors the pattern in LocalGame.tsx:64. PR #306 follow-up fix. */
+  const winningLine = useMemo(
+    () =>
+      game && game.status !== "DRAW"
+        ? (findWinningLine(game.board, 3) ?? undefined)
+        : undefined,
+    [game?.board, game?.status],
+  );
 
   /* ── GameOverModal prop builders ──────────────────────────────────────────── */
 
@@ -354,9 +359,7 @@ export default function AIGame() {
               boardSize={3}
               playerSymbol={game.playerSymbol}
               themed={isThemed}
-              renderSymbol={
-                customization.symbols.type !== "default" ? renderSymbol : undefined
-              }
+              renderSymbol={renderSymbol} /* hook returns undefined when default — PR #306 fix */
             />
 
             {error && <p className="text-sm text-red-400">{error}</p>}
@@ -428,9 +431,7 @@ export default function AIGame() {
               }
               winningLine={winningLine}
               themed={isThemed}
-              renderSymbol={
-                customization.symbols.type !== "default" ? renderSymbol : undefined
-              }
+              renderSymbol={renderSymbol} /* hook returns undefined when default — PR #306 fix */
             />
 
             <Button

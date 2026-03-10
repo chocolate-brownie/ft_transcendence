@@ -9,7 +9,7 @@
  * derived values (isThemed, renderSymbol) ready to pass to GameBoard.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { CellValue } from "../types/game";
 import type {
@@ -67,20 +67,21 @@ export function useGameCustomization() {
   }, []);
 
   const setTheme = useCallback((theme: Theme) => {
-    setCustomizationState((prev) => {
-      const next = { ...prev, theme };
-      saveCustomization(next);
-      return next;
-    });
+    /* Pure updater — no side effects inside setState. PR #306 follow-up fix. */
+    setCustomizationState((prev) => ({ ...prev, theme }));
   }, []);
 
   const setSymbols = useCallback((symbols: CustomSymbols) => {
-    setCustomizationState((prev) => {
-      const next = { ...prev, symbols };
-      saveCustomization(next);
-      return next;
-    });
+    /* Pure updater — no side effects inside setState. PR #306 follow-up fix. */
+    setCustomizationState((prev) => ({ ...prev, symbols }));
   }, []);
+
+  /* Persist to localStorage whenever customization changes.
+   * Kept in useEffect so updaters stay pure (React StrictMode safe).
+   * Issue: PR #306 follow-up — saveCustomization anti-pattern fix. */
+  useEffect(() => {
+    saveCustomization(customization);
+  }, [customization]);
 
   /* Whether a non-classic theme is active */
   const isThemed = customization.theme !== "classic";
