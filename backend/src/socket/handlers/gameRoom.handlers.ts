@@ -43,6 +43,21 @@ function resolveRoles(
   };
 }
 
+/** Normalize a raw DB boardState value to a CellValue array.
+ *  AI games persist boardState as a JSON string; all other games store it as a
+ *  native Prisma JSON value. Returns an empty array on parse failure. */
+function parseBoardState(raw: unknown): unknown[] {
+  if (typeof raw === "string") {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
 /** Send an error to the socket and optionally ack the callback. */
 function emitError(socket: Socket, message: string, callback?: AckCallback) {
   socket.emit("error", { message });
@@ -60,12 +75,7 @@ function buildJoinedPayload(
   return {
     gameId: game.id,
     game: {
-      /* AI games store boardState as a JSON string in the DB; parse it so
-      the frontend always receives a CellValue[] array (never a raw string). */
-      boardState:
-        typeof game.boardState === "string"
-          ? JSON.parse(game.boardState)
-          : game.boardState,
+      boardState: parseBoardState(game.boardState),
       boardSize: game.boardSize,
       currentTurn: game.currentTurn,
       status: game.status,
@@ -333,7 +343,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket) {
 
         callback?.({
           gameId: game.id,
-          boardState: game.boardState,
+          boardState: parseBoardState(game.boardState),
           boardSize: game.boardSize,
           currentTurn: game.currentTurn,
           status: game.status,

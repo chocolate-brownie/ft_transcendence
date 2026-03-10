@@ -146,6 +146,10 @@ export default function AIGame() {
   }, []);
 
   const totalMoves = game ? game.board.filter((c) => c !== null).length : 0;
+  const winningLine =
+    game && game.status !== "DRAW"
+      ? (findWinningLine(game.board, 3) ?? undefined)
+      : undefined;
 
   /* ── GameOverModal prop builders ──────────────────────────────────────────── */
 
@@ -353,11 +357,7 @@ export default function AIGame() {
             winnerSymbol={
               game.status !== "DRAW" ? ((game.winner as PlayerSymbol) ?? null) : null
             }
-            winningLine={
-              game.status !== "DRAW"
-                ? (findWinningLine(game.board, 3) ?? undefined)
-                : undefined
-            }
+            winningLine={winningLine}
           />
 
           <Button
