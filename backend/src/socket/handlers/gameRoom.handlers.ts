@@ -60,7 +60,11 @@ function buildJoinedPayload(
   return {
     gameId: game.id,
     game: {
-      boardState: game.boardState,
+      // AI games store boardState as a JSON string in the DB; parse it so
+      // the frontend always receives a CellValue[] array (never a raw string).
+      boardState: typeof game.boardState === "string"
+        ? JSON.parse(game.boardState)
+        : game.boardState,
       boardSize: game.boardSize,
       currentTurn: game.currentTurn,
       status: game.status,
